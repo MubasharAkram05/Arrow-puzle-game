@@ -3,7 +3,7 @@ import { clearHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
 import { hidePointer } from '../../render/pointer.js';
 import { $ } from '../dom.js';
-import { navigate } from '../navigation.js';
+import { navigate, onReturn } from '../navigation.js';
 import { goHome } from './home.js';
 
 const PAGE = 60;
@@ -37,15 +37,20 @@ function appendLevels(more) {
   $('level-grid').appendChild(frag);
 }
 
-/** Open the level select screen (unlimited, grows while scrolling). */
-export function openLevels() {
-  clearHint();
-  hidePointer();
+/** Rebuild the level grid from the current progress. */
+function renderLevels() {
   const p = state.progress;
   $('level-grid').textContent = '';
   count = 0;
   appendLevels(Math.max(PAGE, Math.ceil((p.unlocked + 24) / 4) * 4));
   $('levels-done').textContent = `${p.completed.size} done`;
+}
+
+/** Open the level select screen (unlimited, grows while scrolling). */
+export function openLevels() {
+  clearHint();
+  hidePointer();
+  renderLevels();
   navigate('screen-levels');
   const target = $('level-grid').querySelector('.current');
   if (target) target.scrollIntoView({ block: 'center' });
@@ -72,4 +77,5 @@ export function bindLevels() {
     const el = e.currentTarget;
     if (el.scrollTop + el.clientHeight > el.scrollHeight - 300) appendLevels(PAGE);
   });
+  onReturn('screen-levels', renderLevels);
 }

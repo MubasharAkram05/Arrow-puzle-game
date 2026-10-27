@@ -2,6 +2,8 @@ import { layoutBoard } from '../render/board.js';
 
 /** Screen history; the first entry is the root (home). */
 const stack = ['screen-home'];
+/** Refresh callbacks run when a screen is shown again by going back. */
+const returnHooks = {};
 
 /** Show one screen and hide the others. */
 function show(id) {
@@ -37,8 +39,19 @@ export function resetTo(id) {
 export function goBack() {
   if (stack.length <= 1) return false;
   stack.pop();
-  show(stack[stack.length - 1]);
+  const id = stack[stack.length - 1];
+  show(id);
+  if (returnHooks[id]) returnHooks[id]();
   return true;
+}
+
+/**
+ * Register a refresh callback for when a screen is shown again via goBack.
+ * @param {string} id
+ * @param {() => void} fn
+ */
+export function onReturn(id, fn) {
+  returnHooks[id] = fn;
 }
 
 /**

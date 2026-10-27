@@ -104,3 +104,14 @@
 #modal-gameover p {
   margin: 0 0 18px;
 }
+
+#modal-exit .big-icon {
+  color: var(--primary);
+}
+#modal-exit h3 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+#modal-exit p {
+  margin: 0 0 18px;
+}

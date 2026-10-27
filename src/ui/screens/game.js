@@ -1,11 +1,12 @@
 import { restart } from '../../game/game.js';
-import { useHint } from '../../game/hints.js';
+import { updateTutorial, useHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
 import { layoutBoard } from '../../render/board.js';
 import { renderGrid } from '../../render/hud.js';
 import { saveProgress } from '../../storage/save.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
+import { onReturn } from '../navigation.js';
 import { openLevels } from './levels.js';
 
 /** Wire the game screen buttons (top bar and floating buttons). */
@@ -20,4 +21,5 @@ export function bindGameScreen() {
     saveProgress();
   });
   window.addEventListener('resize', layoutBoard);
+  onReturn('screen-game', updateTutorial);
 }

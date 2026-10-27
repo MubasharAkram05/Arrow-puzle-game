@@ -1,4 +1,5 @@
 import './styles/index.css';
+import { initBackButton } from './input/back-button.js';
 import { bindBoardInput } from './input/board-input.js';
 import { loadSave } from './storage/save.js';
 import { bindGameOver } from './ui/modals/gameover.js';
@@ -25,6 +26,7 @@ function boot() {
   bindVictory();
   bindCloseButtons();
   $('btn-home-settings').addEventListener('click', openSettings);
+  initBackButton();
   goHome();
 }
 
