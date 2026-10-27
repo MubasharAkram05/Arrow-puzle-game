@@ -1,15 +1,19 @@
 /**
  * Coin and diamond counters (small pills) plus the "fly to counter" reward animation.
- * Any element with [data-currency-bar] becomes a bar.
+ * Any element with [data-currency-bar] becomes a bar. Counters always end on the wallet in state:
+ * an animation only touches the one counter it flies to, and syncCurrency() (run on every screen
+ * change) cancels pending animations and shows the real values.
  */
 import { state } from '../../game/state.js';
 
 const KINDS = ['coins', 'diamonds'];
 const ICON = { coins: 'coin', diamonds: 'gem' };
-const counting = { coins: false, diamonds: false };
+const timers = new Set();
+const flights = new Set();
 
 /** Format a number with thousands separators. */
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
+const reducedMotion = () => !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Fill every [data-currency-bar] placeholder with the two pills (once, at boot). */
 export function mountCurrencyBars() {
@@ -24,43 +28,52 @@ export function mountCurrencyBars() {
 }
 
 /**
- * Show values on every bar (defaults to the wallet in state).
+ * Show values on the bars inside a scope (defaults: the wallet in state, every bar).
+ * Counters that are animating keep animating; they end on their target value.
  * @param {{coins?: number, diamonds?: number}} [values]
+ * @param {ParentNode} [scope]
  */
-export function renderCurrency(values = state) {
+export function renderCurrency(values = state, scope = document) {
   for (const k of KINDS) {
-    if (counting[k] && values === state) continue;
-    document.querySelectorAll(`.cur[data-cur="${k}"] b`).forEach((b) => {
-      b.textContent = fmt(values[k]);
+    scope.querySelectorAll(`.cur[data-cur="${k}"]:not([data-counting])`).forEach((el) => {
+      el.querySelector('b').textContent = fmt(values[k]);
     });
   }
 }
 
+/** Cancel every pending reward animation and show the real wallet everywhere. */
+export function syncCurrency() {
+  timers.forEach(clearTimeout);
+  timers.clear();
+  flights.forEach((a) => a.cancel());
+  flights.clear();
+  document.querySelectorAll('.fly-icon').forEach((el) => el.remove());
+  document.querySelectorAll('.cur[data-counting]').forEach((el) => el.removeAttribute('data-counting'));
+  renderCurrency();
+}
+
 /**
- * Count a counter up (or down) with a little bump at the end.
- * @param {'coins'|'diamonds'} kind
+ * Count one counter pill from a value to another, with a little bump at the end.
+ * @param {HTMLElement} el the .cur pill
  * @param {number} from
  * @param {number} to
  * @param {number} duration ms
  */
-export function countUp(kind, from, to, duration) {
-  const els = [...document.querySelectorAll(`.cur[data-cur="${kind}"]`)];
-  counting[kind] = true;
+export function countUp(el, from, to, duration) {
+  el.setAttribute('data-counting', '');
+  const b = el.querySelector('b');
   const t0 = performance.now();
   (function frame(now) {
+    if (!el.hasAttribute('data-counting')) return; // cancelled by syncCurrency
     const t = Math.min(1, (now - t0) / duration);
-    const v = from + (to - from) * (1 - (1 - t) * (1 - t));
-    els.forEach((el) => {
-      el.querySelector('b').textContent = fmt(v);
-    });
+    b.textContent = fmt(from + (to - from) * (1 - (1 - t) * (1 - t)));
     if (t < 1) requestAnimationFrame(frame);
     else {
-      counting[kind] = false;
-      els.forEach((el) => {
-        el.classList.remove('bump');
-        void el.offsetWidth;
-        el.classList.add('bump');
-      });
+      el.removeAttribute('data-counting');
+      b.textContent = fmt(to);
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
     }
   })(t0);
 }
@@ -71,9 +84,18 @@ function target(kind) {
   return scope && scope.querySelector(`.cur[data-cur="${kind}"]`);
 }
 
+/** setTimeout that syncCurrency() can cancel. */
+function later(fn, ms) {
+  const id = setTimeout(() => {
+    timers.delete(id);
+    fn();
+  }, ms);
+  timers.add(id);
+}
+
 /**
- * Fly currency icons from an element to its counter, then count up.
- * Uses transform/opacity only. Falls back to an instant count when animations are unavailable.
+ * Fly currency icons from an element to its counter, then count that counter up.
+ * Uses transform/opacity only. With reduced motion (or no Web Animations) it just counts.
  * @param {HTMLElement} from start element (e.g. the victory card)
  * @param {'coins'|'diamonds'} kind
  * @param {number} start counter value before the reward
@@ -82,15 +104,21 @@ function target(kind) {
  */
 export function flyCurrency(from, kind, start, amount, delay = 0) {
   const to = target(kind);
-  if (!amount || !to || !from) return;
+  if (!to) return;
+  if (!amount) {
+    to.querySelector('b').textContent = fmt(start);
+    return;
+  }
+  to.setAttribute('data-counting', '');
+  to.querySelector('b').textContent = fmt(start);
+  if (!from || reducedMotion() || typeof document.body.animate !== 'function') {
+    later(() => countUp(to, start, start + amount, 300), delay);
+    return;
+  }
   const a = from.getBoundingClientRect();
   const b = to.getBoundingClientRect();
   const pieces = Math.min(10, Math.max(1, Math.ceil(amount / (kind === 'coins' ? 6 : 1))));
   const flight = 650;
-  if (typeof document.body.animate !== 'function') {
-    countUp(kind, start, start + amount, 300);
-    return;
-  }
   for (let i = 0; i < pieces; i++) {
     const el = document.createElement('div');
     el.className = 'fly-icon';
@@ -110,7 +138,11 @@ export function flyCurrency(from, kind, start, amount, delay = 0) {
       ],
       { duration: flight, delay: delay + i * 60, easing: 'cubic-bezier(0.5, 0, 0.3, 1)', fill: 'both' },
     );
-    anim.onfinish = () => el.remove();
+    flights.add(anim);
+    anim.onfinish = () => {
+      flights.delete(anim);
+      el.remove();
+    };
   }
-  setTimeout(() => countUp(kind, start, start + amount, flight), delay + flight * 0.6);
+  later(() => countUp(to, start, start + amount, flight), delay + flight * 0.6);
 }

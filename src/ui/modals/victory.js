@@ -46,7 +46,7 @@ function renderPreview() {
 export function showVictory(summary) {
   $('next-sub').textContent = `Level ${state.progress.current}`;
   renderRewards(summary.reward, summary.xp);
-  renderCurrency(summary.before);
+  renderCurrency(summary.before, $('modal-victory'));
   openModal('modal-victory');
   renderPreview();
   startConfetti();
