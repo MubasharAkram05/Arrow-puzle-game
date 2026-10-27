@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 20, with shape (mask) levels every 10th level
+- Endless generated levels in chapters of 40, with shape (mask) levels every 10th level
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing, spent on hints, heart refills, continues, skips, arrow styles and accent themes
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
@@ -104,7 +104,7 @@ All numbers live in `src/config.js`.
 | Perfect level (no heart lost), first time | +20                                 |          |
 | Replay of a completed level               | 25% of base + hearts                |          |
 | Shape level (every 10th), first clear     |                                     | +1       |
-| Chapter complete (20 levels), once        | +100                                | +2       |
+| Chapter complete (40 levels), once        | +200                                | +4       |
 | Achievements                              |                                     | 1-5 each |
 | Free hint every 3 levels completed        | (+1 hint)                           |          |
 | XP per win                                | 10 XP + 5 XP per heart left         |          |
@@ -129,7 +129,7 @@ All numbers live in `src/config.js`.
 | -------------- | ---------------------------------------- | ---------- |
 | First Escape   | Finish level 1                           | 1 diamond  |
 | Perfectionist  | 10 perfect levels                        | 3 diamonds |
-| Chapter Master | Finish chapter 1                         | 2 diamonds |
+| Chapter Master | Finish chapter 1 (40 levels)             | 2 diamonds |
 | Arrow Hunter   | Clear 1000 arrows                        | 5 diamonds |
 | No Mistakes    | 5 levels in a row without losing a heart | 3 diamonds |
 | Shape Solver   | Finish 5 shape levels                    | 3 diamonds |
@@ -141,6 +141,7 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 - Key `arrowEscape:v2`, plus a backup copy in `arrowEscape:v2:backup` written on every save.
 - On first launch after updating, a v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v2 is written and read back.
+- Saves made with 20-level chapters are converted to 40-level chapters: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
 - Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
 
 ## Back button

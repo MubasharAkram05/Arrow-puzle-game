@@ -2,6 +2,14 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.0] - 2026-10-27
+
+### Changed
+
+- Chapters now have 40 levels (was 20). The chapter reward is doubled to 200 coins + 4 diamonds, so total earnings stay the same. Chapter Master needs all 40 levels of chapter 1.
+- Saves made with 20-level chapters are converted on load: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
+- Levels stay unlimited.
+
 ## [3.0.0] - 2026-10-27
 
 ### Added
