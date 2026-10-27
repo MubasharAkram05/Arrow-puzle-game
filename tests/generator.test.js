@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   MASK_SHAPES,
+  analyzeLevel,
+  getDailyConfig,
+  getLevelConfig,
+  meetsGoals,
   buildOccupancy,
   clearArrow,
   dateKey,
@@ -54,13 +58,16 @@ describe('levels 1-200', () => {
   it.each(LEVELS)('level %i is valid, solvable and follows its tier', (n) => {
     const level = generateLevel(n);
     checkLevel(level, rulesFor(n));
+    expect(meetsGoals(analyzeLevel(level), getLevelConfig(n).goals)).toBe(true);
     expect(generateLevel(n).arrows).toEqual(level.arrows);
   });
 });
 
 describe('daily challenges', () => {
   it.each(DAYS)('daily %i is a valid Super Hard level', (key) => {
-    checkLevel(generateDaily(key), { min: 14, max: 16, difficulty: 'Super Hard' });
+    const level = generateDaily(key);
+    checkLevel(level, { min: 14, max: 16, difficulty: 'Super Hard' });
+    expect(meetsGoals(analyzeLevel(level), getDailyConfig(key).goals)).toBe(true);
   });
 
   it('different days give different boards', () => {
@@ -72,5 +79,31 @@ describe('masks', () => {
   it('every 10th level cycles through all five shapes', () => {
     const shapes = new Set([10, 20, 30, 40, 50].map((n) => generateLevel(n).shape));
     expect([...shapes].sort()).toEqual([...MASK_SHAPES].sort());
+  });
+});
+
+describe('difficulty curve', () => {
+  /** Mean of a difficulty metric over a level range. */
+  function mean(from, to, key) {
+    let sum = 0;
+    for (let n = from; n <= to; n++) sum += analyzeLevel(generateLevel(n))[key];
+    return sum / (to - from + 1);
+  }
+
+  it('blocking depth grows and start-free share shrinks from Normal to Hard to Super Hard', () => {
+    const normal = { depth: mean(6, 20, 'avgDepth'), free: mean(6, 20, 'startFreeRatio') };
+    const hard = { depth: mean(21, 50, 'avgDepth'), free: mean(21, 50, 'startFreeRatio') };
+    const superHard = { depth: mean(51, 100, 'avgDepth'), free: mean(51, 100, 'startFreeRatio') };
+    expect(hard.depth).toBeGreaterThan(normal.depth * 1.5);
+    expect(superHard.depth).toBeGreaterThan(hard.depth * 1.3);
+    expect(hard.free).toBeLessThan(normal.free);
+    expect(superHard.free).toBeLessThan(hard.free);
+  });
+
+  it('Hard and Super Hard never start with many free arrows', () => {
+    for (let n = 21; n <= 200; n++) {
+      const { startFree } = analyzeLevel(generateLevel(n));
+      expect(startFree).toBeLessThanOrEqual(n <= 50 ? 4 : 3);
+    }
   });
 });

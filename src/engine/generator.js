@@ -3,7 +3,7 @@ import { hashSeed, mulberry32, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { makePlan } from './shapes.js';
 import { MAX_LEN, MIN_FILL, MIN_LEN, getDailyConfig, getLevelConfig } from './levels.js';
-import { solveLevel } from './solver.js';
+import { analyzeLevel } from './difficulty.js';
 
 const MAX_ATTEMPTS = 500;
 
@@ -185,6 +185,20 @@ export function meetsConstraints(level, cfg) {
 }
 
 /**
+ * Does a measured level reach the tier's difficulty goals?
+ * @param {import('./difficulty.js').DifficultyReport} report
+ * @param {object|null} goals
+ * @returns {boolean}
+ */
+export function meetsGoals(report, goals) {
+  if (!report.solvable) return false;
+  if (!goals) return true;
+  return (
+    report.startFree <= goals.maxStartFree && report.avgDepth >= goals.minAvgDepth && report.rounds >= goals.minRounds
+  );
+}
+
+/**
  * Generate a verified level. Failed attempts retry with the next derived seed.
  * @param {object} cfg
  * @returns {object} level with seed and attempt
@@ -194,8 +208,10 @@ export function generateFromConfig(cfg) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
     const level = buildLevel(cfg, rng);
     if (!meetsConstraints(level, cfg)) continue;
-    if (!solveLevel(level).solvable) continue;
+    const report = analyzeLevel(level);
+    if (!meetsGoals(report, cfg.goals)) continue;
     level.seed = cfg.seed;
+    level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
     level.attempt = attempt;
     return level;
   }

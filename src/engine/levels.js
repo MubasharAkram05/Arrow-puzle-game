@@ -10,6 +10,10 @@ export const MIN_FILL = 0.9;
 /**
  * Difficulty tier settings shared by levels and the daily challenge.
  * depthBias: how strongly heads that point across other arrows are preferred.
+ * goals: minimum difficulty a generated board must reach (see analyzeLevel):
+ *   maxStartFree  at most this many arrows free on the first move
+ *   minAvgDepth   mean number of arrows that must leave before each arrow
+ *   minRounds     length of the longest dependency chain
  */
 export const TIERS = Object.freeze({
   tutorial: {
@@ -18,6 +22,7 @@ export const TIERS = Object.freeze({
     lenMin: 2,
     lenMax: 7,
     depthBias: 0,
+    goals: null,
     styles: { straight: 3, L: 3, U: 1 },
   },
   normal: {
@@ -26,6 +31,7 @@ export const TIERS = Object.freeze({
     lenMin: 2,
     lenMax: 10,
     depthBias: 0.15,
+    goals: { maxStartFree: 6, minAvgDepth: 1.2, minRounds: 3 },
     styles: { straight: 2, L: 3, U: 2, zigzag: 1, spiral: 1, snake: 2 },
   },
   hard: {
@@ -33,7 +39,8 @@ export const TIERS = Object.freeze({
     hearts: 4,
     lenMin: 2,
     lenMax: 14,
-    depthBias: 0.35,
+    depthBias: 0.6,
+    goals: { maxStartFree: 4, minAvgDepth: 3, minRounds: 6 },
     styles: { straight: 1, L: 2, U: 2, zigzag: 2, spiral: 2, snake: 3 },
   },
   superHard: {
@@ -41,10 +48,28 @@ export const TIERS = Object.freeze({
     hearts: 4,
     lenMin: 3,
     lenMax: 20,
-    depthBias: 0.55,
+    depthBias: 1.0,
+    goals: { maxStartFree: 3, minAvgDepth: 6, minRounds: 8 },
     styles: { straight: 1, L: 2, U: 2, zigzag: 2, spiral: 2, snake: 4 },
   },
 });
+
+/** Mask shapes have shorter rays, so their depth goals are scaled down (start-free cap stays). */
+export const MASK_GOAL_SCALE = 0.8;
+
+/** Copy tier settings for a board, easing depth goals on masked boards. */
+function tierConfig(tier, mask) {
+  const t = TIERS[tier];
+  const goals =
+    t.goals && mask
+      ? {
+          ...t.goals,
+          minAvgDepth: t.goals.minAvgDepth * MASK_GOAL_SCALE,
+          minRounds: Math.round(t.goals.minRounds * MASK_GOAL_SCALE),
+        }
+      : t.goals;
+  return { ...t, goals };
+}
 
 /**
  * @typedef {object} LevelConfig
@@ -90,7 +115,7 @@ export function getLevelConfig(n) {
   } else if (n > 5 && rng() < 0.5) {
     rows = Math.min(maxSize, size + 1);
   }
-  const cfg = { ...TIERS[tier], tier, rows, cols, mask, seed: n };
+  const cfg = { ...tierConfig(tier, mask), tier, rows, cols, mask, seed: n };
   if (tier === 'tutorial') {
     cfg.arrowsMin = 4;
     cfg.arrowsMax = 8;
@@ -118,5 +143,5 @@ export function getDailyConfig(key) {
   const mask = useMask ? MASK_SHAPES[Math.floor(rng() * MASK_SHAPES.length)] : null;
   const size = mask ? 15 : 14;
   const rows = mask ? size : size + (rng() < 0.5 ? 1 : 0);
-  return { ...TIERS.superHard, tier: 'superHard', rows, cols: size, mask, seed: 1e8 + key };
+  return { ...tierConfig('superHard', mask), tier: 'superHard', rows, cols: size, mask, seed: 1e8 + key };
 }
