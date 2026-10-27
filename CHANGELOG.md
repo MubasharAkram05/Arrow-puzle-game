@@ -18,6 +18,12 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - Shop page: hints and a 5-hint pack, arrow styles and accent themes (coins or diamonds), Owned/Equipped states, confirm before buying, a "Get more coins: coming soon" placeholder.
 - Accent themes (Ocean Blue, Royal Purple, Lagoon Teal, Sunset Coral) for light and dark mode.
 
+### Changed
+
+- Saves move to `arrowEscape:v2` (`src/storage/schema.js`). v1 saves migrate automatically and keep level progress, hints, settings and the equipped style. Daily data is dropped. Every load is validated, and a backup copy is used if the main save is unreadable.
+- Reset progress now also clears coins, diamonds, items, XP, stats and achievements (settings, avatar and name stay).
+- Settings shows only owned arrow styles, with a link to the Shop.
+
 ### Fixed
 
 - Finishing a level could trigger the win several times when multiple escape animations were still running. It now runs once per attempt.

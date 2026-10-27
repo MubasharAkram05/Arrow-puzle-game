@@ -4,6 +4,16 @@ A "Tap Away Arrows" style puzzle game. Tap an arrow: if nothing is in front of i
 
 Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is packaged for Android with Capacitor.
 
+## Features
+
+- Endless generated levels in chapters of 20, with shape (mask) levels every 10th level
+- Hearts, hints, a level 1 tutorial, snake-style arrow animations
+- Coins and diamonds: earned by playing, spent on hints, heart refills, continues, skips, arrow styles and accent themes
+- Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
+- Profile with 12 built-in avatars, an editable name, player level/XP, stats and 7 achievements
+- Light, dark and auto theme, 4 arrow styles, 4 accent themes
+- Saves locally (versioned, validated, with a backup copy), works with storage blocked
+
 ## Requirements
 
 - Node.js 22+ (see `.nvmrc`; `nvm use` picks it up). CI uses the same version.
@@ -16,7 +26,7 @@ npm install
 npm run dev       # dev server with hot reload
 npm run build     # production build in dist/
 npm run preview   # serve the build locally
-npm test          # Vitest: engine, solver, board, 200 levels
+npm test          # Vitest: engine, 200 levels, economy, achievements, storage
 npm run lint      # ESLint + Prettier check
 npm run format    # auto-fix formatting and lint issues
 ```
@@ -26,8 +36,8 @@ npm run format    # auto-fix formatting and lint issues
 ```
 index.html              markup for every screen and modal (Vite entry)
 src/
-  main.js               boot: load save, theme, wire screens, back button
-  config.js             game constants
+  main.js               boot: icons, save, theme, screens, bottom nav, back button
+  config.js             game constants, rewards, prices, shop items
   engine/               pure logic, no DOM (tested in Node)
     rng.js              seeded mulberry32 RNG and seed hashing
     directions.js       up/right/down/left
@@ -39,13 +49,20 @@ src/
     solver.js           greedy solver and structural validation
     difficulty.js       blocking depth, free arrows at start, rounds
   game/                 state, game loop (tap, win, lose), hints and tutorial
+    economy.js          pure reward and wallet rules (+ grant() hook for ads/IAP later)
+    rewards.js          applies rewards and purchases to the game state
+    achievements.js     achievement goals, progress and claiming (pure)
+    stats.js            stats, streaks, XP levels, name validation (pure)
   render/               SVG board, HUD, pointing hand, animations, confetti
   input/                board taps, Android/browser back button
   audio/                Web Audio sounds, vibration
-  storage/              localStorage save/load with safe fallbacks
+  storage/
+    schema.js           v2 save format, validation, v1 migration, backup (pure)
+    save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers
-    screens/            home, levels, game
-    modals/             settings, game over, victory, shared modal logic
+    components/         icons, currency bar, bottom nav, avatars, toast, style preview
+    screens/            home, levels, game, shop, profile
+    modals/             settings, game over, victory, purchase dialog, shared modal logic
   styles/               tokens, base and per-screen CSS
 tests/                  Vitest suites
 reference/              screenshots of the original game (design target)
@@ -72,6 +89,59 @@ Difficulty is measured, not guessed:
 | Super Hard | 51+    | 14-16 | 3                 | 6             | 8          |
 
 Mask levels (every 10th) scale the depth and rounds goals by 0.8 because shapes have shorter rays. If a board misses its goals, the generator retries with the next derived seed.
+
+## Economy
+
+All numbers live in `src/config.js`.
+
+### Earning
+
+| Event                                     | Coins                               | Diamonds |
+| ----------------------------------------- | ----------------------------------- | -------- |
+| Level complete                            | 10                                  |          |
+| Each heart left at the end                | +5                                  |          |
+| Difficulty multiplier (base + hearts)     | Normal x1, Hard x1.5, Super Hard x2 |          |
+| Perfect level (no heart lost), first time | +20                                 |          |
+| Replay of a completed level               | 25% of base + hearts                |          |
+| Shape level (every 10th), first clear     |                                     | +1       |
+| Chapter complete (20 levels), once        | +100                                | +2       |
+| Achievements                              |                                     | 1-5 each |
+| Free hint every 3 levels completed        | (+1 hint)                           |          |
+| XP per win                                | 10 XP + 5 XP per heart left         |          |
+
+### Spending
+
+| Item                                       | Price      |
+| ------------------------------------------ | ---------- |
+| Hint (once free hints run out)             | 50 coins   |
+| 5-hint pack                                | 200 coins  |
+| Refill 1 heart (max 2 per level)           | 80 coins   |
+| Continue after game over, full hearts      | 2 diamonds |
+| Skip level (marks it complete, no rewards) | 5 diamonds |
+| Arrow styles: Dark Slate, Olive            | 300 coins  |
+| Arrow style: Soft Mint                     | 5 diamonds |
+| Themes: Royal Purple, Lagoon Teal          | 400 coins  |
+| Theme: Sunset Coral                        | 8 diamonds |
+
+### Achievements
+
+| Achievement    | Goal                                     | Reward     |
+| -------------- | ---------------------------------------- | ---------- |
+| First Escape   | Finish level 1                           | 1 diamond  |
+| Perfectionist  | 10 perfect levels                        | 3 diamonds |
+| Chapter Master | Finish chapter 1                         | 2 diamonds |
+| Arrow Hunter   | Clear 1000 arrows                        | 5 diamonds |
+| No Mistakes    | 5 levels in a row without losing a heart | 3 diamonds |
+| Shape Solver   | Finish 5 shape levels                    | 3 diamonds |
+| Big Spender    | Spend 1000 coins                         | 2 diamonds |
+
+Currency from outside the game (rewarded ads, in-app purchases) should go through `grant()` in `economy.js` (via `credit()` in `rewards.js`) with source `'ad'` or `'purchase'`.
+
+## Saves
+
+- Key `arrowEscape:v2`, plus a backup copy in `arrowEscape:v2:backup` written on every save.
+- On first launch after updating, a v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v2 is written and read back.
+- Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
 
 ## Back button
 

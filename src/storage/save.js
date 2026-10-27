@@ -1,88 +1,98 @@
-import { SHOP_STYLES, START_HINTS, STORE_KEY, THEMES } from '../config.js';
+/**
+ * Bridges the game state and the v2 save format (see schema.js for validation and migration).
+ */
+import { START_HINTS } from '../config.js';
+import { achievementStatus } from '../game/achievements.js';
 import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
+import { defaultSave, readSave, sanitize, writeSave } from './schema.js';
 
-const isInt = (v, min) => Number.isInteger(v) && v >= min;
-
-/**
- * Apply a parsed save object to the state. Bad or missing fields keep their defaults.
- * @param {unknown} d
- */
-export function applySave(d) {
-  if (!d || typeof d !== 'object') return;
-  const p = state.progress;
-  p.unlocked = isInt(d.unlocked, 1) ? d.unlocked : 1;
-  p.current = Math.min(isInt(d.current, 1) ? d.current : 1, p.unlocked);
-  if (Array.isArray(d.completed)) p.completed = new Set(d.completed.filter((n) => isInt(n, 1)));
-  if (isInt(d.hints, 0)) state.hints = Math.min(d.hints, 999);
-  for (const key of ['coins', 'diamonds', 'xp']) if (isInt(d[key], 0)) state[key] = d[key];
-  for (const key of ['perfect', 'masks', 'chaptersRewarded']) {
-    if (Array.isArray(d[key])) p[key] = new Set(d[key].filter((n) => isInt(n, 1)));
-  }
-  if (d.stats && typeof d.stats === 'object') {
-    for (const k in state.stats) if (isInt(d.stats[k], 0)) state.stats[k] = d.stats[k];
-  }
-  if (THEMES.includes(d.theme)) state.theme = d.theme;
-  if (SHOP_STYLES.some((s) => s.id === d.style)) state.style = d.style;
-  if (Array.isArray(d.claimed)) state.claimed = new Set(d.claimed.filter((x) => typeof x === 'string'));
-  if (d.owned && Array.isArray(d.owned.styles) && Array.isArray(d.owned.themes)) state.owned = d.owned;
-  if (typeof d.accent === 'string') state.accent = d.accent;
-  if (isInt(d.avatar, 0)) state.avatar = d.avatar;
-  if (typeof d.name === 'string') state.name = d.name;
-  for (const key of ['sound', 'vibration', 'grid']) {
-    if (typeof d[key] === 'boolean') state[key] = d[key];
-  }
-}
-
-/** Read saved data. Works (with defaults) when storage is blocked or corrupt. */
-export function loadSave() {
-  let d;
+/** localStorage, or null when the browser blocks it. */
+function storage() {
   try {
-    d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    return window.localStorage;
   } catch {
-    d = null;
+    return null;
   }
-  applySave(d);
 }
 
 /**
- * Serializable snapshot of progress and settings.
+ * Copy a validated v2 save into the game state.
+ * @param {object} raw any parsed save (it is sanitized first)
+ */
+export function applySave(raw) {
+  const d = sanitize(raw);
+  const p = d.progress;
+  state.progress = {
+    current: p.current,
+    unlocked: p.unlocked,
+    completed: new Set(p.completed),
+    perfect: new Set(p.perfect),
+    masks: new Set(p.masks),
+    chaptersRewarded: new Set(p.chaptersRewarded),
+  };
+  state.coins = d.wallet.coins;
+  state.diamonds = d.wallet.diamonds;
+  state.hints = d.wallet.hints;
+  state.xp = d.xp;
+  state.stats = { ...newStats(), ...d.stats };
+  state.claimed = new Set(d.achievements.claimed);
+  state.owned = d.items.owned;
+  state.style = d.items.style;
+  state.accent = d.items.accent;
+  state.avatar = d.profile.avatar;
+  state.name = d.profile.name;
+  Object.assign(state, d.settings);
+}
+
+/**
+ * v2 save built from the game state.
  * @returns {object}
  */
 export function snapshot() {
   const p = state.progress;
+  const progress = {};
+  for (const a of achievementStatus(
+    { completed: p.completed, perfect: p.perfect, masks: p.masks, stats: state.stats },
+    state.claimed,
+  )) {
+    progress[a.def.id] = a.value;
+  }
   return {
-    current: p.current,
-    unlocked: p.unlocked,
-    completed: Array.from(p.completed),
-    perfect: Array.from(p.perfect),
-    masks: Array.from(p.masks),
-    chaptersRewarded: Array.from(p.chaptersRewarded),
-    coins: state.coins,
-    diamonds: state.diamonds,
+    version: 2,
+    progress: {
+      current: p.current,
+      unlocked: p.unlocked,
+      completed: [...p.completed],
+      perfect: [...p.perfect],
+      masks: [...p.masks],
+      chaptersRewarded: [...p.chaptersRewarded],
+    },
+    wallet: { coins: state.coins, diamonds: state.diamonds, hints: state.hints },
     xp: state.xp,
-    stats: state.stats,
-    claimed: Array.from(state.claimed),
-    owned: state.owned,
-    accent: state.accent,
-    avatar: state.avatar,
-    name: state.name,
-    hints: state.hints,
-    theme: state.theme,
-    style: state.style,
-    sound: state.sound,
-    vibration: state.vibration,
-    grid: state.grid,
+    stats: { ...state.stats },
+    achievements: { claimed: [...state.claimed], progress },
+    items: { owned: state.owned, style: state.style, accent: state.accent },
+    profile: { avatar: state.avatar, name: state.name },
+    settings: { theme: state.theme, sound: state.sound, vibration: state.vibration, grid: state.grid },
   };
+}
+
+/**
+ * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
+ * @returns {'v2'|'backup'|'v1'|'new'} where the data came from
+ */
+export function loadSave() {
+  const s = storage();
+  const { data, source } = s ? readSave(s) : { data: defaultSave(), source: 'new' };
+  applySave(data);
+  return source;
 }
 
 /** Write progress and settings. Failures (private mode, full storage) are ignored. */
 export function saveProgress() {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(snapshot()));
-  } catch {
-    // storage unavailable
-  }
+  const s = storage();
+  if (s) writeSave(s, snapshot());
 }
 
 /** Clear progress, currency, items, XP, stats and achievements. Settings, avatar and name stay. */

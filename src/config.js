@@ -14,8 +14,6 @@ export const HEAD_L_PX = 14;
 export const START_HINTS = 3;
 /** Earn one hint every N completed levels. */
 export const HINT_EVERY = 3;
-/** localStorage key for the save file. */
-export const STORE_KEY = 'arrowEscape.save.v1';
 /** Theme options. */
 export const THEMES = Object.freeze(['light', 'dark', 'auto']);
 
