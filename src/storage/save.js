@@ -1,7 +1,7 @@
 /**
  * Bridges the game state and the v2 save format (see schema.js for validation and migration).
  */
-import { START_HINTS } from '../config.js';
+import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
 import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
@@ -67,6 +67,7 @@ export function snapshot() {
       perfect: [...p.perfect],
       masks: [...p.masks],
       chaptersRewarded: [...p.chaptersRewarded],
+      chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: state.coins, diamonds: state.diamonds, hints: state.hints },
     xp: state.xp,
@@ -86,6 +87,8 @@ export function loadSave() {
   const s = storage();
   const { data, source } = s ? readSave(s) : { data: defaultSave(), source: 'new' };
   applySave(data);
+  // store the validated, current-format save right away (e.g. after a chapter-size conversion)
+  if (s && source !== 'new') writeSave(s, snapshot());
   return source;
 }
 

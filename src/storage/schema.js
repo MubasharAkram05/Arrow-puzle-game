@@ -1,7 +1,7 @@
 /**
  * Save format v2, validation and migration from v1. Pure: storage is passed in, so tests can use a fake.
  */
-import { SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
+import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
 
 export const V1_KEY = 'arrowEscape.save.v1';
 export const V2_KEY = 'arrowEscape:v2';
@@ -35,7 +35,15 @@ const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
 export function defaultSave() {
   return {
     version: 2,
-    progress: { current: 1, unlocked: 1, completed: [], perfect: [], masks: [], chaptersRewarded: [] },
+    progress: {
+      current: 1,
+      unlocked: 1,
+      completed: [],
+      perfect: [],
+      masks: [],
+      chaptersRewarded: [],
+      chapterSize: REWARDS.chapterSize,
+    },
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
@@ -44,6 +52,32 @@ export function defaultSave() {
     profile: { avatar: 0, name: 'Player' },
     settings: { theme: 'auto', sound: true, vibration: true, grid: false },
   };
+}
+
+/** Chapter size used by saves made before chapters had 40 levels. */
+export const OLD_CHAPTER_SIZE = 20;
+
+/**
+ * Convert rewarded chapter numbers from an older chapter size to the current one.
+ * A new chapter counts as rewarded only when every old chapter inside it was rewarded,
+ * so no player loses a chapter reward (at worst a half-rewarded chapter pays again).
+ * @param {number[]} rewarded old chapter numbers
+ * @param {number} oldSize
+ * @returns {number[]}
+ */
+export function convertChapters(rewarded, oldSize) {
+  const size = REWARDS.chapterSize;
+  if (oldSize === size) return rewarded;
+  const old = new Set(rewarded);
+  const lastLevel = Math.max(0, ...rewarded) * oldSize;
+  const out = [];
+  for (let c = 1; (c - 1) * size < lastLevel; c++) {
+    const first = (c - 1) * size + 1;
+    let all = true;
+    for (let l = first; l < first + size; l += oldSize) if (!old.has(Math.ceil(l / oldSize))) all = false;
+    if (all) out.push(c);
+  }
+  return out;
 }
 
 /** Owned ids filtered to real items, always including the free one. */
@@ -86,7 +120,9 @@ export function sanitize(raw) {
       completed,
       perfect: levels(p.perfect).filter((n) => completed.includes(n)),
       masks: levels(p.masks).filter((n) => completed.includes(n)),
-      chaptersRewarded: levels(p.chaptersRewarded),
+      // saves without chapterSize were made with 20-level chapters
+      chaptersRewarded: convertChapters(levels(p.chaptersRewarded), count(p.chapterSize) || OLD_CHAPTER_SIZE),
+      chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: count(w.coins), diamonds: count(w.diamonds), hints: count(w.hints, START_HINTS) },
     xp: count(d.xp),

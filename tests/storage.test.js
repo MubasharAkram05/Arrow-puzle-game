@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BACKUP_KEY,
+  convertChapters,
   V1_KEY,
   V2_KEY,
   defaultSave,
@@ -144,5 +145,26 @@ describe('corrupted data', () => {
     const s = memoryStorage();
     expect(writeSave(s, defaultSave())).toBe(true);
     expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V2_KEY));
+  });
+});
+
+describe('40-level chapters', () => {
+  it('maps old 20-level chapter rewards to new 40-level chapters', () => {
+    expect(convertChapters([1, 2], 20)).toEqual([1]);
+    expect(convertChapters([1, 2, 3, 4], 20)).toEqual([1, 2]);
+    expect(convertChapters([1, 2, 3], 20)).toEqual([1]);
+    expect(convertChapters([], 20)).toEqual([]);
+  });
+
+  it('does not mark a half-rewarded chapter, so its reward is not lost', () => {
+    expect(convertChapters([1], 20)).toEqual([]);
+    expect(convertChapters([2, 3], 20)).toEqual([]);
+  });
+
+  it('converts saves without a chapter size once and keeps new saves as they are', () => {
+    const old = sanitize({ progress: { completed: [1, 2], chaptersRewarded: [1, 2, 3, 4] } });
+    expect(old.progress.chaptersRewarded).toEqual([1, 2]);
+    expect(old.progress.chapterSize).toBe(40);
+    expect(sanitize(old).progress.chaptersRewarded).toEqual([1, 2]);
   });
 });

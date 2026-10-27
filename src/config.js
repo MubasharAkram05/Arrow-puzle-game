@@ -24,9 +24,9 @@ export const REWARDS = Object.freeze({
   multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2 }),
   perfectBonus: 20, // no heart lost, first time per level
   replayRate: 0.25, // share of coins for a level already completed
-  chapterSize: 20,
-  chapterCoins: 100,
-  chapterDiamonds: 2,
+  chapterSize: 40,
+  chapterCoins: 200,
+  chapterDiamonds: 4,
   maskEvery: 10, // every 10th level is a mask level
   maskDiamonds: 1, // first clear of a mask level
 });

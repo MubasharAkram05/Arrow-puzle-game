@@ -2,6 +2,7 @@
  * Achievements. Pure: progress is computed from a context of saved progress and stats;
  * only the set of claimed ids is stored.
  */
+import { REWARDS } from '../config.js';
 import { chapterLevels } from './economy.js';
 
 /**
@@ -34,7 +35,7 @@ export const ACHIEVEMENTS = Object.freeze([
     title: 'Chapter Master',
     desc: 'Finish every level of chapter 1',
     icon: 'trophy',
-    goal: 20,
+    goal: REWARDS.chapterSize,
     reward: 2,
     progress: (c) => chapterLevels(1).filter((l) => c.completed.has(l)).length,
   },
