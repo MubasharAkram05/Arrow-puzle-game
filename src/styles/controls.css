@@ -1,0 +1,120 @@
+/* Pointing glove used by hints and the tutorial */
+.pointer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  display: none;
+  z-index: 5;
+}
+.pointer.show {
+  display: block;
+}
+.glove {
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+  transform-origin: 6px 6px;
+  animation: tap 1.1s ease-in-out infinite;
+  filter: drop-shadow(0 6px 6px rgba(15, 25, 50, 0.22));
+}
+@keyframes tap {
+  0%,
+  100% {
+    transform: translate(10px, 10px) scale(1);
+  }
+  50% {
+    transform: translate(0, 0) scale(0.9);
+  }
+}
+
+/* "Tap to remove" bubble under the board, nub points at the arrow */
+.tip-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: none;
+  padding: 14px 22px;
+  border-radius: 16px;
+  background: var(--tip-bg);
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(24, 119, 242, 0.25);
+  z-index: 4;
+}
+.tip-bubble.show {
+  display: block;
+  animation: fade 0.25s ease both;
+}
+.tip-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% - 1px);
+  left: var(--nub, 50%);
+  width: 26px;
+  height: 14px;
+  margin-left: -13px;
+  background: var(--tip-bg);
+  clip-path: path('M0 14 Q8 14 11 3 Q13 -1 15 3 Q18 14 26 14 Z');
+}
+
+/* Round buttons centred under the board */
+.fab-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  pointer-events: none;
+}
+.fab {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--fab-bg);
+  color: var(--fab-icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+.fab .icon {
+  width: 30px;
+  height: 30px;
+  stroke-width: 2.4;
+}
+.fab.on {
+  color: var(--primary);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
+  background: var(--badge);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 22px;
+  border: 2px solid var(--bg);
+}
+
+/* Level 1 shows only the title, like the reference tutorial */
+#screen-game.tutorial .topbar .left,
+#screen-game.tutorial .topbar .right,
+#screen-game.tutorial .stats,
+#screen-game.tutorial .progress,
+#screen-game.tutorial .fab-row {
+  visibility: hidden;
+}

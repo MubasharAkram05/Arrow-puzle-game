@@ -1,0 +1,178 @@
+/* ---------- Victory ---------- */
+.victory {
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: calc(12dvh + env(safe-area-inset-top)) 16px calc(4dvh + env(safe-area-inset-bottom));
+  color: #ffffff;
+  background: radial-gradient(ellipse at 50% 46%, #4fd0ff 0%, #2aa6f7 38%, #1d84ea 72%, #1a6fe0 100%);
+}
+.sunburst {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 250vmax;
+  height: 250vmax;
+  margin: -125vmax 0 0 -125vmax;
+  background: repeating-conic-gradient(rgba(255, 255, 255, 0.1) 0deg 7deg, rgba(255, 255, 255, 0) 7deg 15deg);
+  animation: spin 80s linear infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.victory h2 {
+  position: relative;
+  margin: 0;
+  font-size: clamp(30px, 9vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  text-shadow: 0 2px 8px rgba(0, 60, 140, 0.25);
+}
+.mini-card {
+  position: relative;
+  width: min(50vw, 260px, 30dvh);
+  aspect-ratio: 1;
+  margin-top: 4dvh;
+  background: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 18px 36px rgba(0, 50, 130, 0.28);
+}
+.mini-card svg {
+  display: block;
+  overflow: visible;
+}
+.mini-card .arrow .shaft {
+  stroke: #0a1440;
+}
+.mini-card .arrow .head {
+  fill: #0a1440;
+  stroke: #0a1440;
+}
+.victory-spacer {
+  flex: 1;
+}
+.pill-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(82vw, 380px);
+  min-height: 60px;
+  background: #ffffff;
+  color: var(--primary-on-white);
+  border-radius: 999px;
+  padding: 8px 24px;
+  font-weight: 800;
+  font-size: 21px;
+  line-height: 1.2;
+  box-shadow: 0 10px 24px rgba(0, 50, 130, 0.2);
+}
+.pill-btn small {
+  font-size: 16px;
+  font-weight: 500;
+  color: #5aa2f2;
+}
+.text-btn {
+  position: relative;
+  margin-top: 18px;
+  padding: 8px 32px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 21px;
+}
+#confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.victory.open h2 {
+  animation: rise 0.35s ease both;
+}
+.victory.open .mini-card {
+  animation: card-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.05s;
+}
+.victory.open .pill-btn,
+.victory.open .text-btn {
+  animation: rise 0.35s ease both 0.15s;
+}
+@keyframes card-pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Currency counters and the reward breakdown */
+.victory-bar {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 3;
+}
+.victory-bar .cur {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0e1a3a;
+}
+.reward-box {
+  position: relative;
+  z-index: 1;
+  width: min(86vw, 340px);
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(0, 40, 110, 0.22);
+  font-size: 14px;
+}
+.victory.open .reward-box {
+  animation: rise 0.35s ease both 0.25s;
+}
+.reward-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.reward-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  opacity: 0.92;
+}
+.reward-total {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 18px;
+  font-weight: 800;
+}
+.amt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+}
+.amt .cur-icon {
+  width: 18px;
+  height: 18px;
+}
+.xp {
+  color: #d6f0ff;
+}

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-style="classic">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#FFFFFF" />
+    <title>Arrow Escape</title>
+  </head>
+  <body>
+    <!-- Icon sprite is mounted by src/ui/components/icons.js -->
+
+    <!-- Home screen -->
+    <section id="screen-home" class="screen tab-screen" aria-label="Home">
+      <header class="home-top">
+        <div data-currency-bar></div>
+        <button class="icon-btn" id="btn-home-settings" aria-label="Settings">
+          <svg class="icon"><use href="#i-gear" /></svg>
+        </button>
+      </header>
+      <div class="home-main">
+        <svg class="logo" viewBox="0 0 96 96" aria-hidden="true">
+          <rect x="4" y="4" width="88" height="88" rx="26" fill="var(--primary)" />
+          <path
+            d="M28 72V52h36V36"
+            fill="none"
+            stroke="#FFFFFF"
+            stroke-width="9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path d="M51 38 64 21l13 17z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" />
+        </svg>
+        <h1>Arrow Escape</h1>
+        <p class="muted">Tap the arrows to clear the board.</p>
+        <div class="home-actions">
+          <button class="btn primary big" id="btn-play">
+            <svg class="icon"><use href="#i-play" /></svg>
+            <span class="btn-text">Play<small id="play-sub">Level 1</small></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Level select screen -->
+    <section id="screen-levels" class="screen tab-screen" aria-label="Levels">
+      <header class="tab-head">
+        <h2>Levels</h2>
+        <div data-currency-bar></div>
+      </header>
+      <div class="levels-scroll tab-scroll" id="levels-scroll"><div class="chapters" id="level-grid"></div></div>
+    </section>
+
+    <!-- Shop screen (content built by src/ui/screens/shopScreen.js) -->
+    <section id="screen-shop" class="screen tab-screen" aria-label="Shop">
+      <header class="tab-head">
+        <h2>Shop</h2>
+        <div data-currency-bar></div>
+      </header>
+      <div class="tab-scroll" id="shop-body"></div>
+    </section>
+
+    <!-- Profile screen (content built by src/ui/screens/profileScreen.js) -->
+    <section id="screen-profile" class="screen tab-screen" aria-label="Profile">
+      <header class="tab-head">
+        <h2>Profile</h2>
+        <div data-currency-bar></div>
+        <button class="icon-btn" id="btn-profile-settings" aria-label="Settings">
+          <svg class="icon"><use href="#i-gear" /></svg>
+        </button>
+      </header>
+      <div class="tab-scroll" id="profile-body"></div>
+    </section>
+
+    <!-- Game screen -->
+    <section id="screen-game" class="screen" aria-label="Game">
+      <header class="topbar">
+        <div class="left">
+          <button class="icon-btn" id="btn-levels" aria-label="Levels">
+            <svg class="icon"><use href="#i-back" /></svg>
+          </button>
+          <button class="icon-btn" id="btn-restart" aria-label="Restart level">
+            <svg class="icon"><use href="#i-restart" /></svg>
+          </button>
+        </div>
+        <div class="title" id="game-title">Level 1</div>
+        <div class="right">
+          <button class="icon-btn" id="btn-settings" aria-label="Settings">
+            <svg class="icon"><use href="#i-gear" /></svg>
+          </button>
+        </div>
+      </header>
+      <div class="stats" id="stats">
+        <div class="pill" aria-label="Arrows left">
+          <svg class="icon solid"><use href="#i-nav" /></svg><span id="remaining">0</span>
+        </div>
+        <div class="hearts" id="hearts" role="button" tabindex="0" aria-label="Hearts"></div>
+        <div class="pill diff" id="diff-badge" data-level="normal">
+          <svg class="icon solid crown"><use href="#i-crown" /></svg><span id="diff-label">Normal</span>
+        </div>
+      </div>
+      <div class="progress"><div class="progress-fill" id="progress"></div></div>
+      <div class="board-wrap" id="board-wrap">
+        <div class="board-card" id="board-card">
+          <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puzzle board"></svg>
+        </div>
+        <div class="pointer" id="pointer">
+          <!-- cartoon glove, fingertip at (6, 6) -->
+          <svg class="glove" viewBox="0 0 64 64" aria-hidden="true">
+            <g
+              transform="translate(-14 2) rotate(-35 20 4)"
+              stroke="#1E2533"
+              stroke-width="2.2"
+              stroke-linejoin="round"
+            >
+              <path
+                fill="#FFFFFF"
+                d="M14 30V10a6 6 0 0 1 12 0v16q2-3 6-2.5 3.5.5 4.5 4 2-2.5 5.5-2 4 .7 4.5 5 2.5-1.2 5 .5 2.5 2 2.5 6v8q0 12-13 13H28q-10 0-13-9z"
+              />
+              <path fill="#DCE1EB" stroke="none" d="M50 40v6q0 10-11 11h-8q8-3 9-11 1-5 0-9 5 0 10 3z" />
+              <path fill="none" stroke-linecap="round" d="M26 26v6M36.5 28.5v5M46.5 31.5v4" />
+              <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9" d="M18 9v6" />
+            </g>
+          </svg>
+        </div>
+        <div class="tip-bubble" id="tip-bubble">Tap to remove</div>
+      </div>
+      <div class="fab-row">
+        <button class="fab" id="btn-hint" aria-label="Hint">
+          <svg class="icon"><use href="#i-bulb" /></svg>
+          <span class="badge" id="hint-count">3</span>
+        </button>
+        <button class="fab" id="btn-grid" aria-label="Toggle grid" aria-pressed="false">
+          <svg class="icon"><use href="#i-grid" /></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <div class="modal" id="modal-settings">
+      <div class="card">
+        <div class="card-head">
+          <h3>Settings</h3>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <div class="setting-row">
+          <svg class="icon"><use href="#i-volume" /></svg><span>Sound</span>
+          <button class="switch" id="sw-sound" role="switch" aria-checked="true" aria-label="Sound">
+            <span class="knob"></span>
+          </button>
+        </div>
+        <div class="setting-row">
+          <svg class="icon"><use href="#i-vibrate" /></svg><span>Vibration</span>
+          <button class="switch" id="sw-vibration" role="switch" aria-checked="true" aria-label="Vibration">
+            <span class="knob"></span>
+          </button>
+        </div>
+        <div class="section-label">Theme</div>
+        <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
+          <button data-theme-opt="light" role="radio">
+            <svg class="icon"><use href="#i-sun" /></svg>Light
+          </button>
+          <button data-theme-opt="dark" role="radio">
+            <svg class="icon"><use href="#i-moon" /></svg>Dark
+          </button>
+          <button data-theme-opt="auto" role="radio">
+            <svg class="icon"><use href="#i-auto" /></svg>Auto
+          </button>
+        </div>
+        <div class="section-label">Switch Your Style</div>
+        <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
+        <button class="link-btn more-styles" id="btn-more-styles">
+          <svg class="icon"><use href="#i-shop" /></svg>More styles in the Shop
+        </button>
+        <button class="btn danger" id="btn-reset">
+          <svg class="icon"><use href="#i-trash" /></svg>Reset progress
+        </button>
+      </div>
+    </div>
+
+    <!-- Reset confirm -->
+    <div class="modal" id="modal-confirm">
+      <div class="card center">
+        <svg class="icon big-icon warn"><use href="#i-trash" /></svg>
+        <h3>Reset progress?</h3>
+        <p class="muted">This clears your levels, coins, diamonds, items and achievements. It can't be undone.</p>
+        <div class="stack">
+          <button class="btn danger-solid" id="btn-confirm-reset">Reset</button>
+          <button class="btn" id="btn-cancel-reset">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic confirm / purchase dialog (src/ui/modals/ask.js) -->
+    <div class="modal" id="modal-ask">
+      <div class="card center">
+        <svg class="icon big-icon ask-icon" id="ask-icon"></svg>
+        <h3 id="ask-title">Confirm</h3>
+        <p class="muted" id="ask-message"></p>
+        <div class="ask-price" id="ask-price"></div>
+        <p class="ask-error" id="ask-error" role="alert"></p>
+        <div class="stack">
+          <button class="btn primary" id="btn-ask-ok">Confirm</button>
+          <button class="btn" id="btn-ask-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exit confirm (Android back on Home) -->
+    <div class="modal" id="modal-exit">
+      <div class="card center">
+        <svg class="icon big-icon"><use href="#i-back" /></svg>
+        <h3>Exit game?</h3>
+        <p class="muted">Your progress is saved.</p>
+        <div class="stack">
+          <button class="btn primary" id="btn-exit">Exit</button>
+          <button class="btn" data-close>Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game over -->
+    <div class="modal" id="modal-gameover">
+      <div class="card center">
+        <svg class="icon big-icon broken"><use href="#i-heart-crack" /></svg>
+        <h3>Out of Hearts!</h3>
+        <p class="muted">Look for arrows with a clear path ahead of their tip.</p>
+        <div class="stack">
+          <button class="btn primary buy" id="btn-refill">
+            <span class="buy-label">Refill heart</span><span class="buy-price" id="refill-price"></span>
+          </button>
+          <p class="buy-note" id="refill-note"></p>
+          <button class="btn buy" id="btn-continue">
+            <span class="buy-label">Continue (full hearts)</span><span class="buy-price" id="continue-price"></span>
+          </button>
+          <p class="buy-note" id="continue-note"></p>
+          <button class="btn" id="btn-tryagain">
+            <svg class="icon"><use href="#i-restart" /></svg>Try Again
+          </button>
+          <button class="link-btn" id="btn-skip">
+            <svg class="icon"><use href="#i-skip" /></svg>Skip level<span class="buy-price" id="skip-price"></span>
+          </button>
+          <p class="buy-note" id="skip-note"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory -->
+    <div class="modal victory" id="modal-victory">
+      <div class="sunburst"></div>
+      <canvas id="confetti"></canvas>
+      <div class="victory-bar" data-currency-bar></div>
+      <h2 id="victory-title">Level Completed!</h2>
+      <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="reward-box" id="reward-box">
+        <ul class="reward-lines" id="reward-lines"></ul>
+        <div class="reward-total" id="reward-total"></div>
+      </div>
+      <div class="victory-spacer"></div>
+      <button class="pill-btn" id="btn-next">
+        <span id="next-label">Next Game</span><small id="next-sub">Level 2</small>
+      </button>
+      <button class="text-btn" id="btn-main">Main</button>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+/**
+ * Level select: chapters of 20 levels as collapsible cards.
+ * Only open chapters render their tiles, and chapter headers are added in batches while scrolling,
+ * so thousands of levels stay light.
+ */
+import { REWARDS } from '../../config.js';
+import { MASK_SHAPES } from '../../engine/index.js';
+import { chapterLevels, chapterOf, isMaskLevel } from '../../game/economy.js';
+import { startLevel } from '../../game/game.js';
+import { clearHint } from '../../game/hints.js';
+import { state } from '../../game/state.js';
+import { hidePointer } from '../../render/pointer.js';
+import { icon } from '../components/icons.js';
+import { toast } from '../components/toast.js';
+import { $ } from '../dom.js';
+import { navigate, onReturn, openTab } from '../navigation.js';
+
+const NAMES = ['Beginner', 'Explorer', 'Pathfinder', 'Tactician', 'Strategist', 'Expert', 'Master', 'Grandmaster'];
+const BATCH = 3; // chapter headers added per scroll step
+let shown = 0;
+const open = new Set();
+
+/** Chapter title, e.g. "Chapter 1: Beginner". */
+function chapterTitle(c) {
+  return NAMES[c - 1] ? `Chapter ${c}: ${NAMES[c - 1]}` : `Chapter ${c}`;
+}
+
+/** Markup for one level tile. */
+function tileHTML(n) {
+  const p = state.progress;
+  if (n > p.unlocked) {
+    return `<button class="level-btn locked" data-level="${n}" aria-label="Level ${n}, locked">${icon('lock')}</button>`;
+  }
+  const done = p.completed.has(n);
+  const perfect = p.perfect.has(n);
+  const cls = ['level-btn', done ? 'done' : '', n === p.current ? 'current' : ''].join(' ');
+  const shape = isMaskLevel(n) ? icon(`shape-${MASK_SHAPES[(n / 10 - 1) % MASK_SHAPES.length]}`, 'shape') : '';
+  const badges = (done ? icon('check', 'tick') : '') + (perfect ? icon('crown', 'solid crown-mark') : '');
+  const label = `Level ${n}${done ? ', completed' : ''}${perfect ? ', perfect' : ''}`;
+  return `<button class="${cls}" data-level="${n}" aria-label="${label}">${shape}<span>${n}</span>${badges}</button>`;
+}
+
+/** Markup for a chapter card (tiles only when open). */
+function chapterHTML(c) {
+  const levels = chapterLevels(c);
+  const done = levels.filter((l) => state.progress.completed.has(l)).length;
+  const isOpen = open.has(c);
+  const reward = state.progress.chaptersRewarded.has(c)
+    ? `<span class="ch-reward got">${icon('check')}Reward</span>`
+    : `<span class="ch-reward"><svg class="cur-icon"><use href="#i-coin" /></svg>${REWARDS.chapterCoins}<svg class="cur-icon"><use href="#i-gem" /></svg>${REWARDS.chapterDiamonds}</span>`;
+  return `<section class="chapter${isOpen ? ' open' : ''}${levels[0] > state.progress.unlocked ? ' locked' : ''}" data-ch="${c}">
+    <button class="chapter-head" aria-expanded="${isOpen}">
+      <span class="ch-title"><b>${chapterTitle(c)}</b><small>${done}/${levels.length} completed</small></span>
+      ${reward}${icon('back', 'chev')}
+    </button>
+    <div class="ch-bar"><i style="transform:scaleX(${done / levels.length})"></i></div>
+    <div class="chapter-grid">${isOpen ? levels.map(tileHTML).join('') : ''}</div>
+  </section>`;
+}
+
+/** Add more chapter headers at the end of the list. */
+function appendChapters(count) {
+  const html = [];
+  for (let c = shown + 1; c <= shown + count; c++) html.push(chapterHTML(c));
+  shown += count;
+  $('level-grid').insertAdjacentHTML('beforeend', html.join(''));
+}
+
+/** Rebuild the list: current chapter open, a couple of locked chapters after it. */
+function renderLevels() {
+  const cur = chapterOf(state.progress.current);
+  open.add(cur);
+  $('level-grid').textContent = '';
+  shown = 0;
+  appendChapters(Math.max(chapterOf(state.progress.unlocked) + 2, 3));
+}
+
+/** Scroll the current level into the middle of the view. */
+function scrollToCurrent() {
+  const tile = $('level-grid').querySelector('.level-btn.current');
+  if (tile) tile.scrollIntoView({ block: 'center' });
+}
+
+/**
+ * Open the level select screen.
+ * @param {boolean} [asTab] opened from the bottom bar (history becomes [home, levels])
+ */
+export function openLevels(asTab = false) {
+  clearHint();
+  hidePointer();
+  renderLevels();
+  if (asTab) openTab('screen-levels');
+  else navigate('screen-levels');
+  requestAnimationFrame(scrollToCurrent);
+}
+
+/** Open or close a chapter card. */
+function toggleChapter(section) {
+  const c = Number(section.dataset.ch);
+  if (open.has(c)) open.delete(c);
+  else open.add(c);
+  section.outerHTML = chapterHTML(c);
+}
+
+/** Tap on a tile or a chapter header. */
+function onPick(e) {
+  const head = e.target.closest('.chapter-head');
+  if (head) return toggleChapter(head.parentElement);
+  const b = e.target.closest('.level-btn');
+  if (!b) return;
+  if (b.classList.contains('locked')) {
+    b.classList.remove('shake');
+    void b.offsetWidth;
+    b.classList.add('shake');
+    toast(`Complete level ${state.progress.unlocked} first`);
+    return;
+  }
+  startLevel(Number(b.dataset.level));
+}
+
+/** Wire the level screen. */
+export function bindLevels() {
+  $('level-grid').addEventListener('click', onPick);
+  $('levels-scroll').addEventListener('scroll', (e) => {
+    const el = e.currentTarget;
+    if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) appendChapters(BATCH);
+  });
+  onReturn('screen-levels', renderLevels);
+}

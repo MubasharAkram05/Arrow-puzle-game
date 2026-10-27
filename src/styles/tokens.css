@@ -1,0 +1,142 @@
+/* ---------- Design tokens ---------- */
+:root {
+  --primary: #1877f2;
+  --primary-press: #0f63d1;
+  --on-primary: #ffffff;
+  --error: #ff473e;
+  --arrow: #07193b;
+  --board-bg: #ffffff;
+  --bg: #ffffff;
+  --bg-alt: #eef0f8;
+  --surface: #ffffff;
+  --pill: #eef2f7;
+  --text: #081838;
+  --muted: #56627a;
+  --dot: #dce1ec;
+  --lost: #cbd3e1;
+  --locked: #e0e4ee;
+  --title: #111318;
+  --pill-text: #4a5568;
+  --pill-icon: #3c4a62;
+  --fab-bg: #e3e6f5;
+  --fab-icon: #5b6190;
+  --badge: #1fb2f0;
+  --tip-bg: #2f86eb;
+  --super: #a855f7;
+  --primary-on-white: #1f7bef;
+  --scrim: rgba(8, 24, 56, 0.45);
+  --shadow: 0 6px 20px rgba(8, 24, 56, 0.12);
+  --shadow-lg: 0 12px 32px rgba(8, 24, 56, 0.18);
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 28px;
+  --space: 16px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dark theme */
+html[data-theme='dark'] {
+  --primary: #3b8bff;
+  --primary-press: #2a76e6;
+  --error: #ff5a52;
+  --bg: #0d1321;
+  --bg-alt: #111a2c;
+  --surface: #18223a;
+  --pill: #212c45;
+  --text: #eef2fa;
+  --muted: #a7b1c7;
+  --lost: #3a4560;
+  --locked: #1a2338;
+  --title: #f2f5fb;
+  --pill-text: #c3cbdc;
+  --pill-icon: #c3cbdc;
+  --fab-bg: #222c48;
+  --fab-icon: #aeb6d8;
+  --tip-bg: #3b8bff;
+  --super: #c38cff;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Arrow styles (board colours) for each theme; [data-preview] cards reuse them */
+html[data-theme='light'][data-style='classic'],
+html[data-theme='light'] [data-preview='classic'] {
+  --arrow: #0b1442;
+  --board-bg: #ffffff;
+  --dot: #dce1ec;
+}
+html[data-theme='light'][data-style='slate'],
+html[data-theme='light'] [data-preview='slate'] {
+  --arrow: #dce3ee;
+  --board-bg: #2b3445;
+  --dot: #3d485c;
+}
+html[data-theme='light'][data-style='olive'],
+html[data-theme='light'] [data-preview='olive'] {
+  --arrow: #4f5e1f;
+  --board-bg: #f2f0e1;
+  --dot: #dad5bc;
+}
+html[data-theme='light'][data-style='mint'],
+html[data-theme='light'] [data-preview='mint'] {
+  --arrow: #1f6b5a;
+  --board-bg: #e3f5ee;
+  --dot: #c2e5d7;
+}
+html[data-theme='dark'][data-style='classic'],
+html[data-theme='dark'] [data-preview='classic'] {
+  --arrow: #e3eaf8;
+  --board-bg: #0d1321;
+  --dot: #2a3550;
+}
+html[data-theme='dark'][data-style='slate'],
+html[data-theme='dark'] [data-preview='slate'] {
+  --arrow: #dce3ee;
+  --board-bg: #1f2736;
+  --dot: #364257;
+}
+html[data-theme='dark'][data-style='olive'],
+html[data-theme='dark'] [data-preview='olive'] {
+  --arrow: #c3d48e;
+  --board-bg: #1e2114;
+  --dot: #3b4127;
+}
+html[data-theme='dark'][data-style='mint'],
+html[data-theme='dark'] [data-preview='mint'] {
+  --arrow: #93e2cc;
+  --board-bg: #10211c;
+  --dot: #24453b;
+}
+
+/* Accent themes (bought in the Shop) */
+html[data-accent='purple'] {
+  --primary: #7c4dff;
+  --primary-press: #6236e8;
+  --tip-bg: #7c4dff;
+  --primary-on-white: #6b3ff0;
+}
+html[data-accent='teal'] {
+  --primary: #0b8a7c;
+  --primary-press: #08756a;
+  --tip-bg: #0b8a7c;
+  --primary-on-white: #0b8a7c;
+}
+html[data-accent='coral'] {
+  --primary: #e5483b;
+  --primary-press: #c93a2e;
+  --tip-bg: #e5483b;
+  --primary-on-white: #d63f33;
+}
+html[data-theme='dark'][data-accent='purple'] {
+  --primary: #a58bff;
+  --tip-bg: #8f6bff;
+}
+html[data-theme='dark'][data-accent='teal'] {
+  --primary: #2ec4b0;
+  --tip-bg: #17a594;
+}
+html[data-theme='dark'][data-accent='coral'] {
+  --primary: #ff7a6e;
+  --tip-bg: #f0574a;
+}

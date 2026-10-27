@@ -1,0 +1,144 @@
+/* ---------- Currency pills ---------- */
+.currency-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cur {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cur-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.cur.bump {
+  animation: cur-bump 0.35s ease;
+}
+@keyframes cur-bump {
+  40% {
+    transform: scale(1.15);
+  }
+}
+.fly-icon {
+  position: fixed;
+  z-index: 200;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.fly-icon .cur-icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
+/* ---------- Prices and paid buttons ---------- */
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+}
+.price .cur-icon {
+  width: 18px;
+  height: 18px;
+}
+.btn.buy {
+  justify-content: space-between;
+}
+.buy-price {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+.btn:not(.primary) .buy-price {
+  background: var(--surface);
+}
+.buy-note {
+  margin: -4px 0 2px;
+  min-height: 0;
+  font-size: 13px;
+  color: var(--error);
+}
+.buy-note:empty {
+  display: none;
+}
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 700;
+}
+.link-btn .icon {
+  width: 20px;
+  height: 20px;
+}
+.link-btn .buy-price {
+  background: var(--pill);
+}
+.badge.paid {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 3px;
+  background: #f7b500;
+  color: #4a3200;
+}
+.badge.paid .cur-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Confirm / purchase dialog ---------- */
+.ask-icon {
+  color: var(--primary);
+}
+#modal-ask h3 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+#modal-ask p {
+  margin: 0 0 12px;
+}
+.ask-price:not(:empty) {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--pill);
+  font-size: 20px;
+}
+.ask-price .cur-icon {
+  width: 24px;
+  height: 24px;
+}
+.ask-error {
+  min-height: 0;
+  color: var(--error);
+  font-weight: 600;
+}
+.ask-error:empty {
+  display: none;
+}
+
+/* Hearts double as the refill button */
+.hearts[role='button'] {
+  cursor: pointer;
+  border-radius: 12px;
+}

@@ -1,0 +1,117 @@
+/* ---------- Modals ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--scrim);
+}
+.modal.open {
+  display: flex;
+  animation: fade 0.2s ease both;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.card {
+  width: 100%;
+  max-width: 380px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
+  animation: rise 0.28s ease both;
+}
+@keyframes rise {
+  from {
+    transform: translateY(18px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-head h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.card-head .icon-btn {
+  color: var(--muted);
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  background: var(--pill);
+  color: var(--text);
+}
+.btn.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 6px 16px rgba(24, 119, 242, 0.3);
+}
+.btn.primary:active:not(:disabled) {
+  background: var(--primary-press);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.center {
+  text-align: center;
+}
+.muted {
+  color: var(--muted);
+}
+
+/* ---------- Game over ---------- */
+.big-icon {
+  width: 64px;
+  height: 64px;
+}
+.broken {
+  color: var(--error);
+  animation: heart-pop 0.45s ease;
+}
+#modal-gameover h3 {
+  margin: 8px 0 4px;
+  font-size: 24px;
+}
+#modal-gameover p {
+  margin: 0 0 18px;
+}
+
+#modal-exit .big-icon {
+  color: var(--primary);
+}
+#modal-exit h3 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+#modal-exit p {
+  margin: 0 0 18px;
+}
