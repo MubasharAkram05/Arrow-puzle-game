@@ -18,13 +18,6 @@ export const HINT_EVERY = 3;
 export const STORE_KEY = 'arrowEscape.save.v1';
 /** Theme options. */
 export const THEMES = Object.freeze(['light', 'dark', 'auto']);
-/** Arrow style options shown in settings. */
-export const STYLES = Object.freeze([
-  { id: 'classic', name: 'Classic' },
-  { id: 'slate', name: 'Dark Slate' },
-  { id: 'olive', name: 'Olive' },
-  { id: 'mint', name: 'Soft Mint' },
-]);
 
 /** Coin and diamond rewards. */
 export const REWARDS = Object.freeze({

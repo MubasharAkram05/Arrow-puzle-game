@@ -108,3 +108,35 @@ html[data-theme='dark'] [data-preview='mint'] {
   --board-bg: #10211c;
   --dot: #24453b;
 }
+
+/* Accent themes (bought in the Shop) */
+html[data-accent='purple'] {
+  --primary: #7c4dff;
+  --primary-press: #6236e8;
+  --tip-bg: #7c4dff;
+  --primary-on-white: #6b3ff0;
+}
+html[data-accent='teal'] {
+  --primary: #0b8a7c;
+  --primary-press: #08756a;
+  --tip-bg: #0b8a7c;
+  --primary-on-white: #0b8a7c;
+}
+html[data-accent='coral'] {
+  --primary: #e5483b;
+  --primary-press: #c93a2e;
+  --tip-bg: #e5483b;
+  --primary-on-white: #d63f33;
+}
+html[data-theme='dark'][data-accent='purple'] {
+  --primary: #a58bff;
+  --tip-bg: #8f6bff;
+}
+html[data-theme='dark'][data-accent='teal'] {
+  --primary: #2ec4b0;
+  --tip-bg: #17a594;
+}
+html[data-theme='dark'][data-accent='coral'] {
+  --primary: #ff7a6e;
+  --tip-bg: #f0574a;
+}

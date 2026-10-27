@@ -1,4 +1,5 @@
 import { layoutBoard } from '../render/board.js';
+import { updateBottomNav } from './components/bottomNav.js';
 
 /** Screen history; the first entry is the root (home). */
 const stack = ['screen-home'];
@@ -8,6 +9,7 @@ const returnHooks = {};
 /** Show one screen and hide the others. */
 function show(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+  updateBottomNav(id);
   if (id === 'screen-game') requestAnimationFrame(layoutBoard);
 }
 
@@ -29,6 +31,17 @@ export function navigate(id) {
 export function resetTo(id) {
   stack.length = 0;
   stack.push(id);
+  show(id);
+}
+
+/**
+ * Open a tab screen: history becomes [home, tab] so back always returns to home.
+ * @param {string} id
+ */
+export function openTab(id) {
+  stack.length = 0;
+  stack.push('screen-home');
+  if (id !== 'screen-home') stack.push(id);
   show(id);
 }
 

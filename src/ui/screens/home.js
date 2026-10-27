@@ -7,7 +7,6 @@ import { renderCurrency } from '../components/currencyBar.js';
 import { $ } from '../dom.js';
 import { closeModals } from '../modals/modal.js';
 import { onReturn, resetTo } from '../navigation.js';
-import { openLevels } from './levels.js';
 
 /** Fill in the home screen labels. */
 function renderHome() {
@@ -30,6 +29,5 @@ export function bindHome() {
     initAudio();
     startLevel(state.progress.current);
   });
-  $('btn-home-levels').addEventListener('click', openLevels);
   onReturn('screen-home', renderHome);
 }

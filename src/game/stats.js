@@ -93,3 +93,20 @@ export function formatPlayTime(sec) {
   if (h) return `${h}h ${String(m).padStart(2, '0')}m`;
   return `${m}m ${String(s % 60).padStart(2, '0')}s`;
 }
+
+/** Player names: 3-16 characters, letters (any language), digits, spaces, _ and -. */
+export const NAME_MIN = 3;
+export const NAME_MAX = 16;
+
+/**
+ * Validate a player name.
+ * @param {string} raw
+ * @returns {string} error message, or '' when the name is fine
+ */
+export function validateName(raw) {
+  const name = String(raw || '').trim();
+  if (name.length < NAME_MIN) return `At least ${NAME_MIN} characters`;
+  if (name.length > NAME_MAX) return `At most ${NAME_MAX} characters`;
+  if (!/^[\p{L}\p{N} _-]+$/u.test(name)) return 'Use letters, numbers, spaces, _ or -';
+  return '';
+}

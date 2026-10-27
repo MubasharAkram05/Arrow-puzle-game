@@ -2,6 +2,7 @@
  * Applies economy results to the shared game state. No DOM: screens read the returned summaries.
  */
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
+import { claimAchievement } from './achievements.js';
 import { chapterLevels, chapterOf, grant, isMaskLevel, levelReward, spend } from './economy.js';
 import { recordWin, xpForWin } from './stats.js';
 import { state } from './state.js';
@@ -125,4 +126,40 @@ export function buyHints(price) {
   const res = pay(price);
   if (res.ok) state.hints += price.count || 1;
   return res;
+}
+
+/**
+ * Data the achievements are measured on.
+ * @returns {import('./achievements.js').AchievementContext}
+ */
+export function achievementContext() {
+  const p = state.progress;
+  return { completed: p.completed, perfect: p.perfect, masks: p.masks, stats: state.stats };
+}
+
+/**
+ * Claim a finished achievement and credit its diamonds.
+ * @param {string} id
+ * @returns {{ok: boolean, diamonds: number, reason?: string}}
+ */
+export function claim(id) {
+  const res = claimAchievement(id, achievementContext(), state.claimed);
+  if (!res.ok) return res;
+  state.claimed = res.claimed;
+  credit({ diamonds: res.diamonds }, 'achievement');
+  return res;
+}
+
+/**
+ * Buy a shop item (arrow style or accent theme) unless already owned.
+ * @param {'styles'|'themes'} kind
+ * @param {{id: string, price: object|null}} item
+ * @returns {{ok: boolean, missing?: object}}
+ */
+export function buyItem(kind, item) {
+  if (state.owned[kind].includes(item.id)) return { ok: true };
+  const res = item.price ? pay(item.price) : { ok: true };
+  if (!res.ok) return res;
+  state.owned = { ...state.owned, [kind]: [...state.owned[kind], item.id] };
+  return { ok: true };
 }

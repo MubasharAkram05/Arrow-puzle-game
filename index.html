@@ -13,7 +13,7 @@
     <!-- Icon sprite is mounted by src/ui/components/icons.js -->
 
     <!-- Home screen -->
-    <section id="screen-home" class="screen" aria-label="Home">
+    <section id="screen-home" class="screen tab-screen" aria-label="Home">
       <header class="home-top">
         <div data-currency-bar></div>
         <button class="icon-btn" id="btn-home-settings" aria-label="Settings">
@@ -40,25 +40,38 @@
             <svg class="icon"><use href="#i-play" /></svg>
             <span class="btn-text">Play<small id="play-sub">Level 1</small></span>
           </button>
-          <button class="btn" id="btn-home-levels">
-            <svg class="icon"><use href="#i-levels" /></svg>Levels
-          </button>
         </div>
       </div>
     </section>
 
     <!-- Level select screen -->
-    <section id="screen-levels" class="screen" aria-label="Levels">
-      <header class="topbar">
-        <div class="left">
-          <button class="icon-btn" id="btn-levels-back" aria-label="Back">
-            <svg class="icon"><use href="#i-back" /></svg>
-          </button>
-        </div>
-        <div class="title">Levels</div>
-        <div class="right" data-currency-bar></div>
+    <section id="screen-levels" class="screen tab-screen" aria-label="Levels">
+      <header class="tab-head">
+        <h2>Levels</h2>
+        <div data-currency-bar></div>
       </header>
-      <div class="levels-scroll" id="levels-scroll"><div class="level-grid" id="level-grid"></div></div>
+      <div class="levels-scroll tab-scroll" id="levels-scroll"><div class="chapters" id="level-grid"></div></div>
+    </section>
+
+    <!-- Shop screen (content built by src/ui/screens/shopScreen.js) -->
+    <section id="screen-shop" class="screen tab-screen" aria-label="Shop">
+      <header class="tab-head">
+        <h2>Shop</h2>
+        <div data-currency-bar></div>
+      </header>
+      <div class="tab-scroll" id="shop-body"></div>
+    </section>
+
+    <!-- Profile screen (content built by src/ui/screens/profileScreen.js) -->
+    <section id="screen-profile" class="screen tab-screen" aria-label="Profile">
+      <header class="tab-head">
+        <h2>Profile</h2>
+        <div data-currency-bar></div>
+        <button class="icon-btn" id="btn-profile-settings" aria-label="Settings">
+          <svg class="icon"><use href="#i-gear" /></svg>
+        </button>
+      </header>
+      <div class="tab-scroll" id="profile-body"></div>
     </section>
 
     <!-- Game screen -->
@@ -160,6 +173,9 @@
         </div>
         <div class="section-label">Switch Your Style</div>
         <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
+        <button class="link-btn more-styles" id="btn-more-styles">
+          <svg class="icon"><use href="#i-shop" /></svg>More styles in the Shop
+        </button>
         <button class="btn danger" id="btn-reset">
           <svg class="icon"><use href="#i-trash" /></svg>Reset progress
         </button>
@@ -171,7 +187,7 @@
       <div class="card center">
         <svg class="icon big-icon warn"><use href="#i-trash" /></svg>
         <h3>Reset progress?</h3>
-        <p class="muted">This clears your levels and hints. It can't be undone.</p>
+        <p class="muted">This clears your levels, coins, diamonds, items and achievements. It can't be undone.</p>
         <div class="stack">
           <button class="btn danger-solid" id="btn-confirm-reset">Reset</button>
           <button class="btn" id="btn-cancel-reset">Cancel</button>

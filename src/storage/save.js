@@ -1,5 +1,6 @@
-import { START_HINTS, STORE_KEY, STYLES, THEMES } from '../config.js';
+import { SHOP_STYLES, START_HINTS, STORE_KEY, THEMES } from '../config.js';
 import { newProgress, state } from '../game/state.js';
+import { newStats } from '../game/stats.js';
 
 const isInt = (v, min) => Number.isInteger(v) && v >= min;
 
@@ -22,7 +23,12 @@ export function applySave(d) {
     for (const k in state.stats) if (isInt(d.stats[k], 0)) state.stats[k] = d.stats[k];
   }
   if (THEMES.includes(d.theme)) state.theme = d.theme;
-  if (STYLES.some((s) => s.id === d.style)) state.style = d.style;
+  if (SHOP_STYLES.some((s) => s.id === d.style)) state.style = d.style;
+  if (Array.isArray(d.claimed)) state.claimed = new Set(d.claimed.filter((x) => typeof x === 'string'));
+  if (d.owned && Array.isArray(d.owned.styles) && Array.isArray(d.owned.themes)) state.owned = d.owned;
+  if (typeof d.accent === 'string') state.accent = d.accent;
+  if (isInt(d.avatar, 0)) state.avatar = d.avatar;
+  if (typeof d.name === 'string') state.name = d.name;
   for (const key of ['sound', 'vibration', 'grid']) {
     if (typeof d[key] === 'boolean') state[key] = d[key];
   }
@@ -56,6 +62,11 @@ export function snapshot() {
     diamonds: state.diamonds,
     xp: state.xp,
     stats: state.stats,
+    claimed: Array.from(state.claimed),
+    owned: state.owned,
+    accent: state.accent,
+    avatar: state.avatar,
+    name: state.name,
     hints: state.hints,
     theme: state.theme,
     style: state.style,
@@ -74,9 +85,17 @@ export function saveProgress() {
   }
 }
 
-/** Clear progress and hints, keep settings. */
+/** Clear progress, currency, items, XP, stats and achievements. Settings, avatar and name stay. */
 export function resetProgress() {
   state.progress = newProgress();
   state.hints = START_HINTS;
+  state.coins = 0;
+  state.diamonds = 0;
+  state.xp = 0;
+  state.stats = newStats();
+  state.claimed = new Set();
+  state.owned = { styles: ['classic'], themes: ['blue'] };
+  state.style = 'classic';
+  state.accent = 'blue';
   saveProgress();
 }

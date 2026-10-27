@@ -42,6 +42,9 @@ export const state = {
   won: false, // the current attempt has been paid out
   owned: { styles: ['classic'], themes: ['blue'] },
   accent: 'blue', // equipped accent theme
+  claimed: new Set(), // claimed achievement ids
+  avatar: 0, // index into the built-in avatars
+  name: 'Player',
   grid: false, // the reference shows no dot grid until the player turns it on
   sound: true,
   vibration: true,

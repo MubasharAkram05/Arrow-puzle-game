@@ -56,7 +56,7 @@ function onHearts() {
 
 /** Wire the game screen buttons (top bar and floating buttons). */
 export function bindGameScreen() {
-  $('btn-levels').addEventListener('click', openLevels);
+  $('btn-levels').addEventListener('click', () => openLevels());
   $('btn-restart').addEventListener('click', restart);
   $('btn-settings').addEventListener('click', openSettings);
   $('btn-hint').addEventListener('click', onHint);
@@ -68,4 +68,14 @@ export function bindGameScreen() {
   });
   window.addEventListener('resize', layoutBoard);
   onReturn('screen-game', updateTutorial);
+}
+
+/** Count play time: one second per tick while a level is on screen, the app is visible and input is open. */
+export function startPlayClock() {
+  let ticks = 0;
+  setInterval(() => {
+    if (document.hidden || state.locked || !$('screen-game').classList.contains('active')) return;
+    state.stats.playSeconds++;
+    if (++ticks % 15 === 0) saveProgress();
+  }, 1000);
 }

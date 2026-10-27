@@ -1,27 +1,18 @@
-import { STYLES } from '../../config.js';
+import { SHOP_STYLES } from '../../config.js';
 import { state } from '../../game/state.js';
 import { vibrate } from '../../audio/haptics.js';
 import { resetProgress, saveProgress } from '../../storage/save.js';
+import { PREVIEW_SVG } from '../components/stylePreview.js';
 import { $ } from '../dom.js';
+import { openShop } from '../screens/shopScreen.js';
 import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
-import { onModalBack, openModal } from './modal.js';
+import { closeModals, onModalBack, openModal } from './modal.js';
 
-/** Small preview drawing used on each style card (colours come from CSS variables). */
-const PREVIEW_SVG =
-  '<svg class="prev" viewBox="0 0 120 72" aria-hidden="true">' +
-  '<rect width="120" height="72" rx="10" fill="var(--board-bg)"/>' +
-  '<circle cx="24" cy="18" r="2" fill="var(--dot)"/><circle cx="96" cy="54" r="2" fill="var(--dot)"/>' +
-  '<path d="M22 56V36h40V22h22" fill="none" stroke="var(--arrow)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>' +
-  '<path d="M84 13l12 9-12 9z" fill="var(--arrow)" stroke="var(--arrow)" stroke-width="3" stroke-linejoin="round"/>' +
-  '<path d="M48 56h30" fill="none" stroke="var(--arrow)" stroke-width="6" stroke-linecap="round"/>' +
-  '<path d="M48 49l-10 7 10 7z" fill="var(--arrow)" stroke="var(--arrow)" stroke-width="3" stroke-linejoin="round"/>' +
-  '</svg>';
-
-/** Build the four style cards once. */
+/** Build the style cards once (only owned ones are shown). */
 function buildStyleCards() {
   const grid = $('style-grid');
-  for (const s of STYLES) {
+  for (const s of SHOP_STYLES) {
     const b = document.createElement('button');
     b.className = 'style-card';
     b.dataset.preview = s.id;
@@ -39,9 +30,10 @@ function renderSettings() {
   document
     .querySelectorAll('[data-theme-opt]')
     .forEach((b) => b.setAttribute('aria-checked', String(b.dataset.themeOpt === state.theme)));
-  document
-    .querySelectorAll('[data-style-opt]')
-    .forEach((b) => b.setAttribute('aria-checked', String(b.dataset.styleOpt === state.style)));
+  document.querySelectorAll('[data-style-opt]').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.styleOpt === state.style));
+    b.hidden = !state.owned.styles.includes(b.dataset.styleOpt);
+  });
 }
 
 /** Open the settings sheet. */
@@ -81,10 +73,15 @@ export function bindSettings() {
     state.style = b.dataset.styleOpt;
     changed();
   });
+  $('btn-more-styles').addEventListener('click', () => {
+    closeModals();
+    openShop();
+  });
   $('btn-reset').addEventListener('click', () => openModal('modal-confirm'));
   $('btn-cancel-reset').addEventListener('click', openSettings);
   $('btn-confirm-reset').addEventListener('click', () => {
     resetProgress();
+    applyTheme();
     goHome();
   });
   onModalBack('modal-confirm', openSettings);

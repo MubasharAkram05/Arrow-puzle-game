@@ -12,6 +12,11 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
   - spending: buy hints when the free ones run out, refill a heart (tap the hearts or from game over, max 2 per level), continue with full hearts, skip a level
   - every price lives in `config.js`; `grant()` is the hook for currency from ads or purchases later
 - Confirm/purchase dialog that blocks with a clear message when you can't afford something.
+- Bottom navigation (Home, Levels, Shop, Profile), hidden during play. A red dot on Profile when an achievement can be claimed.
+- Levels page: chapters of 20 as collapsible cards with progress and chapter reward. Tiles show check, crown (perfect), lock, a glowing ring on the current level and a shape icon on every 10th level. Opens scrolled to the current level. A locked tap shakes and says which level to finish first. Only open chapters render tiles, so 1000+ levels stay fast.
+- Profile page: 12 built-in SVG avatars, editable name (3-16 characters, inline validation), player level and XP bar, 8 stat cards, 7 achievements with progress, diamond rewards and a Claim button with a small burst.
+- Shop page: hints and a 5-hint pack, arrow styles and accent themes (coins or diamonds), Owned/Equipped states, confirm before buying, a "Get more coins: coming soon" placeholder.
+- Accent themes (Ocean Blue, Royal Purple, Lagoon Teal, Sunset Coral) for light and dark mode.
 
 ### Fixed
 

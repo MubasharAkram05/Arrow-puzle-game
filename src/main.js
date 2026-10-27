@@ -11,7 +11,11 @@ import { bindSettings, openSettings } from './ui/modals/settings.js';
 import { bindVictory } from './ui/modals/victory.js';
 import { bindGameScreen } from './ui/screens/game.js';
 import { bindHome, goHome } from './ui/screens/home.js';
-import { bindLevels } from './ui/screens/levels.js';
+import { bindLevels, openLevels } from './ui/screens/levels.js';
+import { bindProfile, openProfile } from './ui/screens/profileScreen.js';
+import { bindShop, openShop } from './ui/screens/shopScreen.js';
+import { mountBottomNav } from './ui/components/bottomNav.js';
+import { startPlayClock } from './ui/screens/game.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { $ } from './ui/dom.js';
 
@@ -25,6 +29,8 @@ function boot() {
   bindGameScreen();
   bindHome();
   bindLevels();
+  bindShop();
+  bindProfile();
   bindSettings();
   bindGameOver();
   bindVictory();
@@ -32,6 +38,13 @@ function boot() {
   bindCloseButtons();
   mountCurrencyBars();
   $('btn-home-settings').addEventListener('click', openSettings);
+  mountBottomNav({
+    'screen-home': goHome,
+    'screen-levels': () => openLevels(true),
+    'screen-shop': openShop,
+    'screen-profile': openProfile,
+  });
+  startPlayClock();
   initBackButton();
   goHome();
 }

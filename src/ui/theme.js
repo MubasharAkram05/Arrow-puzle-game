@@ -8,6 +8,7 @@ export function applyTheme() {
   const root = document.documentElement;
   root.setAttribute('data-theme', dark ? 'dark' : 'light');
   root.setAttribute('data-style', state.style);
+  root.setAttribute('data-accent', state.accent);
   document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0D1321' : '#FFFFFF');
 }
 
