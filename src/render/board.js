@@ -1,20 +1,42 @@
-import { CELL, MAX_CELL_PX } from '../config.js';
+import { BASE_CELL_PX, CELL, HEAD_L_PX, HEAD_W_PX, SMALL_BOARD_PX, STROKE_PX } from '../config.js';
 import { DIRS } from '../engine/index.js';
 import { state } from '../game/state.js';
 import { $, svgEl } from '../ui/dom.js';
 import { placePointer } from './pointer.js';
 
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
 /**
- * Stroke and head sizes in SVG units. Thinner on big boards so lines never merge.
- * @param {number} cols
- * @param {number} rows
- * @returns {{sw: number, hw: number, back: number, tip: number}}
+ * Stroke and head sizes in SVG units for a given on-screen cell size.
+ * Lines and heads keep a constant pixel size, clamped so they never merge on dense boards.
+ * @param {number} cellPx
+ * @param {number} [k] size factor (the victory preview draws thinner lines)
+ * @returns {{sw: number, hw: number, back: number, tip: number, dot: number}}
  */
-export function strokeMetrics(cols, rows) {
-  const n = Math.max(cols, rows);
-  const sw = n <= 6 ? 17 : n <= 9 ? 16 : n <= 12 ? 15 : 14;
-  const k = sw / 16;
-  return { sw, hw: 24 * k, back: 14 * k, tip: 22 * k };
+export function strokeMetrics(cellPx, k = 1) {
+  const u = (CELL / cellPx) * k;
+  const len = clamp(HEAD_L_PX * u, 36, 70);
+  return {
+    sw: clamp(STROKE_PX * u, 9, 32),
+    hw: clamp((HEAD_W_PX / 2) * u, 18, 40),
+    back: len * 0.45,
+    tip: len * 0.55,
+    dot: clamp(1.6 * u, 3, 9),
+  };
+}
+
+/**
+ * On-screen cell size for a board inside a box: compact for small boards, shrinks to fit big ones.
+ * @param {number} rows
+ * @param {number} cols
+ * @param {number} w available width (px)
+ * @param {number} h available height (px)
+ * @returns {number}
+ */
+export function cellSizeFor(rows, cols, w, h) {
+  const scale = clamp(window.innerWidth / 390, 1, 1.6); // tablets get a slightly bigger board
+  const target = Math.max(BASE_CELL_PX, SMALL_BOARD_PX / Math.max(rows, cols)) * scale;
+  return Math.max(6, Math.min(target, w / cols, h / rows));
 }
 
 /**
@@ -50,12 +72,12 @@ export function arrowGeometry(arrow, m, rows, cols) {
 }
 
 /** Dot grid as one path (only cells inside the mask). */
-function dotsPath(level) {
+function dotsPath(level, r0) {
   let d = '';
   for (let r = 0; r < level.rows; r++) {
     for (let c = 0; c < level.cols; c++) {
       if (level.mask && !level.mask[r * level.cols + c]) continue;
-      d += `M${(c + 0.5) * CELL - 4.5} ${(r + 0.5) * CELL}a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0`;
+      d += `M${(c + 0.5) * CELL - r0} ${(r + 0.5) * CELL}a${r0} ${r0} 0 1 0 ${2 * r0} 0a${r0} ${r0} 0 1 0 ${-2 * r0} 0`;
     }
   }
   return d;
@@ -68,14 +90,13 @@ function dotsPath(level) {
  * @param {object[]} arrows
  * @param {object} level
  * @param {boolean} withDots
- * @returns {ReturnType<typeof strokeMetrics>}
+ * @param {ReturnType<typeof strokeMetrics>} m sizes from strokeMetrics(cellPx)
  */
-export function drawArrows(svg, arrows, level, withDots) {
+export function drawArrows(svg, arrows, level, withDots, m) {
   const { rows, cols } = level;
-  const m = strokeMetrics(cols, rows);
   svg.textContent = '';
   svg.setAttribute('viewBox', `0 0 ${cols * CELL} ${rows * CELL}`);
-  if (withDots) svg.appendChild(svgEl('path', { class: 'dots', d: dotsPath(level) }));
+  if (withDots) svg.appendChild(svgEl('path', { class: 'dots', d: dotsPath(level, m.dot) }));
   const layer = svgEl('g');
   for (const a of arrows) {
     const g = arrowGeometry(a, m, rows, cols);
@@ -89,7 +110,7 @@ export function drawArrows(svg, arrows, level, withDots) {
     });
     const head = svgEl('polygon', {
       class: 'head',
-      'stroke-width': 3.5,
+      'stroke-width': m.sw * 0.25,
       points: `${-m.hw},${m.back} ${m.hw},${m.back} 0,${-m.tip}`,
     });
     el.append(shaft, head);
@@ -98,7 +119,6 @@ export function drawArrows(svg, arrows, level, withDots) {
     setArrowOffset(a, 0);
   }
   svg.appendChild(layer);
-  return m;
 }
 
 /**
@@ -112,16 +132,24 @@ export function setArrowOffset(a, s) {
   a.headEl.setAttribute('transform', `translate(${g.hx + g.dx * s} ${g.hy + g.dy * s}) rotate(${g.rot})`);
 }
 
-/** Fit the board svg into the free space and keep the hand overlay in place. */
-export function layoutBoard() {
-  if (!state.level || !$('screen-game').classList.contains('active')) return;
+/**
+ * On-screen cell size for the current level in the game screen.
+ * @returns {number}
+ */
+export function boardCellPx() {
   const wrap = $('board-wrap');
   const cs = getComputedStyle(wrap);
   const pad = 2 * parseFloat(getComputedStyle($('board-card')).paddingLeft);
   const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - pad;
   const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - pad;
+  return cellSizeFor(state.level.rows, state.level.cols, w, h);
+}
+
+/** Fit the board svg into the free space and keep the hand overlay in place. */
+export function layoutBoard() {
+  if (!state.level || !$('screen-game').classList.contains('active')) return;
   const { rows, cols } = state.level;
-  const cell = Math.max(8, Math.min(w / cols, h / rows, MAX_CELL_PX));
+  const cell = boardCellPx();
   const svg = $('board');
   svg.setAttribute('width', Math.floor(cell * cols));
   svg.setAttribute('height', Math.floor(cell * rows));

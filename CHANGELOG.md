@@ -2,6 +2,23 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] - 2026-10-27
+
+### Changed
+
+- UI matched to the screenshots in `reference/`:
+  - compact board with constant-size lines (about 4px) and larger arrowheads
+  - dot grid off by default
+  - level 1 shows only the title, with a cartoon glove and a big "Tap to remove" bubble under the board
+  - filled navigation icon and larger text in the pills, glossy hearts
+  - Super Hard: crown label above the hearts, lavender background on the daily challenge
+  - centred lavender hint and grid buttons with a cyan badge
+  - victory screen: radial blue glow with soft rays, confetti that keeps falling, compact preview card, wide "Next Game" pill and "Main" near the bottom
+
+### Added
+
+- `reference/` screenshots used as the design target.
+
 ## [2.0.0] - 2026-10-27
 
 ### Added

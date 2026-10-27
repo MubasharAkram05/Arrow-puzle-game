@@ -9,12 +9,21 @@
   --bg: #ffffff;
   --bg-alt: #eef0f8;
   --surface: #ffffff;
-  --pill: #eef0f8;
+  --pill: #eef2f7;
   --text: #081838;
   --muted: #56627a;
   --dot: #dce1ec;
   --lost: #cbd3e1;
   --locked: #e0e4ee;
+  --title: #111318;
+  --pill-text: #4a5568;
+  --pill-icon: #3c4a62;
+  --fab-bg: #e3e6f5;
+  --fab-icon: #5b6190;
+  --badge: #1fb2f0;
+  --tip-bg: #2f86eb;
+  --super: #a855f7;
+  --primary-on-white: #1f7bef;
   --scrim: rgba(8, 24, 56, 0.45);
   --shadow: 0 6px 20px rgba(8, 24, 56, 0.12);
   --shadow-lg: 0 12px 32px rgba(8, 24, 56, 0.18);
@@ -38,6 +47,13 @@ html[data-theme='dark'] {
   --muted: #a7b1c7;
   --lost: #3a4560;
   --locked: #1a2338;
+  --title: #f2f5fb;
+  --pill-text: #c3cbdc;
+  --pill-icon: #c3cbdc;
+  --fab-bg: #222c48;
+  --fab-icon: #aeb6d8;
+  --tip-bg: #3b8bff;
+  --super: #c38cff;
   --scrim: rgba(0, 0, 0, 0.6);
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -46,7 +62,7 @@ html[data-theme='dark'] {
 /* Arrow styles (board colours) for each theme; [data-preview] cards reuse them */
 html[data-theme='light'][data-style='classic'],
 html[data-theme='light'] [data-preview='classic'] {
-  --arrow: #07193b;
+  --arrow: #0b1442;
   --board-bg: #ffffff;
   --dot: #dce1ec;
 }

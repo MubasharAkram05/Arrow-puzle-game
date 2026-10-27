@@ -48,6 +48,7 @@ src/
     modals/             settings, game over, victory, shared modal logic
   styles/               tokens, base and per-screen CSS
 tests/                  Vitest suites
+reference/              screenshots of the original game (design target)
 legacy/                 the old single-file version, kept for reference
 ```
 

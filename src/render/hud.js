@@ -23,7 +23,11 @@ export function renderHearts(popIndex) {
       viewBox: '0 0 24 24',
       class: 'heart' + (i < state.hearts ? '' : ' lost') + (i === popIndex ? ' pop' : ''),
     });
-    svg.appendChild(svgEl('path', { d: HEART_PATH }));
+    // glossy heart: gradient body plus a soft highlight
+    svg.appendChild(svgEl('path', { class: 'heart-body', d: HEART_PATH }));
+    svg.appendChild(
+      svgEl('ellipse', { class: 'heart-shine', cx: 7.6, cy: 7.4, rx: 2.6, ry: 1.7, transform: 'rotate(-35 7.6 7.4)' }),
+    );
     box.appendChild(svg);
   }
   box.setAttribute('aria-label', `${state.hearts} hearts left`);

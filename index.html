@@ -23,10 +23,6 @@
           d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
         />
       </symbol>
-      <symbol id="i-send" viewBox="0 0 24 24">
-        <path d="M22 2 11 13" />
-        <path d="M22 2 15 22 11 13 2 9z" />
-      </symbol>
       <symbol id="i-bulb" viewBox="0 0 24 24">
         <path
           d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
@@ -40,12 +36,17 @@
         <path d="M10 3 8 21" />
         <path d="M16 3l-2 18" />
       </symbol>
-      <symbol id="i-hand" viewBox="0 0 24 24">
-        <path d="M18 11V6a2 2 0 0 0-4 0v0" />
-        <path d="M14 10V4a2 2 0 0 0-4 0v2" />
-        <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
-        <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+      <symbol id="i-nav" viewBox="0 0 24 24"><path d="M3 11 22 2l-9 19-2-8z" /></symbol>
+      <symbol id="i-crown" viewBox="0 0 24 24">
+        <path d="M3 18 2 7l5.5 4.5L12 4l4.5 7.5L22 7l-1 11z" />
+        <path d="M4 21h16" />
       </symbol>
+      <defs>
+        <linearGradient id="heart-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FF6A63" />
+          <stop offset="1" stop-color="#E5262C" />
+        </linearGradient>
+      </defs>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
       <symbol id="i-lock" viewBox="0 0 24 24">
         <rect width="16" height="11" x="4" y="11" rx="2" />
@@ -173,12 +174,14 @@
           </button>
         </div>
       </header>
-      <div class="stats">
+      <div class="stats" id="stats">
         <div class="pill" aria-label="Arrows left">
-          <svg class="icon"><use href="#i-send" /></svg><span id="remaining">0</span>
+          <svg class="icon solid"><use href="#i-nav" /></svg><span id="remaining">0</span>
         </div>
         <div class="hearts" id="hearts" aria-label="Hearts"></div>
-        <div class="pill" id="diff-badge">Normal</div>
+        <div class="pill diff" id="diff-badge" data-level="normal">
+          <svg class="icon solid crown"><use href="#i-crown" /></svg><span id="diff-label">Normal</span>
+        </div>
       </div>
       <div class="progress"><div class="progress-fill" id="progress"></div></div>
       <div class="board-wrap" id="board-wrap">
@@ -186,16 +189,32 @@
           <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puzzle board"></svg>
         </div>
         <div class="pointer" id="pointer">
-          <svg class="hand" viewBox="0 0 24 24"><use href="#i-hand" /></svg>
-          <div class="tip" id="pointer-tip">Tap to remove</div>
+          <!-- cartoon glove, fingertip at (6, 6) -->
+          <svg class="glove" viewBox="0 0 64 64" aria-hidden="true">
+            <g
+              transform="translate(-14 2) rotate(-35 20 4)"
+              stroke="#1E2533"
+              stroke-width="2.2"
+              stroke-linejoin="round"
+            >
+              <path
+                fill="#FFFFFF"
+                d="M14 30V10a6 6 0 0 1 12 0v16q2-3 6-2.5 3.5.5 4.5 4 2-2.5 5.5-2 4 .7 4.5 5 2.5-1.2 5 .5 2.5 2 2.5 6v8q0 12-13 13H28q-10 0-13-9z"
+              />
+              <path fill="#DCE1EB" stroke="none" d="M50 40v6q0 10-11 11h-8q8-3 9-11 1-5 0-9 5 0 10 3z" />
+              <path fill="none" stroke-linecap="round" d="M26 26v6M36.5 28.5v5M46.5 31.5v4" />
+              <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9" d="M18 9v6" />
+            </g>
+          </svg>
         </div>
+        <div class="tip-bubble" id="tip-bubble">Tap to remove</div>
       </div>
       <div class="fab-row">
         <button class="fab" id="btn-hint" aria-label="Hint">
           <svg class="icon"><use href="#i-bulb" /></svg>
           <span class="badge" id="hint-count">3</span>
         </button>
-        <button class="fab on" id="btn-grid" aria-label="Toggle grid" aria-pressed="true">
+        <button class="fab" id="btn-grid" aria-label="Toggle grid" aria-pressed="false">
           <svg class="icon"><use href="#i-grid" /></svg>
         </button>
       </div>
@@ -291,9 +310,10 @@
       <div class="sunburst"></div>
       <canvas id="confetti"></canvas>
       <h2 id="victory-title">Level Completed!</h2>
-      <div class="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="victory-spacer"></div>
       <button class="pill-btn" id="btn-next">
-        <span id="next-label">Next Level</span><small id="next-sub">Level 2</small>
+        <span id="next-label">Next Game</span><small id="next-sub">Level 2</small>
       </button>
       <button class="text-btn" id="btn-main">Main</button>
     </div>

@@ -27,7 +27,7 @@ export const state = {
   pointerId: -1, // arrow the hand points at
   hints: START_HINTS,
   progress: newProgress(),
-  grid: true,
+  grid: false, // the reference shows no dot grid until the player turns it on
   sound: true,
   vibration: true,
   theme: 'auto',

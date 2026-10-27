@@ -1,7 +1,7 @@
 import { buildOccupancy, clearArrow, dateKey, generateDaily, generateLevel, rayBlocker } from '../engine/index.js';
 import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
-import { drawArrows, layoutBoard } from '../render/board.js';
+import { boardCellPx, drawArrows, layoutBoard, strokeMetrics } from '../render/board.js';
 import { renderGrid, renderHearts, renderHintButton, renderProgress } from '../render/hud.js';
 import { hidePointer } from '../render/pointer.js';
 import { initAudio, playSound } from '../audio/sound.js';
@@ -29,13 +29,24 @@ export function loadLevel(level) {
   state.locked = false;
   state.hintId = -1;
   hidePointer();
-  state.metrics = drawArrows($('board'), state.arrows, level, true);
-  $('diff-badge').textContent = level.difficulty;
+  $('screen-game').classList.toggle('tutorial', !state.daily && state.levelNum === 1);
+  $('screen-game').classList.toggle('daily', !!state.daily);
+  state.metrics = strokeMetrics(boardCellPx());
+  drawArrows($('board'), state.arrows, level, true, state.metrics);
+  setDifficultyBadge(level.difficulty);
   renderHearts(-1);
   renderProgress();
   renderHintButton();
   renderGrid();
   layoutBoard();
+}
+
+/** Difficulty pill; Super Hard gets the crown and purple label. */
+function setDifficultyBadge(difficulty) {
+  const badge = $('diff-badge');
+  badge.dataset.level = difficulty.replace(' ', '-').toLowerCase();
+  $('stats').classList.toggle('super', difficulty === 'Super Hard');
+  $('diff-label').textContent = difficulty;
 }
 
 /**
