@@ -82,3 +82,55 @@ export const BOOSTER_PACK = Object.freeze({
   price: Object.freeze({ coins: 350 }),
   contents: Object.freeze({ shield: 3, reveal: 3, autoClear: 2 }),
 });
+
+/**
+ * Cosmetics by category. The first item of each category is the free default.
+ * `achievement`: the item is also unlocked for free by claiming that achievement.
+ */
+export const COSMETICS = Object.freeze({
+  effect: [
+    { id: 'default', name: 'Classic Slide', price: null },
+    { id: 'spark', name: 'Spark Trail', price: { coins: 250 } },
+    { id: 'comet', name: 'Comet Glow', price: { coins: 400 } },
+    { id: 'burst', name: 'Burst', price: { diamonds: 3 } },
+    { id: 'rocket', name: 'Rocket Flame', price: { diamonds: 6 } },
+  ],
+  board: [
+    { id: 'plain', name: 'Plain', price: null },
+    { id: 'paper', name: 'Soft Paper', price: { coins: 200 } },
+    { id: 'sky', name: 'Gradient Sky', price: { coins: 300 } },
+    { id: 'chalk', name: 'Chalkboard', price: { diamonds: 4 } },
+    { id: 'stars', name: 'Night Stars', price: { diamonds: 6 } },
+  ],
+  head: [
+    { id: 'triangle', name: 'Triangle', price: null },
+    { id: 'chevron', name: 'Chevron', price: { coins: 200 } },
+    { id: 'round', name: 'Round', price: { coins: 250 } },
+    { id: 'feather', name: 'Feather', price: { diamonds: 3 } },
+  ],
+  confetti: [
+    { id: 'classic', name: 'Classic', price: null },
+    { id: 'hearts', name: 'Hearts', price: { coins: 150 } },
+    { id: 'coins', name: 'Coins', price: { coins: 200 } },
+    { id: 'stars', name: 'Stars', price: { coins: 250 } },
+  ],
+  sound: [
+    { id: 'soft', name: 'Soft', price: null },
+    { id: 'retro', name: 'Retro 8-bit', price: { coins: 300 } },
+    { id: 'nature', name: 'Nature', price: { diamonds: 3 } },
+  ],
+  avatar: [
+    { id: 'p1', name: 'King', price: { diamonds: 2 } },
+    { id: 'p2', name: 'Cool Cat', price: { diamonds: 2 } },
+    { id: 'p3', name: 'Star Eyes', price: { diamonds: 2 } },
+    { id: 'p4', name: 'Astronaut', price: { diamonds: 2 } },
+    { id: 'p5', name: 'Wizard', price: { diamonds: 2 } },
+    { id: 'p6', name: 'Ninja', price: { diamonds: 2 } },
+  ],
+  frame: [
+    { id: 'none', name: 'No Frame', price: null },
+    { id: 'silver', name: 'Silver', price: { coins: 500 }, achievement: 'perfectionist' },
+    { id: 'gold', name: 'Gold', price: { coins: 1000 }, achievement: 'chapter-master' },
+    { id: 'diamond', name: 'Diamond', price: { diamonds: 10 } },
+  ],
+});

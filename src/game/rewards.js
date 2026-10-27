@@ -3,6 +3,7 @@
  */
 import { BOOSTERS, BOOSTER_PACK, MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
 import { addBoosters, useBooster } from './boosters.js';
+import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
 import { chapterLevels, chapterOf, grant, isMaskLevel, levelReward, spend } from './economy.js';
 import { recordWin, xpForWin } from './stats.js';
@@ -149,7 +150,8 @@ export function claim(id) {
   if (!res.ok) return res;
   state.claimed = res.claimed;
   credit({ diamonds: res.diamonds }, 'achievement');
-  return res;
+  for (const u of achievementUnlocks(id)) state.cosmetics = grantCosmetic(state.cosmetics, u.cat, u.id);
+  return { ...res, unlocks: achievementUnlocks(id) };
 }
 
 /**
@@ -205,4 +207,33 @@ export function spendBooster(id) {
 export function noteHintUsed() {
   state.levelBoost = { ...state.levelBoost, assisted: true };
   state.stats = { ...state.stats, hintsUsed: state.stats.hintsUsed + 1 };
+}
+
+/**
+ * Buy a cosmetic (optionally at a sale price) and track coins spent.
+ * @param {string} cat
+ * @param {string} id
+ * @param {object} [price]
+ * @returns {{ok: boolean, reason?: string, missing?: object}}
+ */
+export function buyCosmeticItem(cat, id, price) {
+  const res = buyCosmetic(wallet(), state.cosmetics, cat, id, price);
+  if (!res.ok) return res;
+  const spent = state.coins - res.wallet.coins;
+  setWallet(res.wallet);
+  state.cosmetics = res.cos;
+  state.stats = { ...state.stats, coinsSpent: state.stats.coinsSpent + spent };
+  return { ok: true };
+}
+
+/**
+ * Equip an owned cosmetic.
+ * @param {string} cat
+ * @param {string} id
+ * @returns {boolean}
+ */
+export function equipCosmeticItem(cat, id) {
+  const res = equipCosmetic(state.cosmetics, cat, id);
+  if (res.ok) state.cosmetics = res.cos;
+  return res.ok;
 }

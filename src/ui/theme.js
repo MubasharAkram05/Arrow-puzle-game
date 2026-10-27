@@ -9,6 +9,8 @@ export function applyTheme() {
   root.setAttribute('data-theme', dark ? 'dark' : 'light');
   root.setAttribute('data-style', state.style);
   root.setAttribute('data-accent', state.accent);
+  root.setAttribute('data-board', state.cosmetics.equipped.board);
+  root.setAttribute('data-frame', state.cosmetics.equipped.frame);
   document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0D1321' : '#FFFFFF');
 }
 

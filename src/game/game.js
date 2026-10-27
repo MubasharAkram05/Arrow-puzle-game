@@ -38,7 +38,7 @@ export function loadLevel(level) {
   state.levelBoost = newLevelBoosts();
   hidePointer();
   $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
-  state.metrics = strokeMetrics(boardCellPx());
+  state.metrics = { ...strokeMetrics(boardCellPx()), head: state.cosmetics.equipped.head };
   drawArrows($('board'), state.arrows, level, true, state.metrics);
   setDifficultyBadge(level.difficulty);
   renderHearts(-1);

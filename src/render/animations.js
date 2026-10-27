@@ -1,6 +1,7 @@
 import { CELL } from '../config.js';
 import { state } from '../game/state.js';
 import { setArrowOffset } from './board.js';
+import { escapeFx } from './effects/index.js';
 
 /**
  * requestAnimationFrame tween from 0 to 1.
@@ -34,10 +35,12 @@ export function animateEscape(a) {
   const g = a.geom;
   const dist = g.dashLen + (g.toEdge + 1.5) * CELL;
   const dur = Math.max(260, Math.min(450, 200 + dist * 0.06));
+  const fx = escapeFx(a); // equipped escape effect (null for the classic slide or reduced motion)
   a.el.classList.add('out');
   return tween(dur, easeIn, (t) => {
     setArrowOffset(a, dist * t);
     if (t > 0.6) a.el.style.opacity = String(1 - (t - 0.6) / 0.4);
+    if (fx) fx(t, dist * t);
   });
 }
 

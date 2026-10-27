@@ -3,6 +3,7 @@
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
 import { BOOSTER_IDS } from '../game/boosters.js';
+import { CATEGORIES, findItem, newCosmetics } from '../game/cosmetics.js';
 
 export const V1_KEY = 'arrowEscape.save.v1';
 export const V2_KEY = 'arrowEscape:v2';
@@ -49,6 +50,7 @@ export function defaultSave() {
     },
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
     boosters: { shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 },
+    cosmetics: newCosmetics(),
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -84,6 +86,42 @@ export function convertChapters(rewarded, oldSize) {
   return out;
 }
 
+/**
+ * Validate cosmetics: owned lists keep only real items (plus the free defaults),
+ * and an equipped item must be owned.
+ * @param {unknown} raw
+ * @returns {ReturnType<typeof newCosmetics>}
+ */
+export function sanitizeCosmetics(raw) {
+  const def = newCosmetics();
+  const c = obj(raw);
+  const owned = obj(c.owned);
+  const equipped = obj(c.equipped);
+  const out = { owned: {}, equipped: {} };
+  for (const cat of [...CATEGORIES, 'avatar']) {
+    const list = Array.isArray(owned[cat])
+      ? owned[cat].filter((id) => typeof id === 'string' && findItem(cat, id))
+      : [];
+    out.owned[cat] = [...new Set([...def.owned[cat], ...list])];
+  }
+  for (const cat of CATEGORIES) {
+    out.equipped[cat] = out.owned[cat].includes(equipped[cat]) ? equipped[cat] : def.equipped[cat];
+  }
+  return out;
+}
+
+/**
+ * Avatar index: 0-11 are free, 12-17 are premium and need to be owned; anything else wraps into the free ones.
+ * @param {number} i
+ * @param {{owned: Record<string, string[]>}} cosmetics
+ * @returns {number}
+ */
+function avatarIndex(i, cosmetics) {
+  if (i < 12) return i;
+  if (i < 18) return cosmetics.owned.avatar.includes(`p${i - 11}`) ? i : 0;
+  return i % 12;
+}
+
 /** Owned ids filtered to real items, always including the free one. */
 function ownedList(v, items) {
   const ids = items.map((i) => i.id);
@@ -116,6 +154,7 @@ export function sanitize(raw) {
     typeof pr.name === 'string' && pr.name.trim().length >= 3 ? pr.name.trim().slice(0, 16) : def.profile.name;
   const se = obj(d.settings);
   const ach = obj(d.achievements);
+  const cosmetics = sanitizeCosmetics(d.cosmetics);
   return {
     version: 2,
     progress: {
@@ -130,6 +169,7 @@ export function sanitize(raw) {
     },
     wallet: { coins: count(w.coins), diamonds: count(w.diamonds), hints: count(w.hints, START_HINTS) },
     boosters: Object.fromEntries(BOOSTER_IDS.map((id) => [id, count(obj(d.boosters)[id])])),
+    cosmetics,
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
@@ -141,7 +181,7 @@ export function sanitize(raw) {
       style: oneOf(it.style, styles, 'classic'),
       accent: oneOf(it.accent, themes, 'blue'),
     },
-    profile: { avatar: count(pr.avatar) % 12, name },
+    profile: { avatar: avatarIndex(count(pr.avatar), cosmetics), name },
     settings: {
       theme: oneOf(se.theme, THEMES, def.settings.theme),
       sound: bool(se.sound, true),

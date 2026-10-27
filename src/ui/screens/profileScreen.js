@@ -6,7 +6,11 @@ import { achievementContext, claim } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
 import { formatPlayTime, playerLevel, validateName } from '../../game/stats.js';
 import { saveProgress } from '../../storage/save.js';
-import { AVATAR_COUNT, avatarSVG } from '../components/avatars.js';
+import { AVATAR_TOTAL, avatarSVG, premiumId } from '../components/avatars.js';
+import { COSMETICS } from '../../config.js';
+import { buyCosmeticItem } from '../../game/rewards.js';
+import { renderCurrency } from '../components/currencyBar.js';
+import { ask } from '../modals/ask.js';
 import { updateBottomNav } from '../components/bottomNav.js';
 import { flyCurrency } from '../components/currencyBar.js';
 import { icon } from '../components/icons.js';
@@ -17,8 +21,9 @@ import { onReturn, openTab } from '../navigation.js';
 /** Static skeleton, built once. */
 function buildSkeleton() {
   const picker = Array.from(
-    { length: AVATAR_COUNT },
-    (_, i) => `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}</button>`,
+    { length: AVATAR_TOTAL },
+    (_, i) =>
+      `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock"><svg class="cur-icon"><use href="#i-gem" /></svg>2</span></button>`,
   ).join('');
   $('profile-body').innerHTML = `
     <div class="profile-card">
@@ -40,9 +45,12 @@ function buildSkeleton() {
 /** Avatar, name and XP bar. */
 function renderHeader() {
   $('avatar-btn').innerHTML = avatarSVG(state.avatar);
-  document
-    .querySelectorAll('.avatar-opt')
-    .forEach((b) => b.classList.toggle('on', Number(b.dataset.avatar) === state.avatar));
+  document.querySelectorAll('.avatar-opt').forEach((b) => {
+    const i = Number(b.dataset.avatar);
+    const pid = premiumId(i);
+    b.classList.toggle('on', i === state.avatar);
+    b.classList.toggle('locked', !!pid && !state.cosmetics.owned.avatar.includes(pid));
+  });
   if (document.activeElement !== $('name-input')) $('name-input').value = state.name;
   const lv = playerLevel(state.xp);
   $('lvl-badge').textContent = `Lv ${lv.level}`;
@@ -63,6 +71,8 @@ function renderStats() {
     ['fire', s.streak, 'Win streak'],
     ['trophy', s.bestStreak, 'Best streak'],
     ['clock', formatPlayTime(s.playSeconds), 'Play time'],
+    ['bolt', s.boostersUsed, 'Boosters used'],
+    ['bulb', s.hintsUsed, 'Hints used'],
   ];
   $('stat-grid').innerHTML = cards
     .map(([ic, value, label, colored]) => {
@@ -137,6 +147,25 @@ function onNameInput() {
   }
 }
 
+/** Offer a premium avatar for diamonds, then wear it. */
+function buyAvatar(i) {
+  const item = COSMETICS.avatar.find((a) => a.id === premiumId(i));
+  ask({
+    title: `Unlock ${item.name}?`,
+    message: 'A premium avatar for your profile.',
+    icon: 'user',
+    price: item.price,
+    okLabel: 'Unlock',
+    onOk: () => {
+      if (!buyCosmeticItem('avatar', item.id).ok) return;
+      state.avatar = i;
+      saveProgress();
+      renderCurrency();
+      renderHeader();
+    },
+  });
+}
+
 /** Wire the profile page once. */
 export function bindProfile() {
   buildSkeleton();
@@ -149,7 +178,9 @@ export function bindProfile() {
   $('avatar-picker').addEventListener('click', (e) => {
     const b = e.target.closest('.avatar-opt');
     if (!b) return;
-    state.avatar = Number(b.dataset.avatar);
+    const i = Number(b.dataset.avatar);
+    if (b.classList.contains('locked')) return buyAvatar(i);
+    state.avatar = i;
     saveProgress();
     $('avatar-picker').hidden = true;
     renderHeader();

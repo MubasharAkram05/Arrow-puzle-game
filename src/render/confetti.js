@@ -1,3 +1,4 @@
+import { state } from '../game/state.js';
 import { $ } from '../ui/dom.js';
 
 /** Pastel confetti like the reference victory screen. */
@@ -18,18 +19,55 @@ function piece(w, h, scattered) {
     rot: Math.random() * Math.PI * 2,
     vr: (Math.random() - 0.5) * 0.12,
     flip: Math.random() * Math.PI * 2,
-    curl: Math.random() < 0.35, // some pieces are curly ribbons
+    curl: Math.random() < 0.35, // some classic pieces are curly ribbons
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   };
 }
 
-/** Draw one piece; flip squashes it to fake a 3D tumble. */
-function draw(ctx, p) {
+/** Heart path centred on 0,0. */
+function heart(ctx, s) {
+  ctx.beginPath();
+  ctx.moveTo(0, s * 0.35);
+  ctx.bezierCurveTo(-s, -s * 0.2, -s * 0.45, -s * 0.9, 0, -s * 0.35);
+  ctx.bezierCurveTo(s * 0.45, -s * 0.9, s, -s * 0.2, 0, s * 0.35);
+  ctx.fill();
+}
+
+/** Five-point star centred on 0,0. */
+function star(ctx, s) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? s * 0.25 : s * 0.6;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Draw one piece in the equipped confetti style; flip squashes it to fake a 3D tumble. */
+function draw(ctx, p, style) {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(p.rot);
   ctx.scale(1, Math.cos(p.flip));
-  if (p.curl) {
+  if (style === 'hearts') {
+    ctx.fillStyle = p.curl ? '#FF4F7B' : '#FF8FAB';
+    heart(ctx, p.size * 0.9);
+  } else if (style === 'coins') {
+    ctx.fillStyle = '#F7B500';
+    ctx.beginPath();
+    ctx.arc(0, 0, p.size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFE07A';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, p.size * 0.3, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (style === 'stars') {
+    ctx.fillStyle = p.curl ? '#FFFFFF' : '#FFD54A';
+    star(ctx, p.size);
+  } else if (p.curl) {
     ctx.strokeStyle = p.color;
     ctx.lineWidth = 2.6;
     ctx.beginPath();
@@ -42,11 +80,20 @@ function draw(ctx, p) {
   ctx.restore();
 }
 
-/** Confetti rain on the victory screen. Stops when the screen closes or every piece has fallen. */
+/**
+ * Confetti rain on the victory screen in the equipped style. Stops when the screen closes
+ * or every piece has fallen. Reduced motion shows no confetti.
+ */
 export function startConfetti() {
   const canvas = $('confetti');
   const modal = $('modal-victory');
   const ctx = canvas.getContext('2d');
+  cancelAnimationFrame(frameId);
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  const style = state.cosmetics.equipped.confetti;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = innerWidth;
   const h = innerHeight;
@@ -55,7 +102,6 @@ export function startConfetti() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const parts = Array.from({ length: COUNT }, (_, i) => piece(w, h, i < COUNT / 2));
   const t0 = performance.now();
-  cancelAnimationFrame(frameId);
   (function frame(now) {
     ctx.clearRect(0, 0, w, h);
     const raining = now - t0 < RAIN_MS;
@@ -68,7 +114,7 @@ export function startConfetti() {
       p.flip += 0.08;
       if (p.y > h + 20 && raining) Object.assign(p, piece(w, h, false));
       if (p.y < h + 20) alive = true;
-      draw(ctx, p);
+      draw(ctx, p, style);
     }
     if (alive && modal.classList.contains('open')) frameId = requestAnimationFrame(frame);
     else ctx.clearRect(0, 0, w, h);
