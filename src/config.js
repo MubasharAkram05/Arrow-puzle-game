@@ -134,3 +134,16 @@ export const COSMETICS = Object.freeze({
     { id: 'diamond', name: 'Diamond', price: { diamonds: 10 } },
   ],
 });
+
+/** Shop offers. */
+export const OFFERS = Object.freeze({
+  starterPack: Object.freeze({
+    name: 'Starter Pack',
+    minLevel: 5, // shown once this level is unlocked
+    price: Object.freeze({ diamonds: 3 }),
+    contents: Object.freeze({ hints: 5, boosters: { shield: 3, reveal: 3 }, style: 'slate' }),
+  }),
+  freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
+  exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),
+  weeklySale: Object.freeze({ discount: 0.3 }),
+});

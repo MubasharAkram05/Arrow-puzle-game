@@ -43,6 +43,7 @@ export const state = {
   refillsUsed: 0, // heart refills bought in this attempt
   won: false, // the current attempt has been paid out
   boosters: newInventory(), // booster counts
+  offers: { starterBought: false, giftLast: 0 }, // starter pack bought, free gift last claim (ms)
   cosmetics: newCosmetics(), // owned/equipped effects, boards, heads, confetti, sounds, avatars, frames
   levelBoost: newLevelBoosts(), // shield, auto-clears, moved, assisted for this attempt
   owned: { styles: ['classic'], themes: ['blue'] },

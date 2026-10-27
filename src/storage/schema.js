@@ -28,6 +28,8 @@ const count = (v, fallback = 0) => (Number.isFinite(v) && v >= 0 ? Math.min(Math
 const level = (v) => (Number.isInteger(v) && v >= 1 && v <= LIMIT ? v : null);
 /** Sorted, de-duplicated list of level numbers. */
 const levels = (v) => (Array.isArray(v) ? [...new Set(v.map(level).filter(Boolean))].sort((a, b) => a - b) : []);
+/** Millisecond timestamp (0 = never); anything invalid becomes 0. */
+const timestamp = (v) => (Number.isFinite(v) && v > 0 && v < 1e14 ? Math.floor(v) : 0);
 const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const bool = (v, fallback) => (typeof v === 'boolean' ? v : fallback);
 const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
@@ -51,6 +53,7 @@ export function defaultSave() {
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
     boosters: { shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 },
     cosmetics: newCosmetics(),
+    offers: { starterBought: false, giftLast: 0 },
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -170,6 +173,7 @@ export function sanitize(raw) {
     wallet: { coins: count(w.coins), diamonds: count(w.diamonds), hints: count(w.hints, START_HINTS) },
     boosters: Object.fromEntries(BOOSTER_IDS.map((id) => [id, count(obj(d.boosters)[id])])),
     cosmetics,
+    offers: { starterBought: bool(obj(d.offers).starterBought, false), giftLast: timestamp(obj(d.offers).giftLast) },
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
