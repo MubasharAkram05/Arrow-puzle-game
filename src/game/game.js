@@ -13,6 +13,8 @@ import { closeModals } from '../ui/modals/modal.js';
 import { showGameOver } from '../ui/modals/gameover.js';
 import { showVictory } from '../ui/modals/victory.js';
 import { clearHint, updateTutorial } from './hints.js';
+import { applyWin } from './rewards.js';
+import { recordLoss } from './stats.js';
 import { state } from './state.js';
 
 /**
@@ -28,6 +30,8 @@ export function loadLevel(level) {
   state.hearts = level.hearts;
   state.locked = false;
   state.hintId = -1;
+  state.refillsUsed = 0;
+  state.won = false;
   hidePointer();
   $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
   state.metrics = strokeMetrics(boardCellPx());
@@ -73,6 +77,7 @@ function escape(a, lvl) {
   if (state.hintId === a.id) clearHint();
   if (state.pointerId === a.id) hidePointer();
   a.escaped = true;
+  state.stats.arrowsCleared++;
   clearArrow(state.occ, lvl.cols, a);
   state.remaining--;
   renderProgress();
@@ -81,7 +86,11 @@ function escape(a, lvl) {
   else updateTutorial();
   animateEscape(a).then(() => {
     a.el.remove();
-    if (state.level === lvl && state.remaining === 0) onLevelWon();
+    // several escape animations can end after the last arrow left: only the first one finishes the level
+    if (state.level === lvl && state.remaining === 0 && !state.won) {
+      state.won = true;
+      onLevelWon();
+    }
   });
 }
 
@@ -111,36 +120,33 @@ export function tapArrow(a) {
   else escape(a, lvl);
 }
 
-/** Level cleared: record progress and show the victory screen. */
+/** Level cleared: pay rewards, record progress and show the victory screen. */
 export function onLevelWon() {
   playSound('win');
   const p = state.progress;
   const n = state.levelNum;
-  if (!p.completed.has(n)) {
-    p.completed.add(n);
-    if (p.completed.size % HINT_EVERY === 0) state.hints++;
-  }
+  const firstClear = !p.completed.has(n);
+  const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts);
+  if (firstClear && p.completed.size % HINT_EVERY === 0) state.hints++;
   p.unlocked = Math.max(p.unlocked, n + 1);
   p.current = n + 1;
   saveProgress();
-  setTimeout(showVictory, 200);
+  setTimeout(() => showVictory(summary), 200);
 }
 
-/** All hearts gone. */
+/** All hearts gone: the win streaks end. */
 function onOutOfHearts() {
   clearHint();
   hidePointer();
+  state.stats = recordLoss(state.stats);
+  saveProgress();
   showGameOver();
 }
 
-/** Spend a hint to get one heart back and keep playing. */
-export function continueWithHint() {
-  if (state.hints <= 0) return;
-  state.hints--;
-  state.hearts = 1;
+/** Back to the board after hearts were bought (refill or continue). */
+export function resumePlay() {
   saveProgress();
   renderHearts(-1);
-  renderHintButton();
   closeModals();
   updateTutorial();
 }

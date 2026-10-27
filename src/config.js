@@ -25,3 +25,45 @@ export const STYLES = Object.freeze([
   { id: 'olive', name: 'Olive' },
   { id: 'mint', name: 'Soft Mint' },
 ]);
+
+/** Coin and diamond rewards. */
+export const REWARDS = Object.freeze({
+  baseCoins: 10, // every level win
+  coinsPerHeart: 5, // per heart left at the end
+  multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2 }),
+  perfectBonus: 20, // no heart lost, first time per level
+  replayRate: 0.25, // share of coins for a level already completed
+  chapterSize: 20,
+  chapterCoins: 100,
+  chapterDiamonds: 2,
+  maskEvery: 10, // every 10th level is a mask level
+  maskDiamonds: 1, // first clear of a mask level
+});
+
+/** Prices. Each price is { coins } or { diamonds }. */
+export const PRICES = Object.freeze({
+  hint: Object.freeze({ coins: 50 }),
+  hintPack: Object.freeze({ coins: 200, count: 5 }), // 5 hints for the price of 4
+  heartRefill: Object.freeze({ coins: 80 }),
+  continueGame: Object.freeze({ diamonds: 2 }),
+  skipLevel: Object.freeze({ diamonds: 5 }),
+});
+/** Heart refills allowed per level attempt. */
+export const MAX_REFILLS_PER_LEVEL = 2;
+
+/** XP per level win and per heart left. */
+export const XP = Object.freeze({ perLevel: 10, perHeart: 5 });
+
+/** Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start. */
+export const SHOP_STYLES = Object.freeze([
+  { id: 'classic', name: 'Classic', price: null },
+  { id: 'slate', name: 'Dark Slate', price: { coins: 300 } },
+  { id: 'olive', name: 'Olive', price: { coins: 300 } },
+  { id: 'mint', name: 'Soft Mint', price: { diamonds: 5 } },
+]);
+export const SHOP_THEMES = Object.freeze([
+  { id: 'blue', name: 'Ocean Blue', price: null, color: '#1877F2' },
+  { id: 'purple', name: 'Royal Purple', price: { coins: 400 }, color: '#7C4DFF' },
+  { id: 'teal', name: 'Lagoon Teal', price: { coins: 400 }, color: '#0E9F8E' },
+  { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
+]);

@@ -3,7 +3,7 @@
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
-  padding: calc(18dvh + env(safe-area-inset-top)) 16px calc(6dvh + env(safe-area-inset-bottom));
+  padding: calc(12dvh + env(safe-area-inset-top)) 16px calc(4dvh + env(safe-area-inset-bottom));
   color: #ffffff;
   background: radial-gradient(ellipse at 50% 46%, #4fd0ff 0%, #2aa6f7 38%, #1d84ea 72%, #1a6fe0 100%);
 }
@@ -34,9 +34,9 @@
 }
 .mini-card {
   position: relative;
-  width: min(56vw, 300px);
+  width: min(50vw, 260px, 30dvh);
   aspect-ratio: 1;
-  margin-top: 9dvh;
+  margin-top: 4dvh;
   background: #ffffff;
   border-radius: 12px;
   display: flex;
@@ -115,4 +115,64 @@
     transform: none;
     opacity: 1;
   }
+}
+
+/* Currency counters and the reward breakdown */
+.victory-bar {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 3;
+}
+.victory-bar .cur {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0e1a3a;
+}
+.reward-box {
+  position: relative;
+  z-index: 1;
+  width: min(86vw, 340px);
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(0, 40, 110, 0.22);
+  font-size: 14px;
+}
+.victory.open .reward-box {
+  animation: rise 0.35s ease both 0.25s;
+}
+.reward-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.reward-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  opacity: 0.92;
+}
+.reward-total {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 18px;
+  font-weight: 800;
+}
+.amt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+}
+.amt .cur-icon {
+  width: 18px;
+  height: 18px;
+}
+.xp {
+  color: #d6f0ff;
 }

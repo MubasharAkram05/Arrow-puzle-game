@@ -43,7 +43,6 @@ function renderLevels() {
   $('level-grid').textContent = '';
   count = 0;
   appendLevels(Math.max(PAGE, Math.ceil((p.unlocked + 24) / 4) * 4));
-  $('levels-done').textContent = `${p.completed.size} done`;
 }
 
 /** Open the level select screen (unlimited, grows while scrolling). */

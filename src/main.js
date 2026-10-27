@@ -1,5 +1,8 @@
 import './styles/index.css';
 import { initBackButton } from './input/back-button.js';
+import { mountCurrencyBars } from './ui/components/currencyBar.js';
+import { mountIcons } from './ui/components/icons.js';
+import { bindAsk } from './ui/modals/ask.js';
 import { bindBoardInput } from './input/board-input.js';
 import { loadSave } from './storage/save.js';
 import { bindGameOver } from './ui/modals/gameover.js';
@@ -14,6 +17,7 @@ import { $ } from './ui/dom.js';
 
 /** App entry: load save, apply theme, wire every screen, show home. */
 function boot() {
+  mountIcons();
   loadSave();
   applyTheme();
   watchSystemTheme();
@@ -24,7 +28,9 @@ function boot() {
   bindSettings();
   bindGameOver();
   bindVictory();
+  bindAsk();
   bindCloseButtons();
+  mountCurrencyBars();
   $('btn-home-settings').addEventListener('click', openSettings);
   initBackButton();
   goHome();

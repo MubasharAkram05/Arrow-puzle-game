@@ -1,3 +1,4 @@
+import { PRICES } from '../config.js';
 import { state } from '../game/state.js';
 import { $, svgEl } from '../ui/dom.js';
 
@@ -33,10 +34,15 @@ export function renderHearts(popIndex) {
   box.setAttribute('aria-label', `${state.hearts} hearts left`);
 }
 
-/** Hint badge count and disabled state. */
+/** Hint badge: free hints left, or the coin price once they run out. */
 export function renderHintButton() {
-  $('hint-count').textContent = state.hints;
-  $('btn-hint').disabled = state.hints <= 0 && state.hintId === -1;
+  const badge = $('hint-count');
+  const paid = state.hints <= 0;
+  badge.classList.toggle('paid', paid);
+  badge.innerHTML = paid
+    ? `<svg class="cur-icon" aria-hidden="true"><use href="#i-coin" /></svg>${PRICES.hint.coins}`
+    : String(state.hints);
+  $('btn-hint').setAttribute('aria-label', paid ? `Buy a hint for ${PRICES.hint.coins} coins` : 'Hint');
 }
 
 /** Grid toggle button and dot visibility. */

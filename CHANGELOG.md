@@ -4,6 +4,19 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ## [3.0.0] - 2026-10-27
 
+### Added
+
+- Coins and diamonds (`src/game/economy.js` rules, `src/game/rewards.js` state updates):
+  - level rewards with hearts bonus, difficulty multiplier, first-time perfect bonus, 25% on replays, chapter and shape-level bonuses
+  - victory screen shows the breakdown, and coins/diamonds fly to the counters with a count-up
+  - spending: buy hints when the free ones run out, refill a heart (tap the hearts or from game over, max 2 per level), continue with full hearts, skip a level
+  - every price lives in `config.js`; `grant()` is the hook for currency from ads or purchases later
+- Confirm/purchase dialog that blocks with a clear message when you can't afford something.
+
+### Fixed
+
+- Finishing a level could trigger the win several times when multiple escape animations were still running. It now runs once per attempt.
+
 ### Removed
 
 - Daily Challenge: home button, calendar icon, date-seeded generator (`dateKey`, `getDailyConfig`, `generateDaily`), daily styles and tests. Numbered levels are unchanged (levels 1-200 hash the same before and after).

@@ -1,11 +1,19 @@
 import { START_HINTS } from '../config.js';
+import { newStats } from './stats.js';
 
 /**
  * Fresh progress record.
- * @returns {{current: number, unlocked: number, completed: Set<number>}}
+ * @returns {{current: number, unlocked: number, completed: Set<number>, perfect: Set<number>, masks: Set<number>, chaptersRewarded: Set<number>}}
  */
 export function newProgress() {
-  return { current: 1, unlocked: 1, completed: new Set() };
+  return {
+    current: 1,
+    unlocked: 1,
+    completed: new Set(),
+    perfect: new Set(), // finished without losing a heart
+    masks: new Set(), // mask levels completed
+    chaptersRewarded: new Set(),
+  };
 }
 
 /**
@@ -26,6 +34,14 @@ export const state = {
   pointerId: -1, // arrow the hand points at
   hints: START_HINTS,
   progress: newProgress(),
+  coins: 0,
+  diamonds: 0,
+  xp: 0,
+  stats: newStats(),
+  refillsUsed: 0, // heart refills bought in this attempt
+  won: false, // the current attempt has been paid out
+  owned: { styles: ['classic'], themes: ['blue'] },
+  accent: 'blue', // equipped accent theme
   grid: false, // the reference shows no dot grid until the player turns it on
   sound: true,
   vibration: true,

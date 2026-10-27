@@ -45,15 +45,19 @@ export function clearHint() {
   hidePointer();
 }
 
-/** Spend one hint to highlight a free arrow. */
+/**
+ * Spend one hint to highlight a free arrow.
+ * @returns {boolean} false when nothing was shown (no free hint, input locked, no free arrow)
+ */
 export function useHint() {
-  if (state.locked || state.hintId !== -1 || state.hints <= 0) return;
+  if (state.locked || state.hintId !== -1 || state.hints <= 0) return false;
   const free = currentFreeArrows();
-  if (!free.length) return;
+  if (!free.length) return false;
   state.hints--;
   saveProgress();
   showHint(state.arrows[free[0]]);
   renderHintButton();
+  return true;
 }
 
 /** Level 1 tutorial: point the hand with a tooltip at a free arrow. */

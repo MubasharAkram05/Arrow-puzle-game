@@ -3,6 +3,7 @@ import { startLevel } from '../../game/game.js';
 import { clearHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
 import { hidePointer } from '../../render/pointer.js';
+import { renderCurrency } from '../components/currencyBar.js';
 import { $ } from '../dom.js';
 import { closeModals } from '../modals/modal.js';
 import { onReturn, resetTo } from '../navigation.js';
@@ -11,6 +12,7 @@ import { openLevels } from './levels.js';
 /** Fill in the home screen labels. */
 function renderHome() {
   $('play-sub').textContent = `Level ${state.progress.current}`;
+  renderCurrency();
 }
 
 /** Show home as the root screen. */
