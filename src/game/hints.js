@@ -2,6 +2,7 @@ import { freeArrows } from '../engine/index.js';
 import { saveProgress } from '../storage/save.js';
 import { renderHintButton } from '../render/hud.js';
 import { hidePointer, showPointer } from '../render/pointer.js';
+import { noteHintUsed } from './rewards.js';
 import { state } from './state.js';
 
 /**
@@ -54,6 +55,7 @@ export function useHint() {
   const free = currentFreeArrows();
   if (!free.length) return false;
   state.hints--;
+  noteHintUsed();
   saveProgress();
   showHint(state.arrows[free[0]]);
   renderHintButton();

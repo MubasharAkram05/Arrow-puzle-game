@@ -5,6 +5,7 @@ import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
 import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
+import { newInventory } from '../game/boosters.js';
 import { defaultSave, readSave, sanitize, writeSave } from './schema.js';
 
 /** localStorage, or null when the browser blocks it. */
@@ -34,6 +35,7 @@ export function applySave(raw) {
   state.coins = d.wallet.coins;
   state.diamonds = d.wallet.diamonds;
   state.hints = d.wallet.hints;
+  state.boosters = { ...d.boosters };
   state.xp = d.xp;
   state.stats = { ...newStats(), ...d.stats };
   state.claimed = new Set(d.achievements.claimed);
@@ -70,6 +72,7 @@ export function snapshot() {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: state.coins, diamonds: state.diamonds, hints: state.hints },
+    boosters: { ...state.boosters },
     xp: state.xp,
     stats: { ...state.stats },
     achievements: { claimed: [...state.claimed], progress },
@@ -106,6 +109,7 @@ export function resetProgress() {
   state.diamonds = 0;
   state.xp = 0;
   state.stats = newStats();
+  state.boosters = newInventory();
   state.claimed = new Set();
   state.owned = { styles: ['classic'], themes: ['blue'] };
   state.style = 'classic';

@@ -2,6 +2,7 @@
  * Save format v2, validation and migration from v1. Pure: storage is passed in, so tests can use a fake.
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
+import { BOOSTER_IDS } from '../game/boosters.js';
 
 export const V1_KEY = 'arrowEscape.save.v1';
 export const V2_KEY = 'arrowEscape:v2';
@@ -15,6 +16,8 @@ const STAT_KEYS = [
   'bestPerfectStreak',
   'coinsSpent',
   'playSeconds',
+  'boostersUsed',
+  'hintsUsed',
 ];
 const LIMIT = 1e9; // keeps absurd numbers out of the UI
 
@@ -45,6 +48,7 @@ export function defaultSave() {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
+    boosters: { shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 },
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -125,6 +129,7 @@ export function sanitize(raw) {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: count(w.coins), diamonds: count(w.diamonds), hints: count(w.hints, START_HINTS) },
+    boosters: Object.fromEntries(BOOSTER_IDS.map((id) => [id, count(obj(d.boosters)[id])])),
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {

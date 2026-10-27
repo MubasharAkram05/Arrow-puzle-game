@@ -1,5 +1,6 @@
 import { START_HINTS } from '../config.js';
 import { newStats } from './stats.js';
+import { newInventory, newLevelBoosts } from './boosters.js';
 
 /**
  * Fresh progress record.
@@ -40,6 +41,8 @@ export const state = {
   stats: newStats(),
   refillsUsed: 0, // heart refills bought in this attempt
   won: false, // the current attempt has been paid out
+  boosters: newInventory(), // booster counts
+  levelBoost: newLevelBoosts(), // shield, auto-clears, moved, assisted for this attempt
   owned: { styles: ['classic'], themes: ['blue'] },
   accent: 'blue', // equipped accent theme
   claimed: new Set(), // claimed achievement ids

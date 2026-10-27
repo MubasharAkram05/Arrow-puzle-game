@@ -16,6 +16,7 @@ import { bindProfile, openProfile } from './ui/screens/profileScreen.js';
 import { bindShop, openShop } from './ui/screens/shopScreen.js';
 import { mountBottomNav } from './ui/components/bottomNav.js';
 import { startPlayClock } from './ui/screens/game.js';
+import { bindBoosterBar } from './ui/screens/boosterBar.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { $ } from './ui/dom.js';
 
@@ -27,6 +28,7 @@ function boot() {
   watchSystemTheme();
   bindBoardInput();
   bindGameScreen();
+  bindBoosterBar();
   bindHome();
   bindLevels();
   bindShop();
