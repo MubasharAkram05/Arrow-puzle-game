@@ -2,6 +2,14 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] - 2026-10-27
+
+### Changed
+
+- Node 22 is now required (Node 20 is end-of-life): `engines.node >=22`, `.nvmrc`, CI runs on the `.nvmrc` version.
+- Vitest 4.0 → 5.0. It now shares Vite 8 instead of pulling in a nested Vite 7.
+- Capacitor 7 → 8 (`core`, `app`, `cli`, `android`). The Android template targets API 36, which meets the current Google Play requirement.
+
 ## [2.1.0] - 2026-10-27
 
 ### Changed

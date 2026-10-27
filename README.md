@@ -6,8 +6,8 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Requirements
 
-- Node.js 20.19+ (CI uses Node 20)
-- For the APK: Android Studio with an Android SDK, and JDK 21
+- Node.js 22+ (see `.nvmrc`; `nvm use` picks it up). CI uses the same version.
+- For the APK: Android Studio Narwhal 3 (2025.1.3) or newer, Android SDK 36, and JDK 21
 
 ## Run
 
@@ -83,7 +83,20 @@ On Android this uses `@capacitor/app`. In a browser it falls back to `history`/`
 
 ## Build the Android APK with Capacitor
 
-Capacitor 7 is already in `package.json`, and `capacitor.config.json` points at `dist/`.
+Capacitor 8 is already in `package.json`, and `capacitor.config.json` points at `dist/`.
+
+### Google Play target SDK
+
+Capacitor 8's Android template sets:
+
+| Setting             | Value                              |
+| ------------------- | ---------------------------------- |
+| `targetSdkVersion`  | 36 (Android 16)                    |
+| `compileSdkVersion` | 36                                 |
+| `minSdkVersion`     | 24 (Android 7.0)                   |
+| Build tools         | AGP 8.13.0, Gradle 8.14.3, Java 21 |
+
+Google Play requires new apps and app updates to target API level 36 or higher since 31 August 2026, so the default meets it. The values live in `android/variables.gradle` after `npx cap add android`. Raise `targetSdkVersion` there when Google moves the requirement (usually every August).
 
 ```bash
 npm install
@@ -108,4 +121,4 @@ For a Play Store release, create a signing key and use **Generate Signed Bundle 
 
 ## CI
 
-`.github/workflows/ci.yml` runs `npm ci`, lint, test and build on Node 20 for every push and pull request.
+`.github/workflows/ci.yml` runs `npm ci`, lint, test and build on Node 22 (from `.nvmrc`) for every push and pull request.
