@@ -1,0 +1,67 @@
+/* ---------- Level select ---------- */
+.levels-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 16px 24px;
+}
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.level-btn {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgba(8, 24, 56, 0.08);
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.level-btn .icon {
+  width: 20px;
+  height: 20px;
+}
+.level-btn.locked {
+  background: var(--locked);
+  color: var(--muted);
+  box-shadow: none;
+}
+.level-btn.current {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.level-btn .tick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #ffffff;
+  stroke-width: 3.5;
+}
+.level-btn.shake {
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+#screen-levels {
+  background: var(--bg-alt);
+}

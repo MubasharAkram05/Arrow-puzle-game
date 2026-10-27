@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const match = html.match(/<script id="engine">([\s\S]*?)<\/script>/);
 if (!match) throw new Error('engine block not found in index.html');
 const sandbox = { module: { exports: {} } };

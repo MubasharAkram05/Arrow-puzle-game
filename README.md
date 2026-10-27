@@ -3,13 +3,17 @@
 A "Tap Away Arrows" style puzzle game in one self-contained `index.html`. No external files, no network, works offline (ready for a Capacitor Android wrapper).
 
 ## Play
+
 Open `index.html` in any modern browser.
 
 ## Test the level generator
+
 ```
 node tests/generator.test.js
 ```
+
 Generates levels 1-200 and 30 daily challenges, then checks each one:
+
 - solvable (greedy solver + step-by-step replay)
 - valid structure (contiguous arrows, no overlaps, length 2-20, correct head direction, inside the mask)
 - at least 90% of the grid filled
@@ -17,6 +21,7 @@ Generates levels 1-200 and 30 daily challenges, then checks each one:
 - same seed gives the same level
 
 ## Code layout (inside index.html)
+
 1. `<style>`: design tokens (light + dark), arrow styles, components
 2. Config + state script
 3. `<script id="engine">`: seeded RNG, generator, solver. Pure functions, exported with `module.exports` so the test can load it

@@ -1,0 +1,29 @@
+import { startLevel } from '../../game/game.js';
+import { state } from '../../game/state.js';
+import { drawArrows } from '../../render/board.js';
+import { startConfetti } from '../../render/confetti.js';
+import { $ } from '../dom.js';
+import { goHome } from '../screens/home.js';
+import { closeModals, onModalBack, openModal } from './modal.js';
+
+/** Fill in and show the victory screen with a preview of the solved level. */
+export function showVictory() {
+  const daily = !!state.daily;
+  $('victory-title').textContent = daily ? 'Daily Complete!' : 'Level Completed!';
+  $('next-label').textContent = daily ? 'Continue' : 'Next Level';
+  $('next-sub').textContent = `Level ${state.progress.current}`;
+  const preview = state.level.arrows.map((a) => ({ id: a.id, dir: a.dir, path: a.path }));
+  drawArrows($('mini-board'), preview, state.level, false);
+  openModal('modal-victory');
+  startConfetti();
+}
+
+/** Wire the victory buttons. Back acts like "Main". */
+export function bindVictory() {
+  $('btn-next').addEventListener('click', () => {
+    closeModals();
+    startLevel(state.progress.current);
+  });
+  $('btn-main').addEventListener('click', goHome);
+  onModalBack('modal-victory', goHome);
+}

@@ -1,0 +1,194 @@
+/* ---------- Game screen ---------- */
+#screen-game {
+  background: var(--bg);
+}
+.board-card {
+  background: var(--board-bg);
+  border-radius: 24px;
+  padding: 12px;
+  transition: background-color 0.25s ease;
+}
+html:not([data-style='classic']) .board-card {
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 6px 8px 0;
+}
+.topbar .left {
+  display: flex;
+  justify-self: start;
+}
+.topbar .right {
+  display: flex;
+  justify-self: end;
+}
+.topbar .title {
+  font-size: 21px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  border-radius: 50%;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 8px 16px 10px;
+}
+.stats > :first-child {
+  justify-self: start;
+}
+.stats > :last-child {
+  justify-self: end;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 64px;
+  min-height: 36px;
+  background: var(--pill);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.pill .icon {
+  width: 18px;
+  height: 18px;
+}
+.hearts {
+  display: flex;
+  gap: 6px;
+}
+.heart {
+  width: 28px;
+  height: 28px;
+  fill: var(--error);
+  transition: fill 0.25s ease;
+}
+.heart.lost {
+  fill: var(--lost);
+}
+.heart.pop {
+  animation: heart-pop 0.4s ease;
+}
+@keyframes heart-pop {
+  35% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.progress {
+  width: calc(100% - 32px);
+  max-width: 528px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--pill);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.35s ease;
+}
+
+.board-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 16px 96px;
+}
+#board {
+  display: block;
+  overflow: visible;
+  touch-action: none;
+  cursor: pointer;
+}
+#board.no-grid .dots {
+  opacity: 0;
+}
+.dots {
+  fill: var(--dot);
+  transition: opacity 0.2s ease;
+}
+.arrow .shaft {
+  fill: none;
+  stroke: var(--arrow);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.12s ease;
+}
+.arrow .head {
+  fill: var(--arrow);
+  stroke: var(--arrow);
+  stroke-linejoin: round;
+  transition:
+    fill 0.12s ease,
+    stroke 0.12s ease;
+}
+.arrow.err .shaft {
+  stroke: var(--error);
+}
+.arrow.err .head {
+  fill: var(--error);
+  stroke: var(--error);
+}
+.arrow.out .shaft,
+.arrow.hint .shaft {
+  stroke: var(--primary);
+}
+.arrow.out .head,
+.arrow.hint .head {
+  fill: var(--primary);
+  stroke: var(--primary);
+}
+.arrow .glow {
+  fill: none;
+  stroke: var(--primary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: glow 0.9s ease-in-out infinite alternate;
+}
+.arrow .glow-head {
+  fill: var(--primary);
+  stroke: var(--primary);
+  stroke-linejoin: round;
+  animation: glow 0.9s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  from {
+    opacity: 0.12;
+  }
+  to {
+    opacity: 0.38;
+  }
+}
