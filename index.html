@@ -22,6 +22,7 @@
     --muted: #56627A;
     --dot: #DCE1EC;
     --lost: #CBD3E1;
+    --locked: #E0E4EE;
     --scrim: rgba(8, 24, 56, 0.45);
     --shadow: 0 6px 20px rgba(8, 24, 56, 0.12);
     --shadow-lg: 0 12px 32px rgba(8, 24, 56, 0.18);
@@ -366,10 +367,104 @@ button:disabled { opacity: 0.45; cursor: default; }
 }
 #confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* ---------- Level list ---------- */
-.level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-height: 60dvh; overflow-y: auto; padding: 4px; }
-.level-btn { border-radius: var(--r-md); background: var(--pill); font-weight: 700; padding: 12px 0; }
+/* ---------- Home ---------- */
+#screen-home { background: linear-gradient(180deg, var(--bg) 0%, var(--bg-alt) 100%); }
+.home-top { display: flex; justify-content: flex-end; padding: 8px 8px 0; }
+.home-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 24px 48px;
+    text-align: center;
+}
+.logo { width: 96px; height: 96px; margin-bottom: 8px; filter: drop-shadow(0 10px 20px rgba(24, 119, 242, 0.3)); animation: float 3s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-6px); } }
+.home-main h1 { margin: 0; font-size: 34px; letter-spacing: -0.5px; }
+.home-main > p { margin: 0 0 24px; }
+.home-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 340px; }
+.btn.big { min-height: 72px; font-size: 22px; border-radius: 22px; }
+.btn.big .icon { width: 30px; height: 30px; fill: currentColor; }
+.btn-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.btn-text small { font-size: 13px; font-weight: 600; opacity: 0.8; }
+.daily-btn { justify-content: flex-start; gap: 14px; background: var(--surface); box-shadow: var(--shadow); min-height: 64px; }
+.daily-btn .btn-text { flex: 1; }
+.cal { position: relative; display: inline-flex; color: var(--primary); }
+.cal .icon { width: 36px; height: 36px; }
+.cal b { position: absolute; left: 0; right: 0; top: 13px; font-size: 13px; text-align: center; }
+.done-mark { color: #16A34A; display: none; }
+.daily-btn.done .done-mark { display: block; }
+#btn-home-levels { background: transparent; color: var(--primary); }
+
+/* ---------- Level select ---------- */
+.levels-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 16px 24px; }
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+}
+.level-btn {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: 0 2px 8px rgba(8, 24, 56, 0.08);
+    font-weight: 800;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.level-btn .icon { width: 20px; height: 20px; }
+.level-btn.locked { background: var(--locked); color: var(--muted); box-shadow: none; }
 .level-btn.current { background: var(--primary); color: var(--on-primary); }
+.level-btn .tick {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    padding: 2px;
+    border-radius: 50%;
+    background: #16A34A;
+    color: #FFFFFF;
+    stroke-width: 3.5;
+}
+.level-btn.shake { animation: shake 0.3s ease; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+#screen-levels { background: var(--bg-alt); }
+
+/* ---------- Game over ---------- */
+.big-icon { width: 64px; height: 64px; }
+.broken { color: var(--error); animation: heart-pop 0.45s ease; }
+#modal-gameover h3 { margin: 8px 0 4px; font-size: 24px; }
+#modal-gameover p { margin: 0 0 18px; }
+
+/* ---------- Victory extras ---------- */
+.sunburst {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 250vmax;
+    height: 250vmax;
+    margin: -125vmax 0 0 -125vmax;
+    background: repeating-conic-gradient(#1B8BFF 0deg 10deg, #3399FF 10deg 20deg);
+    animation: spin 60s linear infinite;
+    will-change: transform;
+    pointer-events: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.victory.open h2 { animation: rise 0.35s ease both; }
+.victory.open .mini-card { animation: card-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.05s; }
+.victory.open .pill-btn, .victory.open .text-btn { animation: rise 0.35s ease both 0.15s; }
+@keyframes card-pop { from { transform: scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+.pill-btn small { font-size: 13px; font-weight: 600; color: #5B6880; }
+.text-btn { position: relative; margin-top: 12px; padding: 8px 24px; color: #FFFFFF; font-weight: 700; font-size: 17px; }
 </style>
 </head>
 <body>
@@ -383,10 +478,54 @@ button:disabled { opacity: 0.45; cursor: default; }
     <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 9h16"/><path d="M4 15h16"/><path d="M10 3 8 21"/><path d="M16 3l-2 18"/></symbol>
     <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v0"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="16" height="11" x="4" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="i-heart-crack" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="m12 13-1-1 2-2-3-3 2-2"/></symbol>
+    <symbol id="i-levels" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/></symbol>
 </svg>
 
+<!-- Home screen -->
+<section id="screen-home" class="screen" aria-label="Home">
+    <header class="home-top">
+        <button class="icon-btn" id="btn-home-settings" aria-label="Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
+    </header>
+    <div class="home-main">
+        <svg class="logo" viewBox="0 0 96 96" aria-hidden="true">
+            <rect x="4" y="4" width="88" height="88" rx="26" fill="var(--primary)"/>
+            <path d="M28 72V52h36V36" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M51 38 64 21l13 17z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round"/>
+        </svg>
+        <h1>Arrow Escape</h1>
+        <p class="muted">Tap the arrows to clear the board.</p>
+        <div class="home-actions">
+            <button class="btn primary big" id="btn-play">
+                <svg class="icon"><use href="#i-play"/></svg>
+                <span class="btn-text">Play<small id="play-sub">Level 1</small></span>
+            </button>
+            <button class="btn daily-btn" id="btn-daily">
+                <span class="cal"><svg class="icon"><use href="#i-calendar"/></svg><b id="daily-day">1</b></span>
+                <span class="btn-text">Daily Challenge<small id="daily-sub">Super Hard</small></span>
+                <svg class="icon done-mark" id="daily-done"><use href="#i-check"/></svg>
+            </button>
+            <button class="btn" id="btn-home-levels"><svg class="icon"><use href="#i-levels"/></svg>Levels</button>
+        </div>
+    </div>
+</section>
+
+<!-- Level select screen -->
+<section id="screen-levels" class="screen" aria-label="Levels">
+    <header class="topbar">
+        <div class="left"><button class="icon-btn" id="btn-levels-back" aria-label="Back"><svg class="icon"><use href="#i-back"/></svg></button></div>
+        <div class="title">Levels</div>
+        <div class="right"><span class="pill" id="levels-done">0 done</span></div>
+    </header>
+    <div class="levels-scroll" id="levels-scroll"><div class="level-grid" id="level-grid"></div></div>
+</section>
+
 <!-- Game screen -->
-<section id="screen-game" class="screen active" aria-label="Game">
+<section id="screen-game" class="screen" aria-label="Game">
     <header class="topbar">
         <div class="left">
             <button class="icon-btn" id="btn-levels" aria-label="Levels"><svg class="icon"><use href="#i-back"/></svg></button>
@@ -421,17 +560,6 @@ button:disabled { opacity: 0.45; cursor: default; }
     </div>
 </section>
 
-<!-- Level select -->
-<div class="modal" id="modal-levels">
-    <div class="card">
-        <div class="card-head">
-            <h3>Select Level</h3>
-            <button class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
-        </div>
-        <div class="level-grid" id="level-grid"></div>
-    </div>
-</div>
-
 <!-- Settings -->
 <div class="modal" id="modal-settings">
     <div class="card">
@@ -448,18 +576,24 @@ button:disabled { opacity: 0.45; cursor: default; }
 <!-- Game over -->
 <div class="modal" id="modal-gameover">
     <div class="card center">
+        <svg class="icon big-icon broken"><use href="#i-heart-crack"/></svg>
         <h3>Out of Hearts!</h3>
         <p class="muted">Look for arrows with a clear path ahead of their tip.</p>
-        <button class="btn primary" id="btn-tryagain">Try Again</button>
+        <div class="stack">
+            <button class="btn primary" id="btn-tryagain"><svg class="icon"><use href="#i-restart"/></svg>Try Again</button>
+            <button class="btn" id="btn-continue"><svg class="icon"><use href="#i-bulb"/></svg><span>Use a hint to continue (<span id="continue-count">0</span>)</span></button>
+        </div>
     </div>
 </div>
 
 <!-- Victory -->
 <div class="modal victory" id="modal-victory">
+    <div class="sunburst"></div>
     <canvas id="confetti"></canvas>
-    <h2>Level Completed!</h2>
+    <h2 id="victory-title">Level Completed!</h2>
     <div class="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
-    <button class="pill-btn" id="btn-next">Next Level</button>
+    <button class="pill-btn" id="btn-next"><span id="next-label">Next Level</span><small id="next-sub">Level 2</small></button>
+    <button class="text-btn" id="btn-main">Main</button>
 </div>
 
 <!-- ===================== CONFIG + STATE ===================== -->
@@ -489,6 +623,7 @@ const state = {
     hintId: -1,        // arrow currently highlighted by a hint
     pointerId: -1,     // arrow the hand points at
     hints: START_HINTS,
+    progress: { current: 1, unlocked: 1, completed: new Set(), daily: {} },
     grid: true,
     sound: true
 };
@@ -1204,17 +1339,38 @@ function loadLevel(level) {
     layoutBoard();
 }
 
-/* Start a numbered level. */
+/* Start a numbered level and show the game screen. */
 function startLevel(n) {
     state.levelNum = n;
     state.daily = null;
+    state.progress.current = n;
+    saveProgress();
     $('game-title').textContent = 'Level ' + n;
+    showScreen('screen-game');
     loadLevel(generateLevel(n));
+    if (n === 1) updateTutorial();
+}
+
+/* Start today's daily challenge. */
+function startDaily() {
+    const key = dateKey(new Date());
+    state.daily = key;
+    $('game-title').textContent = 'Daily ' + shortDate(new Date());
+    showScreen('screen-game');
+    loadLevel(generateDaily(key));
 }
 
 /* Restart whatever is being played. */
 function restart() {
-    startLevel(state.levelNum);
+    closeModals();
+    if (state.daily) startDaily(); else startLevel(state.levelNum);
+}
+
+/* Level 1 tutorial: point the hand with a tooltip at a free arrow. */
+function updateTutorial() {
+    if (state.daily || state.levelNum !== 1 || state.remaining === 0 || state.hintId !== -1) return;
+    const free = currentFreeArrows().filter(id => !state.arrows[id].busy);
+    if (free.length) showPointer(free[0], true);
 }
 
 /* Tap on an arrow: escape if the way out is clear, otherwise bump and lose a heart. */
@@ -1231,6 +1387,7 @@ function tapArrow(a) {
         renderProgress();
         playSound('pop');
         if (state.remaining === 0) state.locked = true;
+        else updateTutorial();
         animateEscape(a).then(() => {
             a.el.remove();
             if (state.remaining === 0) onLevelWon();
@@ -1249,9 +1406,28 @@ function tapArrow(a) {
     }
 }
 
-/* Level cleared. */
+/* Level cleared: record progress and show the victory screen. */
 function onLevelWon() {
     playSound('win');
+    const p = state.progress;
+    if (state.daily) {
+        p.daily[state.daily] = true;
+        $('victory-title').textContent = 'Daily Complete!';
+        $('next-label').textContent = 'Continue';
+        $('next-sub').textContent = 'Level ' + p.current;
+    } else {
+        const n = state.levelNum;
+        if (!p.completed.has(n)) {
+            p.completed.add(n);
+            if (p.completed.size % HINT_EVERY === 0) state.hints++;
+        }
+        p.unlocked = Math.max(p.unlocked, n + 1);
+        p.current = n + 1;
+        $('victory-title').textContent = 'Level Completed!';
+        $('next-label').textContent = 'Next Level';
+        $('next-sub').textContent = 'Level ' + (n + 1);
+    }
+    saveProgress();
     setTimeout(() => {
         drawArrows($('mini-board'), state.level.arrows.map(a => ({ id: a.id, dir: a.dir, path: a.path })), state.level, false);
         openModal('modal-victory');
@@ -1262,7 +1438,22 @@ function onLevelWon() {
 /* All hearts gone. */
 function onOutOfHearts() {
     clearHint();
+    hidePointer();
+    $('continue-count').textContent = state.hints;
+    $('btn-continue').disabled = state.hints <= 0;
     openModal('modal-gameover');
+}
+
+/* Spend a hint to get one heart back and keep playing. */
+function continueWithHint() {
+    if (state.hints <= 0) return;
+    state.hints--;
+    state.hearts = 1;
+    saveProgress();
+    renderHearts(-1);
+    renderHintButton();
+    closeModals();
+    updateTutorial();
 }
 
 /* Short vibration on wrong taps when supported. */
@@ -1413,61 +1604,123 @@ function closeModals() {
     state.locked = state.hearts <= 0 || state.remaining === 0;
 }
 
-/* Level list with infinite scroll. */
-let levelListCount = 0;
-function openLevels() {
-    $('level-grid').textContent = '';
-    levelListCount = 0;
-    appendLevels(Math.max(60, Math.ceil((state.levelNum + 20) / 4) * 4));
-    openModal('modal-levels');
-    const cur = $('level-grid').querySelector('.current');
-    if (cur) cur.scrollIntoView({ block: 'center' });
+/* Show one screen and hide the others. */
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+    if (id === 'screen-game') requestAnimationFrame(layoutBoard);
 }
 
-/* Add more level buttons to the list. */
+/* Short local date label, e.g. "Oct 27". */
+function shortDate(d) {
+    try { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+    catch (e) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+}
+
+/* Fill in the home screen labels and show it. */
+function goHome() {
+    closeModals();
+    clearHint();
+    hidePointer();
+    const now = new Date();
+    $('play-sub').textContent = 'Level ' + state.progress.current;
+    $('daily-day').textContent = now.getDate();
+    const done = !!state.progress.daily[dateKey(now)];
+    $('daily-sub').textContent = shortDate(now) + ' \u00B7 ' + (done ? 'Completed' : 'Super Hard');
+    $('btn-daily').classList.toggle('done', done);
+    showScreen('screen-home');
+}
+
+/* Level select screen with infinite scroll. */
+let levelListCount = 0;
+function openLevels() {
+    clearHint();
+    hidePointer();
+    const p = state.progress;
+    $('level-grid').textContent = '';
+    levelListCount = 0;
+    appendLevels(Math.max(60, Math.ceil((p.unlocked + 24) / 4) * 4));
+    $('levels-done').textContent = p.completed.size + ' done';
+    showScreen('screen-levels');
+    const target = $('level-grid').querySelector('.current');
+    if (target) target.scrollIntoView({ block: 'center' });
+}
+
+/* Add more level buttons: locked ones show a lock, completed ones a check. */
 function appendLevels(count) {
+    const p = state.progress;
     const frag = document.createDocumentFragment();
     for (let i = levelListCount + 1; i <= levelListCount + count; i++) {
         const b = document.createElement('button');
-        b.className = 'level-btn' + (i === state.levelNum ? ' current' : '');
-        b.textContent = i;
         b.dataset.level = i;
+        if (i > p.unlocked) {
+            b.className = 'level-btn locked';
+            b.setAttribute('aria-label', 'Level ' + i + ', locked');
+            b.innerHTML = '<svg class="icon"><use href="#i-lock"/></svg>';
+        } else {
+            b.className = 'level-btn' + (i === p.current ? ' current' : '');
+            b.textContent = i;
+            if (p.completed.has(i)) {
+                b.insertAdjacentHTML('beforeend', '<svg class="icon tick"><use href="#i-check"/></svg>');
+                b.setAttribute('aria-label', 'Level ' + i + ', completed');
+            }
+        }
         frag.appendChild(b);
     }
     levelListCount += count;
     $('level-grid').appendChild(frag);
 }
 
+/* Tap on a level button. */
+function onLevelPick(e) {
+    const b = e.target.closest('.level-btn');
+    if (!b) return;
+    if (b.classList.contains('locked')) {
+        b.classList.remove('shake');
+        void b.offsetWidth;
+        b.classList.add('shake');
+        return;
+    }
+    startLevel(Number(b.dataset.level));
+}
+
+/* Save hook (real storage is added with the settings phase). */
+function saveProgress() {}
+
 /* Wire up all buttons. */
 function bindUI() {
     $('board').addEventListener('pointerdown', onBoardPointer);
     $('btn-levels').addEventListener('click', openLevels);
+    $('btn-levels-back').addEventListener('click', goHome);
     $('btn-restart').addEventListener('click', restart);
     $('btn-settings').addEventListener('click', () => openModal('modal-settings'));
+    $('btn-home-settings').addEventListener('click', () => openModal('modal-settings'));
+    $('btn-play').addEventListener('click', () => { initAudio(); startLevel(state.progress.current); });
+    $('btn-daily').addEventListener('click', () => { initAudio(); startDaily(); });
+    $('btn-home-levels').addEventListener('click', openLevels);
     $('btn-hint').addEventListener('click', useHint);
     $('btn-grid').addEventListener('click', () => { state.grid = !state.grid; renderGrid(); });
     $('btn-audio').addEventListener('click', e => {
         state.sound = !state.sound;
         e.currentTarget.textContent = 'Sound: ' + (state.sound ? 'ON' : 'OFF');
     });
-    $('btn-tryagain').addEventListener('click', () => { closeModals(); restart(); });
-    $('btn-next').addEventListener('click', () => { closeModals(); startLevel(state.levelNum + 1); });
-    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeModals));
-    $('level-grid').addEventListener('click', e => {
-        const b = e.target.closest('.level-btn');
-        if (!b) return;
+    $('btn-tryagain').addEventListener('click', restart);
+    $('btn-continue').addEventListener('click', continueWithHint);
+    $('btn-next').addEventListener('click', () => {
         closeModals();
-        startLevel(Number(b.dataset.level));
+        startLevel(state.progress.current);
     });
-    $('level-grid').addEventListener('scroll', e => {
-        const g = e.currentTarget;
-        if (g.scrollTop + g.clientHeight > g.scrollHeight - 200) appendLevels(60);
+    $('btn-main').addEventListener('click', goHome);
+    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeModals));
+    $('level-grid').addEventListener('click', onLevelPick);
+    $('levels-scroll').addEventListener('scroll', e => {
+        const el = e.currentTarget;
+        if (el.scrollTop + el.clientHeight > el.scrollHeight - 300) appendLevels(60);
     });
     window.addEventListener('resize', layoutBoard);
 }
 
 bindUI();
-startLevel(1);
+goHome();
 </script>
 </body>
 </html>
