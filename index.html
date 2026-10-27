@@ -33,6 +33,35 @@
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+
+/* Dark theme */
+html[data-theme="dark"] {
+    --primary: #3B8BFF;
+    --primary-press: #2A76E6;
+    --error: #FF5A52;
+    --bg: #0D1321;
+    --bg-alt: #111A2C;
+    --surface: #18223A;
+    --pill: #212C45;
+    --text: #EEF2FA;
+    --muted: #A7B1C7;
+    --lost: #3A4560;
+    --locked: #1A2338;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Arrow styles (board colours) for each theme; [data-preview] cards reuse them */
+html[data-theme="light"][data-style="classic"], html[data-theme="light"] [data-preview="classic"] { --arrow: #07193B; --board-bg: #FFFFFF; --dot: #DCE1EC; }
+html[data-theme="light"][data-style="slate"], html[data-theme="light"] [data-preview="slate"] { --arrow: #DCE3EE; --board-bg: #2B3445; --dot: #3D485C; }
+html[data-theme="light"][data-style="olive"], html[data-theme="light"] [data-preview="olive"] { --arrow: #4F5E1F; --board-bg: #F2F0E1; --dot: #DAD5BC; }
+html[data-theme="light"][data-style="mint"], html[data-theme="light"] [data-preview="mint"] { --arrow: #1F6B5A; --board-bg: #E3F5EE; --dot: #C2E5D7; }
+html[data-theme="dark"][data-style="classic"], html[data-theme="dark"] [data-preview="classic"] { --arrow: #E3EAF8; --board-bg: #0D1321; --dot: #2A3550; }
+html[data-theme="dark"][data-style="slate"], html[data-theme="dark"] [data-preview="slate"] { --arrow: #DCE3EE; --board-bg: #1F2736; --dot: #364257; }
+html[data-theme="dark"][data-style="olive"], html[data-theme="dark"] [data-preview="olive"] { --arrow: #C3D48E; --board-bg: #1E2114; --dot: #3B4127; }
+html[data-theme="dark"][data-style="mint"], html[data-theme="dark"] [data-preview="mint"] { --arrow: #93E2CC; --board-bg: #10211C; --dot: #24453B; }
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -92,7 +121,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 @keyframes screen-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* ---------- Game screen ---------- */
-#screen-game { background: var(--board-bg); }
+#screen-game { background: var(--bg); }
+.board-card { background: var(--board-bg); border-radius: 24px; padding: 12px; transition: background-color 0.25s ease; }
+html:not([data-style="classic"]) .board-card { box-shadow: var(--shadow); }
 
 .topbar {
     display: grid;
@@ -465,6 +496,64 @@ button:disabled { opacity: 0.45; cursor: default; }
 @keyframes card-pop { from { transform: scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
 .pill-btn small { font-size: 13px; font-weight: 600; color: #5B6880; }
 .text-btn { position: relative; margin-top: 12px; padding: 8px 24px; color: #FFFFFF; font-weight: 700; font-size: 17px; }
+
+/* ---------- Settings ---------- */
+.setting-row { display: flex; align-items: center; gap: 12px; min-height: 52px; font-weight: 600; }
+.setting-row > .icon { color: var(--primary); }
+.setting-row > span { flex: 1; }
+.switch { position: relative; width: 56px; min-width: 56px; height: 44px; }
+.switch::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 8px;
+    bottom: 8px;
+    border-radius: 14px;
+    background: var(--lost);
+    transition: background-color 0.2s ease;
+}
+.switch .knob {
+    position: absolute;
+    top: 11px;
+    left: 5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+.switch[aria-checked="true"]::before { background: var(--primary); }
+.switch[aria-checked="true"] .knob { transform: translateX(24px); }
+.section-label { margin: 14px 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--pill); }
+.segmented button { display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--r-sm); font-weight: 700; font-size: 14px; color: var(--muted); }
+.segmented .icon { width: 18px; height: 18px; }
+.segmented button[aria-checked="true"] { background: var(--surface); color: var(--primary); box-shadow: 0 2px 6px rgba(8, 24, 56, 0.12); }
+.style-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.style-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 10px;
+    border-radius: var(--r-md);
+    background: var(--pill);
+    border: 2px solid transparent;
+    font-weight: 700;
+    font-size: 14px;
+}
+.style-card svg.prev { width: 100%; height: auto; border-radius: 10px; }
+.style-card .tick { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; padding: 3px; border-radius: 50%; background: var(--primary); color: var(--on-primary); stroke-width: 3.5; display: none; }
+.style-card[aria-checked="true"] { border-color: var(--primary); }
+.style-card[aria-checked="true"] .tick { display: block; }
+.btn.danger { margin-top: 16px; background: transparent; color: var(--error); }
+.btn.danger-solid { background: var(--error); color: #FFFFFF; }
+.warn { color: var(--error); }
+#modal-confirm h3 { margin: 8px 0 4px; font-size: 22px; }
+#modal-confirm p { margin: 0 0 18px; }
 </style>
 </head>
 <body>
@@ -484,6 +573,12 @@ button:disabled { opacity: 0.45; cursor: default; }
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
     <symbol id="i-heart-crack" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="m12 13-1-1 2-2-3-3 2-2"/></symbol>
     <symbol id="i-levels" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+    <symbol id="i-vibrate" viewBox="0 0 24 24"><rect width="8" height="14" x="8" y="5" rx="1.5"/><path d="m2 8 2 2-2 2 2 2"/><path d="m22 8-2 2 2 2-2 2"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 7h4M12 11h6M12 15h5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
 </svg>
 
 <!-- Home screen -->
@@ -543,7 +638,9 @@ button:disabled { opacity: 0.45; cursor: default; }
     </div>
     <div class="progress"><div class="progress-fill" id="progress"></div></div>
     <div class="board-wrap" id="board-wrap">
-        <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puzzle board"></svg>
+        <div class="board-card" id="board-card">
+            <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puzzle board"></svg>
+        </div>
         <div class="pointer" id="pointer">
             <svg class="hand" viewBox="0 0 24 24"><use href="#i-hand"/></svg>
             <div class="tip" id="pointer-tip">Tap to remove</div>
@@ -567,8 +664,35 @@ button:disabled { opacity: 0.45; cursor: default; }
             <h3>Settings</h3>
             <button class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
         </div>
+        <div class="setting-row">
+            <svg class="icon"><use href="#i-volume"/></svg><span>Sound</span>
+            <button class="switch" id="sw-sound" role="switch" aria-checked="true" aria-label="Sound"><span class="knob"></span></button>
+        </div>
+        <div class="setting-row">
+            <svg class="icon"><use href="#i-vibrate"/></svg><span>Vibration</span>
+            <button class="switch" id="sw-vibration" role="switch" aria-checked="true" aria-label="Vibration"><span class="knob"></span></button>
+        </div>
+        <div class="section-label">Theme</div>
+        <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
+            <button data-theme-opt="light" role="radio"><svg class="icon"><use href="#i-sun"/></svg>Light</button>
+            <button data-theme-opt="dark" role="radio"><svg class="icon"><use href="#i-moon"/></svg>Dark</button>
+            <button data-theme-opt="auto" role="radio"><svg class="icon"><use href="#i-auto"/></svg>Auto</button>
+        </div>
+        <div class="section-label">Switch Your Style</div>
+        <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
+        <button class="btn danger" id="btn-reset"><svg class="icon"><use href="#i-trash"/></svg>Reset progress</button>
+    </div>
+</div>
+
+<!-- Reset confirm -->
+<div class="modal" id="modal-confirm">
+    <div class="card center">
+        <svg class="icon big-icon warn"><use href="#i-trash"/></svg>
+        <h3>Reset progress?</h3>
+        <p class="muted">This clears your levels, hints and daily records. It can't be undone.</p>
         <div class="stack">
-            <button class="btn" id="btn-audio">Sound: ON</button>
+            <button class="btn danger-solid" id="btn-confirm-reset">Reset</button>
+            <button class="btn" id="btn-cancel-reset">Cancel</button>
         </div>
     </div>
 </div>
@@ -607,6 +731,14 @@ const HIT_FALLBACK = 0.3;      // fallback hit radius around lines, in cells
 const MAX_CELL_PX = 64;        // biggest on-screen cell size
 const START_HINTS = 3;
 const HINT_EVERY = 3;          // earn 1 hint every N completed levels
+const STORE_KEY = 'arrowEscape.save.v1';
+const THEMES = ['light', 'dark', 'auto'];
+const STYLES = [
+    { id: 'classic', name: 'Classic' },
+    { id: 'slate', name: 'Dark Slate' },
+    { id: 'olive', name: 'Olive' },
+    { id: 'mint', name: 'Soft Mint' }
+];
 
 /* ---------- State ---------- */
 const state = {
@@ -625,7 +757,10 @@ const state = {
     hints: START_HINTS,
     progress: { current: 1, unlocked: 1, completed: new Set(), daily: {} },
     grid: true,
-    sound: true
+    sound: true,
+    vibration: true,
+    theme: 'auto',
+    style: 'classic'
 };
 </script>
 
@@ -1152,8 +1287,9 @@ function layoutBoard() {
     if (!state.level || !$('screen-game').classList.contains('active')) return;
     const wrap = $('board-wrap');
     const cs = getComputedStyle(wrap);
-    const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const pad = 2 * parseFloat(getComputedStyle($('board-card')).paddingLeft);
+    const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - pad;
+    const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - pad;
     const { rows, cols } = state.level;
     const cell = Math.max(8, Math.min(w / cols, h / rows, MAX_CELL_PX));
     const svg = $('board');
@@ -1240,6 +1376,7 @@ function useHint() {
     const free = currentFreeArrows().filter(id => !state.arrows[id].busy);
     if (!free.length) return;
     state.hints--;
+    saveProgress();
     showHint(state.arrows[free[0]]);
     renderHintButton();
 }
@@ -1376,7 +1513,7 @@ function updateTutorial() {
 /* Tap on an arrow: escape if the way out is clear, otherwise bump and lose a heart. */
 function tapArrow(a) {
     initAudio();
-    const lvl = state.level;
+    const lvl = state.level;   // also a token: callbacks ignore a level that was replaced
     const block = rayBlocker(state.occ, lvl.rows, lvl.cols, a.path[0], a.dir);
     if (!block) {
         if (state.hintId === a.id) clearHint();
@@ -1390,7 +1527,7 @@ function tapArrow(a) {
         else updateTutorial();
         animateEscape(a).then(() => {
             a.el.remove();
-            if (state.remaining === 0) onLevelWon();
+            if (state.level === lvl && state.remaining === 0) onLevelWon();
         });
     } else {
         a.busy = true;
@@ -1401,7 +1538,7 @@ function tapArrow(a) {
         if (state.hearts === 0) state.locked = true;
         animateBlocked(a, block).then(() => {
             a.busy = false;
-            if (state.hearts === 0) setTimeout(onOutOfHearts, 120);
+            if (state.level === lvl && state.hearts === 0) setTimeout(onOutOfHearts, 120);
         });
     }
 }
@@ -1458,6 +1595,7 @@ function continueWithHint() {
 
 /* Short vibration on wrong taps when supported. */
 function vibrate(ms) {
+    if (!state.vibration) return;
     try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* not supported */ }
 }
 
@@ -1589,6 +1727,61 @@ function playSound(type) {
     } catch (e) { /* audio not available */ }
 }
 
+/* ---------- Storage ---------- */
+
+/* Read saved data; any bad or missing field keeps its default. Works when storage is blocked. */
+function loadSave() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { d = null; }
+    if (!d || typeof d !== 'object') return;
+    const int = (v, min) => (Number.isInteger(v) && v >= min ? v : null);
+    const p = state.progress;
+    p.unlocked = int(d.unlocked, 1) || 1;
+    p.current = Math.min(int(d.current, 1) || 1, p.unlocked);
+    if (Array.isArray(d.completed)) p.completed = new Set(d.completed.filter(n => int(n, 1)));
+    if (d.daily && typeof d.daily === 'object') {
+        for (const k in d.daily) if (/^\d{8}$/.test(k)) p.daily[k] = true;
+    }
+    if (int(d.hints, 0) !== null) state.hints = Math.min(d.hints, 999);
+    if (THEMES.indexOf(d.theme) !== -1) state.theme = d.theme;
+    if (STYLES.some(s => s.id === d.style)) state.style = d.style;
+    if (typeof d.sound === 'boolean') state.sound = d.sound;
+    if (typeof d.vibration === 'boolean') state.vibration = d.vibration;
+    if (typeof d.grid === 'boolean') state.grid = d.grid;
+}
+
+/* Write progress and settings. Failures (private mode, full storage) are ignored. */
+function saveProgress() {
+    const p = state.progress;
+    const daily = {};
+    Object.keys(p.daily).sort().slice(-90).forEach(k => { daily[k] = true; });
+    const data = {
+        current: p.current, unlocked: p.unlocked, completed: Array.from(p.completed), daily,
+        hints: state.hints, theme: state.theme, style: state.style,
+        sound: state.sound, vibration: state.vibration, grid: state.grid
+    };
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
+}
+
+/* Clear progress and hints, keep settings. */
+function resetProgress() {
+    state.progress = { current: 1, unlocked: 1, completed: new Set(), daily: {} };
+    state.hints = START_HINTS;
+    saveProgress();
+}
+
+/* ---------- Theme + style ---------- */
+const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+/* Apply the chosen theme (auto follows the system) and arrow style. */
+function applyTheme() {
+    const dark = state.theme === 'dark' || (state.theme === 'auto' && darkQuery && darkQuery.matches);
+    const root = document.documentElement;
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    root.setAttribute('data-style', state.style);
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0D1321' : '#FFFFFF');
+}
+
 /* ---------- UI ---------- */
 
 /* Open a modal and lock board input. */
@@ -1602,6 +1795,41 @@ function openModal(id) {
 function closeModals() {
     document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
     state.locked = state.hearts <= 0 || state.remaining === 0;
+}
+
+/* Build the four style cards once. */
+function buildStyleCards() {
+    const grid = $('style-grid');
+    for (const s of STYLES) {
+        const b = document.createElement('button');
+        b.className = 'style-card';
+        b.dataset.preview = s.id;
+        b.dataset.styleOpt = s.id;
+        b.setAttribute('role', 'radio');
+        b.innerHTML = '<svg class="prev" viewBox="0 0 120 72" aria-hidden="true">' +
+            '<rect width="120" height="72" rx="10" fill="var(--board-bg)"/>' +
+            '<circle cx="24" cy="18" r="2" fill="var(--dot)"/><circle cx="96" cy="54" r="2" fill="var(--dot)"/>' +
+            '<path d="M22 56V36h40V22h22" fill="none" stroke="var(--arrow)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<path d="M84 13l12 9-12 9z" fill="var(--arrow)" stroke="var(--arrow)" stroke-width="3" stroke-linejoin="round"/>' +
+            '<path d="M48 56h30" fill="none" stroke="var(--arrow)" stroke-width="6" stroke-linecap="round"/>' +
+            '<path d="M44 49l-10 7 10 7z" fill="var(--arrow)" stroke="var(--arrow)" stroke-width="3" stroke-linejoin="round" transform="translate(4 0)"/>' +
+            '</svg><span>' + s.name + '</span><svg class="icon tick"><use href="#i-check"/></svg>';
+        grid.appendChild(b);
+    }
+}
+
+/* Sync every settings control with the state. */
+function renderSettings() {
+    $('sw-sound').setAttribute('aria-checked', String(state.sound));
+    $('sw-vibration').setAttribute('aria-checked', String(state.vibration));
+    document.querySelectorAll('[data-theme-opt]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.themeOpt === state.theme)));
+    document.querySelectorAll('[data-style-opt]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.styleOpt === state.style)));
+}
+
+/* Open the settings sheet. */
+function openSettings() {
+    renderSettings();
+    openModal('modal-settings');
 }
 
 /* Show one screen and hide the others. */
@@ -1683,8 +1911,6 @@ function onLevelPick(e) {
     startLevel(Number(b.dataset.level));
 }
 
-/* Save hook (real storage is added with the settings phase). */
-function saveProgress() {}
 
 /* Wire up all buttons. */
 function bindUI() {
@@ -1692,17 +1918,40 @@ function bindUI() {
     $('btn-levels').addEventListener('click', openLevels);
     $('btn-levels-back').addEventListener('click', goHome);
     $('btn-restart').addEventListener('click', restart);
-    $('btn-settings').addEventListener('click', () => openModal('modal-settings'));
-    $('btn-home-settings').addEventListener('click', () => openModal('modal-settings'));
+    $('btn-settings').addEventListener('click', openSettings);
+    $('btn-home-settings').addEventListener('click', openSettings);
+    $('sw-sound').addEventListener('click', () => { state.sound = !state.sound; saveProgress(); renderSettings(); });
+    $('sw-vibration').addEventListener('click', () => {
+        state.vibration = !state.vibration;
+        saveProgress();
+        renderSettings();
+        vibrate(40);
+    });
+    $('theme-seg').addEventListener('click', e => {
+        const b = e.target.closest('[data-theme-opt]');
+        if (!b) return;
+        state.theme = b.dataset.themeOpt;
+        applyTheme(); saveProgress(); renderSettings();
+    });
+    $('style-grid').addEventListener('click', e => {
+        const b = e.target.closest('[data-style-opt]');
+        if (!b) return;
+        state.style = b.dataset.styleOpt;
+        applyTheme(); saveProgress(); renderSettings();
+    });
+    $('btn-reset').addEventListener('click', () => openModal('modal-confirm'));
+    $('btn-cancel-reset').addEventListener('click', openSettings);
+    $('btn-confirm-reset').addEventListener('click', () => { resetProgress(); goHome(); });
+    if (darkQuery) {
+        const onSystemTheme = () => { if (state.theme === 'auto') applyTheme(); };
+        if (darkQuery.addEventListener) darkQuery.addEventListener('change', onSystemTheme);
+        else if (darkQuery.addListener) darkQuery.addListener(onSystemTheme);
+    }
     $('btn-play').addEventListener('click', () => { initAudio(); startLevel(state.progress.current); });
     $('btn-daily').addEventListener('click', () => { initAudio(); startDaily(); });
     $('btn-home-levels').addEventListener('click', openLevels);
     $('btn-hint').addEventListener('click', useHint);
-    $('btn-grid').addEventListener('click', () => { state.grid = !state.grid; renderGrid(); });
-    $('btn-audio').addEventListener('click', e => {
-        state.sound = !state.sound;
-        e.currentTarget.textContent = 'Sound: ' + (state.sound ? 'ON' : 'OFF');
-    });
+    $('btn-grid').addEventListener('click', () => { state.grid = !state.grid; renderGrid(); saveProgress(); });
     $('btn-tryagain').addEventListener('click', restart);
     $('btn-continue').addEventListener('click', continueWithHint);
     $('btn-next').addEventListener('click', () => {
@@ -1719,6 +1968,9 @@ function bindUI() {
     window.addEventListener('resize', layoutBoard);
 }
 
+loadSave();
+applyTheme();
+buildStyleCards();
 bindUI();
 goHome();
 </script>
