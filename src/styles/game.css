@@ -2,19 +2,6 @@
 #screen-game {
   background: var(--bg);
 }
-/* daily challenge sits on the soft lavender background of the reference */
-#screen-game.daily {
-  background: var(--bg-alt);
-}
-html[data-style='classic'] #screen-game.daily .board-card {
-  background: transparent;
-}
-#screen-game.daily .stats > .pill:first-child {
-  background: rgba(255, 255, 255, 0.75);
-}
-html[data-theme='dark'] #screen-game.daily .stats > .pill:first-child {
-  background: var(--pill);
-}
 .board-card {
   background: var(--board-bg);
   border-radius: 24px;

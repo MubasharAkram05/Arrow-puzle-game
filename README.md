@@ -16,7 +16,7 @@ npm install
 npm run dev       # dev server with hot reload
 npm run build     # production build in dist/
 npm run preview   # serve the build locally
-npm test          # Vitest: engine, solver, board, 200 levels + 30 dailies
+npm test          # Vitest: engine, solver, board, 200 levels
 npm run lint      # ESLint + Prettier check
 npm run format    # auto-fix formatting and lint issues
 ```
@@ -32,7 +32,7 @@ src/
     rng.js              seeded mulberry32 RNG and seed hashing
     directions.js       up/right/down/left
     masks.js            heart, circle, diamond, hourglass, star masks
-    levels.js           difficulty tiers, goals, level and daily configs
+    levels.js           difficulty tiers, goals, level configs
     shapes.js           turn plans for straight, L, U, zig-zag, spiral, snake
     generator.js        reverse-peeling generator with retries
     board.js            occupancy, ray checks, free arrows
@@ -54,7 +54,7 @@ legacy/                 the old single-file version, kept for reference
 
 ## Levels and difficulty
 
-Every level is generated from its number (the daily challenge from the date), so a level is always the same. The generator places arrows in reverse: each new arrow may only point at arrows placed before it or off the board, so removing them in creation order always works. The solver verifies every board anyway.
+Every level is generated from its number, so a level is always the same. The generator places arrows in reverse: each new arrow may only point at arrows placed before it or off the board, so removing them in creation order always works. The solver verifies every board anyway.
 
 Difficulty is measured, not guessed:
 

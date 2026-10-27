@@ -2,6 +2,12 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-10-27
+
+### Removed
+
+- Daily Challenge: home button, calendar icon, date-seeded generator (`dateKey`, `getDailyConfig`, `generateDaily`), daily styles and tests. Numbered levels are unchanged (levels 1-200 hash the same before and after).
+
 ## [2.2.0] - 2026-10-27
 
 ### Changed

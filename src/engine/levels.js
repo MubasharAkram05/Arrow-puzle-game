@@ -8,7 +8,7 @@ export const MAX_LEN = 20;
 export const MIN_FILL = 0.9;
 
 /**
- * Difficulty tier settings shared by levels and the daily challenge.
+ * Difficulty tier settings for each level range.
  * depthBias: how strongly heads that point across other arrows are preferred.
  * goals: minimum difficulty a generated board must reach (see analyzeLevel):
  *   maxStartFree  at most this many arrows free on the first move
@@ -121,27 +121,4 @@ export function getLevelConfig(n) {
     cfg.arrowsMax = 8;
   }
   return cfg;
-}
-
-/**
- * Local date as a YYYYMMDD integer.
- * @param {Date} date
- * @returns {number}
- */
-export function dateKey(date) {
-  return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
-}
-
-/**
- * Super Hard config for the daily challenge.
- * @param {number} key YYYYMMDD
- * @returns {LevelConfig & typeof TIERS.superHard}
- */
-export function getDailyConfig(key) {
-  const rng = mulberry32(hashSeed(key, 0xda11));
-  const useMask = rng() < 0.3;
-  const mask = useMask ? MASK_SHAPES[Math.floor(rng() * MASK_SHAPES.length)] : null;
-  const size = mask ? 15 : 14;
-  const rows = mask ? size : size + (rng() < 0.5 ? 1 : 0);
-  return { ...tierConfig('superHard', mask), tier: 'superHard', rows, cols: size, mask, seed: 1e8 + key };
 }

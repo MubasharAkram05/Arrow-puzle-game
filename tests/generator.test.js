@@ -2,13 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   MASK_SHAPES,
   analyzeLevel,
-  getDailyConfig,
   getLevelConfig,
   meetsGoals,
   buildOccupancy,
   clearArrow,
-  dateKey,
-  generateDaily,
   generateLevel,
   rayBlocker,
   solveLevel,
@@ -52,7 +49,6 @@ function checkLevel(level, rules) {
 }
 
 const LEVELS = Array.from({ length: 200 }, (_, i) => i + 1);
-const DAYS = Array.from({ length: 30 }, (_, i) => dateKey(new Date(2026, 0, 1 + i)));
 
 describe('levels 1-200', () => {
   it.each(LEVELS)('level %i is valid, solvable and follows its tier', (n) => {
@@ -60,18 +56,6 @@ describe('levels 1-200', () => {
     checkLevel(level, rulesFor(n));
     expect(meetsGoals(analyzeLevel(level), getLevelConfig(n).goals)).toBe(true);
     expect(generateLevel(n).arrows).toEqual(level.arrows);
-  });
-});
-
-describe('daily challenges', () => {
-  it.each(DAYS)('daily %i is a valid Super Hard level', (key) => {
-    const level = generateDaily(key);
-    checkLevel(level, { min: 14, max: 16, difficulty: 'Super Hard' });
-    expect(meetsGoals(analyzeLevel(level), getDailyConfig(key).goals)).toBe(true);
-  });
-
-  it('different days give different boards', () => {
-    expect(generateDaily(DAYS[0]).arrows).not.toEqual(generateDaily(DAYS[1]).arrows);
   });
 });
 

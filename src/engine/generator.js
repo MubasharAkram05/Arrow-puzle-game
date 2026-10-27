@@ -2,7 +2,7 @@ import { DIRS, opposite } from './directions.js';
 import { hashSeed, mulberry32, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { makePlan } from './shapes.js';
-import { MAX_LEN, MIN_FILL, MIN_LEN, getDailyConfig, getLevelConfig } from './levels.js';
+import { MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig } from './levels.js';
 import { analyzeLevel } from './difficulty.js';
 
 const MAX_ATTEMPTS = 500;
@@ -131,7 +131,7 @@ function absorbLeftovers(grid, cfg, arrows) {
 
 /**
  * Build one candidate board with reverse peeling (not yet verified).
- * @param {object} cfg level config from getLevelConfig / getDailyConfig
+ * @param {object} cfg level config from getLevelConfig
  * @param {() => number} rng
  * @returns {object} level
  */
@@ -226,16 +226,5 @@ export function generateFromConfig(cfg) {
 export function generateLevel(n) {
   const level = generateFromConfig(getLevelConfig(n));
   level.number = n;
-  return level;
-}
-
-/**
- * Daily challenge for a YYYYMMDD key.
- * @param {number} key
- * @returns {object}
- */
-export function generateDaily(key) {
-  const level = generateFromConfig(getDailyConfig(key));
-  level.daily = key;
   return level;
 }

@@ -2,10 +2,10 @@ import { START_HINTS } from '../config.js';
 
 /**
  * Fresh progress record.
- * @returns {{current: number, unlocked: number, completed: Set<number>, daily: Record<string, boolean>}}
+ * @returns {{current: number, unlocked: number, completed: Set<number>}}
  */
 export function newProgress() {
-  return { current: 1, unlocked: 1, completed: new Set(), daily: {} };
+  return { current: 1, unlocked: 1, completed: new Set() };
 }
 
 /**
@@ -14,7 +14,6 @@ export function newProgress() {
  */
 export const state = {
   levelNum: 1,
-  daily: null, // YYYYMMDD key while playing the daily challenge
   level: null, // generated level (read only)
   arrows: [],
   occ: null, // live occupancy: cell -> arrow id or -1

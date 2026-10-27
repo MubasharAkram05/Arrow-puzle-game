@@ -1,4 +1,4 @@
-import { buildOccupancy, clearArrow, dateKey, generateDaily, generateLevel, rayBlocker } from '../engine/index.js';
+import { buildOccupancy, clearArrow, generateLevel, rayBlocker } from '../engine/index.js';
 import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
 import { boardCellPx, drawArrows, layoutBoard, strokeMetrics } from '../render/board.js';
@@ -7,7 +7,7 @@ import { hidePointer } from '../render/pointer.js';
 import { initAudio, playSound } from '../audio/sound.js';
 import { vibrate } from '../audio/haptics.js';
 import { saveProgress } from '../storage/save.js';
-import { $, shortDate } from '../ui/dom.js';
+import { $ } from '../ui/dom.js';
 import { navigate } from '../ui/navigation.js';
 import { closeModals } from '../ui/modals/modal.js';
 import { showGameOver } from '../ui/modals/gameover.js';
@@ -29,8 +29,7 @@ export function loadLevel(level) {
   state.locked = false;
   state.hintId = -1;
   hidePointer();
-  $('screen-game').classList.toggle('tutorial', !state.daily && state.levelNum === 1);
-  $('screen-game').classList.toggle('daily', !!state.daily);
+  $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
   state.metrics = strokeMetrics(boardCellPx());
   drawArrows($('board'), state.arrows, level, true, state.metrics);
   setDifficultyBadge(level.difficulty);
@@ -55,7 +54,6 @@ function setDifficultyBadge(difficulty) {
  */
 export function startLevel(n) {
   state.levelNum = n;
-  state.daily = null;
   state.progress.current = n;
   saveProgress();
   $('game-title').textContent = `Level ${n}`;
@@ -64,20 +62,10 @@ export function startLevel(n) {
   if (n === 1) updateTutorial();
 }
 
-/** Start today's daily challenge. */
-export function startDaily() {
-  const now = new Date();
-  state.daily = dateKey(now);
-  $('game-title').textContent = `Daily ${shortDate(now)}`;
-  navigate('screen-game');
-  loadLevel(generateDaily(state.daily));
-}
-
-/** Restart whatever is being played. */
+/** Restart the current level. */
 export function restart() {
   closeModals();
-  if (state.daily) startDaily();
-  else startLevel(state.levelNum);
+  startLevel(state.levelNum);
 }
 
 /** Arrow escapes: free its cells and slide it out. */
@@ -127,17 +115,13 @@ export function tapArrow(a) {
 export function onLevelWon() {
   playSound('win');
   const p = state.progress;
-  if (state.daily) {
-    p.daily[state.daily] = true;
-  } else {
-    const n = state.levelNum;
-    if (!p.completed.has(n)) {
-      p.completed.add(n);
-      if (p.completed.size % HINT_EVERY === 0) state.hints++;
-    }
-    p.unlocked = Math.max(p.unlocked, n + 1);
-    p.current = n + 1;
+  const n = state.levelNum;
+  if (!p.completed.has(n)) {
+    p.completed.add(n);
+    if (p.completed.size % HINT_EVERY === 0) state.hints++;
   }
+  p.unlocked = Math.max(p.unlocked, n + 1);
+  p.current = n + 1;
   saveProgress();
   setTimeout(showVictory, 200);
 }

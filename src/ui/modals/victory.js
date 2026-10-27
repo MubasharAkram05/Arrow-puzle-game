@@ -8,9 +8,6 @@ import { closeModals, onModalBack, openModal } from './modal.js';
 
 /** Fill in and show the victory screen with a preview of the solved level. */
 export function showVictory() {
-  const daily = !!state.daily;
-  $('victory-title').textContent = daily ? 'Daily Complete!' : 'Level Completed!';
-  $('next-label').textContent = daily ? 'Continue' : 'Next Game';
   $('next-sub').textContent = `Level ${state.progress.current}`;
   const preview = state.level.arrows.map((a) => ({ id: a.id, dir: a.dir, path: a.path }));
   const { rows, cols } = state.level;

@@ -58,7 +58,7 @@ export function useHint() {
 
 /** Level 1 tutorial: point the hand with a tooltip at a free arrow. */
 export function updateTutorial() {
-  if (state.daily || state.levelNum !== 1 || state.remaining === 0 || state.hintId !== -1) return;
+  if (state.levelNum !== 1 || state.remaining === 0 || state.hintId !== -1) return;
   const free = currentFreeArrows();
   if (free.length) showPointer(free[0], true);
 }

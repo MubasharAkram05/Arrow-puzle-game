@@ -57,7 +57,7 @@
   display: block;
   color: var(--super);
 }
-/* Super Hard: crown label above the hearts, like the reference daily screen */
+/* Super Hard: crown label above the hearts, like the reference Super Hard screen */
 .stats.super {
   grid-template-columns: 1fr auto 1fr;
   row-gap: 2px;

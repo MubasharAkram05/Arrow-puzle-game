@@ -18,16 +18,3 @@ export function svgEl(tag, attrs = {}) {
   for (const k in attrs) el.setAttribute(k, attrs[k]);
   return el;
 }
-
-/**
- * Short local date label, e.g. "Oct 27".
- * @param {Date} d
- * @returns {string}
- */
-export function shortDate(d) {
-  try {
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  } catch {
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  }
-}

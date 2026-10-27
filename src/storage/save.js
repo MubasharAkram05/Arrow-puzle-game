@@ -13,9 +13,6 @@ export function applySave(d) {
   p.unlocked = isInt(d.unlocked, 1) ? d.unlocked : 1;
   p.current = Math.min(isInt(d.current, 1) ? d.current : 1, p.unlocked);
   if (Array.isArray(d.completed)) p.completed = new Set(d.completed.filter((n) => isInt(n, 1)));
-  if (d.daily && typeof d.daily === 'object') {
-    for (const k in d.daily) if (/^\d{8}$/.test(k)) p.daily[k] = true;
-  }
   if (isInt(d.hints, 0)) state.hints = Math.min(d.hints, 999);
   if (THEMES.includes(d.theme)) state.theme = d.theme;
   if (STYLES.some((s) => s.id === d.style)) state.style = d.style;
@@ -41,18 +38,10 @@ export function loadSave() {
  */
 export function snapshot() {
   const p = state.progress;
-  const daily = {};
-  Object.keys(p.daily)
-    .sort()
-    .slice(-90)
-    .forEach((k) => {
-      daily[k] = true;
-    });
   return {
     current: p.current,
     unlocked: p.unlocked,
     completed: Array.from(p.completed),
-    daily,
     hints: state.hints,
     theme: state.theme,
     style: state.style,

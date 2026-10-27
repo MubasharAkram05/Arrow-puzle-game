@@ -65,40 +65,6 @@
   font-weight: 600;
   opacity: 0.8;
 }
-.daily-btn {
-  justify-content: flex-start;
-  gap: 14px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  min-height: 64px;
-}
-.daily-btn .btn-text {
-  flex: 1;
-}
-.cal {
-  position: relative;
-  display: inline-flex;
-  color: var(--primary);
-}
-.cal .icon {
-  width: 36px;
-  height: 36px;
-}
-.cal b {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 13px;
-  font-size: 13px;
-  text-align: center;
-}
-.done-mark {
-  color: #16a34a;
-  display: none;
-}
-.daily-btn.done .done-mark {
-  display: block;
-}
 #btn-home-levels {
   background: transparent;
   color: var(--primary);
