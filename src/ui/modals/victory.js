@@ -34,7 +34,7 @@ function renderPreview() {
   const n = Math.max(rows, cols);
   const cell = Math.min(box / n, Math.max(14, 90 / n));
   const svg = $('mini-board');
-  drawArrows(svg, preview, state.level, false, strokeMetrics(cell, 0.62));
+  drawArrows(svg, preview, state.level, false, { ...strokeMetrics(cell, 0.62), head: state.cosmetics.equipped.head });
   svg.setAttribute('width', Math.floor(cell * cols));
   svg.setAttribute('height', Math.floor(cell * rows));
 }
@@ -46,7 +46,7 @@ function renderPreview() {
 export function showVictory(summary) {
   $('next-sub').textContent = `Level ${state.progress.current}`;
   renderRewards(summary.reward, summary.xp);
-  renderCurrency(summary.before);
+  renderCurrency(summary.before, $('modal-victory'));
   openModal('modal-victory');
   renderPreview();
   startConfetti();

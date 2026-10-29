@@ -3,6 +3,7 @@
  * Wallets are plain objects { coins, diamonds } and are never mutated; functions return new ones.
  */
 import { REWARDS } from '../config.js';
+import { isPerfect } from './boosters.js';
 
 /** @typedef {{coins: number, diamonds: number}} Wallet */
 /** @typedef {{coins?: number, diamonds?: number}} Price */
@@ -45,6 +46,7 @@ export function isMaskLevel(n) {
  * @property {boolean} wasPerfect level was already finished perfectly before
  * @property {boolean} chapterDone after this win every level of the chapter is completed
  * @property {boolean} chapterRewarded the chapter bonus was already paid
+ * @property {boolean} [assisted] a booster or hint was used (the level can't be perfect)
  */
 
 /**
@@ -55,7 +57,7 @@ export function isMaskLevel(n) {
  */
 export function levelReward(win) {
   const lines = [];
-  const perfect = win.heartsLeft >= win.maxHearts;
+  const perfect = isPerfect(win.heartsLeft, win.maxHearts, !!win.assisted);
   const mult = REWARDS.multiplier[win.difficulty] || 1;
   const base = REWARDS.baseCoins;
   const hearts = REWARDS.coinsPerHeart * Math.max(0, win.heartsLeft);

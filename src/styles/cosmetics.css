@@ -1,0 +1,137 @@
+/* ---------- Cosmetics: board backgrounds, frames, effects canvas, settings chips ---------- */
+
+/* Board backgrounds. Each sets its own arrow and dot colours so contrast holds in light and dark mode. */
+html[data-board='paper'] .board-card,
+[data-board-preview='paper'] {
+  --arrow: #3b2f1e;
+  --dot: #d8cbb0;
+  background: repeating-linear-gradient(0deg, rgba(120, 90, 40, 0.05) 0 1px, transparent 1px 22px), #f7f0e1;
+}
+html[data-theme='dark'][data-board='paper'] .board-card,
+html[data-theme='dark'] [data-board-preview='paper'] {
+  --arrow: #f4e8cf;
+  --dot: #5a5040;
+  background: repeating-linear-gradient(0deg, rgba(255, 240, 210, 0.05) 0 1px, transparent 1px 22px), #2a251d;
+}
+html[data-board='sky'] .board-card,
+[data-board-preview='sky'] {
+  --arrow: #0f2c57;
+  --dot: #b8cde4;
+  background: linear-gradient(160deg, #dcefff 0%, #eae6ff 55%, #ffe4ef 100%);
+}
+html[data-theme='dark'][data-board='sky'] .board-card,
+html[data-theme='dark'] [data-board-preview='sky'] {
+  --arrow: #e6f0ff;
+  --dot: #3f5579;
+  background: linear-gradient(160deg, #142848 0%, #241f4a 55%, #3a2140 100%);
+}
+html[data-board='chalk'] .board-card,
+[data-board-preview='chalk'] {
+  --arrow: #f1f5ee;
+  --dot: #42574b;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%), #23332b;
+}
+html[data-board='stars'] .board-card,
+[data-board-preview='stars'] {
+  --arrow: #f8f1c9;
+  --dot: #2d3b68;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 40% 62%, #fff, transparent), radial-gradient(1px 1px at 88% 70%, #fff, transparent),
+    radial-gradient(1px 1px at 22% 84%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 34%, #fdf6c4, transparent), linear-gradient(180deg, #0b1430, #18234d);
+}
+html:not([data-board='plain']) .board-card {
+  box-shadow: var(--shadow);
+}
+
+/* Escape effect particles */
+.fx-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Avatar frames */
+html[data-frame='silver'] .avatar-btn,
+.frame-preview[data-frame='silver'] {
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 7px #c0c7d2,
+    0 0 0 8px #8e98a8;
+}
+html[data-frame='gold'] .avatar-btn,
+.frame-preview[data-frame='gold'] {
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 7px #f2b705,
+    0 0 0 8px #b98500,
+    0 0 14px rgba(242, 183, 5, 0.5);
+}
+html[data-frame='diamond'] .avatar-btn,
+.frame-preview[data-frame='diamond'] {
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 7px #35c8f4,
+    0 0 0 9px #b8eeff,
+    0 0 18px rgba(53, 200, 244, 0.6);
+}
+.avatar-opt {
+  position: relative;
+}
+.avatar-lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: none;
+  align-items: center;
+  gap: 1px;
+  padding: 0 5px 0 2px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: var(--shadow);
+}
+.avatar-lock .cur-icon {
+  width: 14px;
+  height: 14px;
+}
+.avatar-opt.locked .avatar {
+  filter: grayscale(0.6) opacity(0.7);
+}
+.avatar-opt.locked .avatar-lock {
+  display: inline-flex;
+}
+
+/* Settings: equip owned cosmetics */
+.chip-row {
+  margin-bottom: 8px;
+}
+.chip-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+.chip[aria-checked='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+}

@@ -126,12 +126,14 @@
           </svg>
         </div>
         <div class="tip-bubble" id="tip-bubble">Tap to remove</div>
+        <canvas class="fx-canvas" id="fx-canvas" aria-hidden="true"></canvas>
       </div>
       <div class="fab-row">
         <button class="fab" id="btn-hint" aria-label="Hint">
           <svg class="icon"><use href="#i-bulb" /></svg>
           <span class="badge" id="hint-count">3</span>
         </button>
+        <div class="booster-bar" id="booster-bar" role="toolbar" aria-label="Boosters"></div>
         <button class="fab" id="btn-grid" aria-label="Toggle grid" aria-pressed="false">
           <svg class="icon"><use href="#i-grid" /></svg>
         </button>
@@ -173,8 +175,10 @@
         </div>
         <div class="section-label">Switch Your Style</div>
         <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
+        <div class="section-label">Cosmetics</div>
+        <div class="cosmetic-equip" id="cosmetic-equip"></div>
         <button class="link-btn more-styles" id="btn-more-styles">
-          <svg class="icon"><use href="#i-shop" /></svg>More styles in the Shop
+          <svg class="icon"><use href="#i-shop" /></svg>More in the Shop
         </button>
         <button class="btn danger" id="btn-reset">
           <svg class="icon"><use href="#i-trash" /></svg>Reset progress

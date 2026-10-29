@@ -66,10 +66,10 @@ function appendChapters(count) {
   $('level-grid').insertAdjacentHTML('beforeend', html.join(''));
 }
 
-/** Rebuild the list: current chapter open, a couple of locked chapters after it. */
+/** Rebuild the list: only the current level's chapter open, plus a couple of locked chapters after it. */
 function renderLevels() {
-  const cur = chapterOf(state.progress.current);
-  open.add(cur);
+  open.clear();
+  open.add(chapterOf(state.progress.current));
   $('level-grid').textContent = '';
   shown = 0;
   appendChapters(Math.max(chapterOf(state.progress.unlocked) + 2, 3));
@@ -91,7 +91,8 @@ export function openLevels(asTab = false) {
   renderLevels();
   if (asTab) openTab('screen-levels');
   else navigate('screen-levels');
-  requestAnimationFrame(scrollToCurrent);
+  // two frames: the screen is displayed and laid out before scrolling
+  requestAnimationFrame(() => requestAnimationFrame(scrollToCurrent));
 }
 
 /** Open or close a chapter card. */
@@ -125,5 +126,8 @@ export function bindLevels() {
     const el = e.currentTarget;
     if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) appendChapters(BATCH);
   });
-  onReturn('screen-levels', renderLevels);
+  onReturn('screen-levels', () => {
+    renderLevels();
+    requestAnimationFrame(() => requestAnimationFrame(scrollToCurrent));
+  });
 }

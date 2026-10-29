@@ -1,0 +1,196 @@
+/* ---------- Shop live previews (boards, heads, confetti, frames, escape effects) ---------- */
+/* Previews */
+.board-swatch {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--board-bg);
+}
+.board-swatch svg,
+.head-prev,
+.confetti-prev {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.head-prev {
+  color: var(--arrow);
+}
+.play-chip {
+  position: absolute;
+  right: 12%;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.play-chip .icon {
+  width: 16px;
+  height: 16px;
+}
+.frame-preview {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+.frame-preview svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Escape effect previews: an arrow slides out of the box, the trail follows (transform/opacity only) */
+.fx-prev {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--board-bg);
+}
+.fx-arrow {
+  position: absolute;
+  top: 50%;
+  left: 14%;
+  width: 34px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: var(--arrow);
+  animation: fx-move 1.8s ease-in infinite;
+}
+.fx-arrow::after {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  border-left: 12px solid var(--arrow);
+  content: '';
+}
+.fx-trail i {
+  position: absolute;
+  top: 50%;
+  left: 14%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: fx-trail 1.8s ease-in infinite;
+}
+.fx-trail i:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.fx-trail i:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.fx-trail i:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.fx-default .fx-trail {
+  display: none;
+}
+.fx-spark .fx-trail i {
+  width: 5px;
+  height: 5px;
+  background: #ffc83d;
+}
+.fx-comet .fx-trail i {
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  background: radial-gradient(circle, #8fd3ff, transparent 70%);
+}
+.fx-burst .fx-trail i {
+  left: 60%;
+  background: #ff6b9a;
+  animation-name: fx-burst;
+  animation-delay: 0s;
+}
+.fx-burst .fx-trail i:nth-child(2) {
+  --bx: -18px;
+  --by: -14px;
+}
+.fx-burst .fx-trail i:nth-child(3) {
+  --bx: 18px;
+  --by: 14px;
+  background: #ffc83d;
+}
+.fx-burst .fx-trail i:nth-child(4) {
+  --bx: -14px;
+  --by: 16px;
+  background: #6fe2f2;
+}
+.fx-rocket .fx-trail i {
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  background: radial-gradient(circle, #ffe08a, #ff6a2b 60%, transparent 72%);
+}
+@keyframes fx-move {
+  0%,
+  15% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(140px);
+  }
+  71%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes fx-trail {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0;
+    transform: translateX(110px) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fx-burst {
+  0%,
+  40% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  50% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--bx, 16px), var(--by, -16px)) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-arrow,
+  .fx-trail i {
+    animation: none;
+  }
+  .fx-trail i {
+    opacity: 0.8;
+  }
+}

@@ -71,6 +71,43 @@ export function arrowGeometry(arrow, m, rows, cols) {
   };
 }
 
+/**
+ * Arrowhead element for the equipped shape (m.head). Only the drawing changes:
+ * hit testing uses the arrow path, so every shape taps the same.
+ * @param {ReturnType<typeof strokeMetrics> & {head?: string}} m
+ * @returns {SVGElement}
+ */
+export function headElement(m) {
+  const { hw, back, tip, sw } = m;
+  switch (m.head) {
+    case 'chevron':
+      return svgEl('polygon', {
+        class: 'head',
+        'stroke-width': sw * 0.25,
+        points: `${-hw},${back} 0,${-tip} ${hw},${back} 0,${back * 0.1}`,
+      });
+    case 'round':
+      // a smaller triangle with a thick round-joined outline reads as a rounded head
+      return svgEl('polygon', {
+        class: 'head',
+        'stroke-width': sw * 0.9,
+        points: `${-hw * 0.75},${back * 0.8} ${hw * 0.75},${back * 0.8} 0,${-tip * 0.8}`,
+      });
+    case 'feather':
+      return svgEl('path', {
+        class: 'head',
+        'stroke-width': sw * 0.2,
+        d: `M0 ${-tip * 1.15}Q${hw} ${back * 0.1} 0 ${back * 1.2}Q${-hw} ${back * 0.1} 0 ${-tip * 1.15}Z`,
+      });
+    default:
+      return svgEl('polygon', {
+        class: 'head',
+        'stroke-width': sw * 0.25,
+        points: `${-hw},${back} ${hw},${back} 0,${-tip}`,
+      });
+  }
+}
+
 /** Dot grid as one path (only cells inside the mask). */
 function dotsPath(level, r0) {
   let d = '';
@@ -108,11 +145,7 @@ export function drawArrows(svg, arrows, level, withDots, m) {
       'stroke-dasharray': `${g.dashLen} 1000000`,
       'stroke-dashoffset': 0,
     });
-    const head = svgEl('polygon', {
-      class: 'head',
-      'stroke-width': m.sw * 0.25,
-      points: `${-m.hw},${m.back} ${m.hw},${m.back} 0,${-m.tip}`,
-    });
+    const head = headElement(m);
     el.append(shaft, head);
     layer.appendChild(el);
     Object.assign(a, { el, shaft, headEl: head, geom: g });

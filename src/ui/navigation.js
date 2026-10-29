@@ -1,5 +1,6 @@
 import { layoutBoard } from '../render/board.js';
 import { updateBottomNav } from './components/bottomNav.js';
+import { syncCurrency } from './components/currencyBar.js';
 
 /** Screen history; the first entry is the root (home). */
 const stack = ['screen-home'];
@@ -10,6 +11,7 @@ const returnHooks = {};
 function show(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
   updateBottomNav(id);
+  syncCurrency(); // counters always show the real wallet on a new screen
   if (id === 'screen-game') requestAnimationFrame(layoutBoard);
 }
 

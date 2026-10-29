@@ -3,8 +3,9 @@ import { state } from '../../game/state.js';
 import { vibrate } from '../../audio/haptics.js';
 import { resetProgress, saveProgress } from '../../storage/save.js';
 import { PREVIEW_SVG } from '../components/stylePreview.js';
+import { bindCosmeticChips, renderCosmeticChips } from './cosmeticChips.js';
 import { $ } from '../dom.js';
-import { openShop } from '../screens/shopScreen.js';
+import { openShop } from '../screens/shop/index.js';
 import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
 import { closeModals, onModalBack, openModal } from './modal.js';
@@ -39,6 +40,7 @@ function renderSettings() {
 /** Open the settings sheet. */
 export function openSettings() {
   renderSettings();
+  renderCosmeticChips();
   openModal('modal-settings');
 }
 
@@ -52,6 +54,7 @@ function changed() {
 /** Wire all settings controls and the reset confirmation. */
 export function bindSettings() {
   buildStyleCards();
+  bindCosmeticChips();
   $('sw-sound').addEventListener('click', () => {
     state.sound = !state.sound;
     changed();
@@ -75,7 +78,7 @@ export function bindSettings() {
   });
   $('btn-more-styles').addEventListener('click', () => {
     closeModals();
-    openShop();
+    openShop('styles');
   });
   $('btn-reset').addEventListener('click', () => openModal('modal-confirm'));
   $('btn-cancel-reset').addEventListener('click', openSettings);

@@ -3,6 +3,7 @@
  */
 import { achievementContext } from '../../game/rewards.js';
 import { claimableCount } from '../../game/achievements.js';
+import { giftStatus } from '../../game/offers.js';
 import { state } from '../../game/state.js';
 import { icon } from './icons.js';
 
@@ -33,6 +34,7 @@ export function mountBottomNav(openers) {
     if (b && !b.classList.contains('active') && handlers[b.dataset.screen]) handlers[b.dataset.screen]();
   });
   document.body.appendChild(nav);
+  setInterval(renderNavDots, 30000); // the gift can become ready while the app is open
 }
 
 /**
@@ -51,6 +53,15 @@ export function updateBottomNav(screenId) {
     if (active) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
-  const dot = nav.querySelector('[data-screen="screen-profile"] .nav-dot');
-  dot.hidden = claimableCount(achievementContext(), state.claimed) === 0;
+  renderNavDots();
+}
+
+/** Red dots: Profile when an achievement can be claimed, Shop when the free gift is ready. */
+export function renderNavDots() {
+  const nav = document.getElementById('bottom-nav');
+  if (!nav) return;
+  nav.querySelector('[data-screen="screen-profile"] .nav-dot').hidden =
+    claimableCount(achievementContext(), state.claimed) === 0;
+  nav.querySelector('[data-screen="screen-shop"] .nav-dot').hidden = !giftStatus(Date.now(), state.offers.giftLast)
+    .ready;
 }

@@ -21,7 +21,7 @@ describe('achievement progress', () => {
 
   it('tracks each goal and caps the value at the goal', () => {
     const c = ctx({
-      completed: range(1, 20),
+      completed: range(1, 40),
       perfect: range(1, 4),
       masks: new Set([10, 20]),
       stats: { ...newStats(), arrowsCleared: 1500, bestPerfectStreak: 2, coinsSpent: 300 },

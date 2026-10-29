@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   BACKUP_KEY,
+  convertChapters,
   V1_KEY,
-  V2_KEY,
+  V3_KEY,
   defaultSave,
   migrateV1,
   readSave,
@@ -35,10 +36,10 @@ const V1 = {
   grid: true,
 };
 
-describe('v1 to v2 migration', () => {
+describe('v1 migration', () => {
   it('keeps level progress, hints, settings and the equipped style', () => {
     const d = migrateV1(V1);
-    expect(d.version).toBe(2);
+    expect(d.version).toBe(3);
     expect(d.progress).toMatchObject({ current: 14, unlocked: 15 });
     expect(d.progress.completed).toEqual(V1.completed);
     expect(d.wallet.hints).toBe(6);
@@ -61,11 +62,11 @@ describe('v1 to v2 migration', () => {
     expect(res.source).toBe('v1');
     expect(res.data.progress.current).toBe(14);
     expect(s.has(V1_KEY)).toBe(false);
-    expect(JSON.parse(s.getItem(V2_KEY)).progress.completed).toHaveLength(14);
-    expect(readSave(s).source).toBe('v2');
+    expect(JSON.parse(s.getItem(V3_KEY)).progress.completed).toHaveLength(14);
+    expect(readSave(s).source).toBe('v3');
   });
 
-  it('keeps the v1 key when the v2 write fails, so nothing is lost', () => {
+  it('keeps the v1 key when the v3 write fails, so nothing is lost', () => {
     const s = memoryStorage({ [V1_KEY]: JSON.stringify(V1) });
     s.setItem = () => {
       throw new Error('quota');
@@ -124,7 +125,7 @@ describe('corrupted data', () => {
 
   it('uses the backup when the main save is unreadable', () => {
     const good = sanitize({ wallet: { coins: 120 } });
-    const s = memoryStorage({ [V2_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
+    const s = memoryStorage({ [V3_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
     const res = readSave(s);
     expect(res.source).toBe('backup');
     expect(res.data.wallet.coins).toBe(120);
@@ -143,6 +144,27 @@ describe('corrupted data', () => {
   it('writes the save and a backup copy', () => {
     const s = memoryStorage();
     expect(writeSave(s, defaultSave())).toBe(true);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V2_KEY));
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V3_KEY));
+  });
+});
+
+describe('40-level chapters', () => {
+  it('maps old 20-level chapter rewards to new 40-level chapters', () => {
+    expect(convertChapters([1, 2], 20)).toEqual([1]);
+    expect(convertChapters([1, 2, 3, 4], 20)).toEqual([1, 2]);
+    expect(convertChapters([1, 2, 3], 20)).toEqual([1]);
+    expect(convertChapters([], 20)).toEqual([]);
+  });
+
+  it('does not mark a half-rewarded chapter, so its reward is not lost', () => {
+    expect(convertChapters([1], 20)).toEqual([]);
+    expect(convertChapters([2, 3], 20)).toEqual([]);
+  });
+
+  it('converts saves without a chapter size once and keeps new saves as they are', () => {
+    const old = sanitize({ progress: { completed: [1, 2], chaptersRewarded: [1, 2, 3, 4] } });
+    expect(old.progress.chaptersRewarded).toEqual([1, 2]);
+    expect(old.progress.chapterSize).toBe(40);
+    expect(sanitize(old).progress.chaptersRewarded).toEqual([1, 2]);
   });
 });

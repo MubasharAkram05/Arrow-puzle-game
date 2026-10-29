@@ -1,4 +1,5 @@
 import { state } from '../game/state.js';
+import { PACKS } from './packs.js';
 
 let audioCtx = null;
 
@@ -28,21 +29,35 @@ function tone(freq, endFreq, type, start, dur, vol) {
   osc.stop(start + dur + 0.02);
 }
 
+/** Short burst of filtered white noise (wooden knocks, rustles). */
+function noise(start, dur, vol, filterHz) {
+  const len = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = filterHz;
+  const gain = audioCtx.createGain();
+  gain.gain.value = vol;
+  src.connect(filter).connect(gain).connect(audioCtx.destination);
+  src.start(start);
+}
+
 /**
- * Play a named sound effect (no-op when sound is off or Web Audio is missing).
+ * Play a named sound effect from the equipped pack (no-op when sound is off or Web Audio is missing).
  * @param {'pop'|'bump'|'win'} type
+ * @param {string} [pack] sound pack id (defaults to the equipped one; used by Shop previews)
  */
-export function playSound(type) {
+export function playSound(type, pack) {
   if (!state.sound) return;
   try {
     initAudio();
     if (!audioCtx) return;
-    const t = audioCtx.currentTime;
-    if (type === 'pop') tone(520, 900, 'sine', t, 0.1, 0.25);
-    else if (type === 'bump') tone(150, 70, 'triangle', t, 0.18, 0.35);
-    else if (type === 'win') {
-      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 0, 'sine', t + i * 0.11, 0.24, 0.22));
-    }
+    const p = PACKS[pack || state.cosmetics.equipped.sound] || PACKS.soft;
+    if (p[type]) p[type](tone, noise, audioCtx.currentTime);
   } catch {
     // audio not available
   }

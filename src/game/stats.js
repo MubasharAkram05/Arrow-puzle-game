@@ -17,6 +17,8 @@ export function newStats() {
     bestPerfectStreak: 0,
     coinsSpent: 0,
     playSeconds: 0,
+    boostersUsed: 0,
+    hintsUsed: 0,
   };
 }
 
