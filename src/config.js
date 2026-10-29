@@ -6,6 +6,17 @@ export const HIT_FALLBACK = 0.3;
 export const BASE_CELL_PX = 24;
 /** Width a small board aims for (px), so 3x3 gets big cells and 8x8 stays at BASE_CELL_PX. */
 export const SMALL_BOARD_PX = 140;
+/** Pinch zoom on big boards. */
+export const ZOOM = Object.freeze({
+  targetCellPx: 46, // zoom in until a cell is about a fingertip wide
+  maxScale: 5,
+  dragPx: 10, // movement that turns a tap into a drag
+  doubleTapMs: 350, // double tap on empty space resets the zoom
+  hintKey: 'arrowEscape:zoomHint',
+  hintMinCols: 14, // only on dense boards
+  hintTimes: 3, // "Pinch to zoom" shows on the first 3 big boards
+  hintMs: 3500,
+});
 /** Arrow line width and head size in screen px (constant across board sizes, as in the reference). */
 export const STROKE_PX = 4.2;
 export const HEAD_W_PX = 15;
@@ -21,6 +32,7 @@ export const THEMES = Object.freeze(['light', 'dark', 'auto']);
 export const REWARDS = Object.freeze({
   baseCoins: 10, // every level win
   coinsPerHeart: 5, // per heart left at the end
+  arrowsPerSizeCoin: 10, // board size bonus: +1 coin per 10 arrows
   multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2 }),
   perfectBonus: 20, // no heart lost, first time per level
   replayRate: 0.25, // share of coins for a level already completed
@@ -146,4 +158,90 @@ export const OFFERS = Object.freeze({
   freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
   exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),
   weeklySale: Object.freeze({ discount: 0.3 }),
+});
+
+/**
+ * Level generation. Every number that shapes a board lives here (src/engine/levels.js reads it).
+ *
+ * Tier goals (checked by the generator on every board, see analyzeLevel):
+ *   maxStartFree / minStartFree  arrows that can leave on the very first move
+ *   minAvgDepth                  mean number of arrows that must leave before each arrow
+ *   minRounds                    solve rounds: removal waves needed when every free arrow leaves at once
+ * size: board width = from + floor((n - firstLevel) / every), capped at max; rows = width + tall (+0-1).
+ * arrows: allowed arrow count (shape boards are exempt: they have less room).
+ */
+const SHORT_ONLY = Object.freeze({
+  short: { min: 2, max: 6 },
+  medium: { min: 7, max: 12, share: 0 },
+  long: { min: 13, max: 30, share: 0 },
+});
+/**
+ * About 70% short, 20% medium and 10-15% long arrows.
+ * medium.share: chance a normal arrow aims for 7-12 cells.
+ * long.share: share of arrows turned into long ones (13-30 cells) by joining neighbours onto deep
+ * arrows (src/engine/longArrows.js), so long arrows are blocked deep and leave late.
+ */
+const MIXED = Object.freeze({
+  short: { min: 2, max: 6 },
+  medium: { min: 7, max: 12, share: 0.4 },
+  long: { min: 13, max: 30, share: 0.13 },
+});
+const BASE_STYLES = Object.freeze({ straight: 2, L: 3, U: 2, zigzag: 2, spiral: 1, snake: 2 });
+/** Long arrows: straights across a row/column, U-turns, square spirals, combs and snakes. */
+const LONG_STYLES = Object.freeze({ straight: 3, U: 2, spiral: 2, snake: 3, zigzag: 1 });
+
+export const LEVELS = Object.freeze({
+  minLen: 2,
+  maxLen: 30,
+  minFill: 0.9, // share of usable cells covered by arrows
+  maxCols: 34,
+  maskEvery: 10, // every 10th level is a shape
+  maskExtraCols: 3, // shape boards are square and a bit wider
+  maskGoalScale: 0.6, // shapes have shorter rays and less room: depth and rounds goals x0.6
+  maskExtraFree: 12, // and their jagged edge lets a few more arrows out at the start
+  tiers: Object.freeze({
+    tutorial: {
+      difficulty: 'Normal',
+      levels: [1, 3],
+      size: { from: 5, every: 1, max: 7, tall: 1 },
+      hearts: 3,
+      depthBias: 0,
+      arrows: [6, 15],
+      goals: { minStartFree: 2, maxStartFree: 3, minAvgDepth: 0, minRounds: 2 },
+      lengths: SHORT_ONLY,
+      styles: { straight: 3, L: 3, U: 1 },
+    },
+    normal: {
+      difficulty: 'Normal',
+      levels: [4, 20],
+      size: { from: 16, every: 3, max: 21, tall: 4 },
+      arrows: [40, 80],
+      hearts: 3,
+      depthBias: 0.6,
+      goals: { maxStartFree: 3, minAvgDepth: 9, minRounds: 12 },
+      lengths: MIXED,
+    },
+    hard: {
+      difficulty: 'Hard',
+      levels: [21, 60],
+      size: { from: 22, every: 8, max: 27, tall: 5 },
+      arrows: [80, 140],
+      hearts: 3,
+      depthBias: 0.8,
+      goals: { maxStartFree: 3, minAvgDepth: 20, minRounds: 20 },
+      lengths: MIXED,
+    },
+    superHard: {
+      difficulty: 'Super Hard',
+      levels: [61, Infinity],
+      size: { from: 30, every: 20, max: 34, tall: 8 },
+      arrows: [140, Infinity],
+      hearts: 3,
+      depthBias: 1,
+      goals: { maxStartFree: 2, minAvgDepth: 26, minRounds: 28 },
+      lengths: MIXED,
+    },
+  }),
+  styles: BASE_STYLES,
+  longStyles: LONG_STYLES,
 });

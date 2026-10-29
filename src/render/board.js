@@ -15,10 +15,11 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
  */
 export function strokeMetrics(cellPx, k = 1) {
   const u = (CELL / cellPx) * k;
-  const len = clamp(HEAD_L_PX * u, 36, 70);
+  // the upper limits keep lines thin on dense boards (cells under ~16px), like the reference
+  const len = clamp(HEAD_L_PX * u, 36, 60);
   return {
-    sw: clamp(STROKE_PX * u, 9, 32),
-    hw: clamp((HEAD_W_PX / 2) * u, 18, 40),
+    sw: clamp(STROKE_PX * u, 9, 22),
+    hw: clamp((HEAD_W_PX / 2) * u, 18, 34),
     back: len * 0.45,
     tip: len * 0.55,
     dot: clamp(1.6 * u, 3, 9),

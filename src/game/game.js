@@ -1,6 +1,7 @@
 import { buildOccupancy, clearArrow, generateLevel, rayBlocker } from '../engine/index.js';
 import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
+import { maybeShowZoomHint, resetZoom } from '../input/zoom.js';
 import { boardCellPx, drawArrows, layoutBoard, strokeMetrics } from '../render/board.js';
 import { renderGrid, renderHearts, renderHintButton, renderProgress } from '../render/hud.js';
 import { hidePointer } from '../render/pointer.js';
@@ -47,6 +48,8 @@ export function loadLevel(level) {
   renderBoosterBar();
   renderGrid();
   layoutBoard();
+  resetZoom(boardCellPx());
+  maybeShowZoomHint(level.cols);
 }
 
 /** Difficulty pill; Super Hard gets the crown and purple label. */
@@ -143,7 +146,7 @@ export function onLevelWon() {
   const p = state.progress;
   const n = state.levelNum;
   const firstClear = !p.completed.has(n);
-  const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts);
+  const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts, state.level.arrows.length);
   if (firstClear && p.completed.size % HINT_EVERY === 0) state.hints++;
   p.unlocked = Math.max(p.unlocked, n + 1);
   p.current = n + 1;

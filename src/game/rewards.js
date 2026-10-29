@@ -51,9 +51,10 @@ export function credit(amount, source) {
  * @param {string} difficulty
  * @param {number} heartsLeft
  * @param {number} maxHearts
+ * @param {number} [arrows] arrows on the board (size bonus)
  * @returns {{reward: ReturnType<typeof levelReward>, xp: number, before: {coins: number, diamonds: number}}}
  */
-export function applyWin(n, difficulty, heartsLeft, maxHearts) {
+export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   const p = state.progress;
   const before = wallet();
   const wasCompleted = p.completed.has(n);
@@ -70,6 +71,7 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts) {
     chapterDone: chapterLevels(chapter).every((l) => p.completed.has(l)),
     chapterRewarded: p.chaptersRewarded.has(chapter),
     assisted: state.levelBoost.assisted,
+    arrows,
   });
   if (reward.perfect) p.perfect.add(n);
   if (reward.chapter) p.chaptersRewarded.add(chapter);

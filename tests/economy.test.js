@@ -30,6 +30,14 @@ describe('levelReward: coins', () => {
     expect(levelReward(win({ heartsLeft: 0, maxHearts: 3 })).coins).toBe(10);
   });
 
+  it('adds +1 coin per 10 arrows on the board, before the difficulty multiplier', () => {
+    expect(levelReward(win({ heartsLeft: 0, arrows: 9 })).coins).toBe(10);
+    const big = levelReward(win({ heartsLeft: 0, arrows: 145 }));
+    expect(big.coins).toBe(24);
+    expect(big.lines).toContainEqual({ label: 'Board size (145 arrows)', coins: 14 });
+    expect(levelReward(win({ difficulty: 'Super Hard', heartsLeft: 0, wasPerfect: true, arrows: 160 })).coins).toBe(52);
+  });
+
   it('applies Hard x1.5 and Super Hard x2 to base + hearts', () => {
     expect(levelReward(win({ difficulty: 'Hard', heartsLeft: 2, maxHearts: 4 })).coins).toBe(30);
     expect(levelReward(win({ difficulty: 'Super Hard', heartsLeft: 1, maxHearts: 4 })).coins).toBe(30);
