@@ -47,6 +47,7 @@ describe('free gift timer', () => {
     expect(formatCountdown(3 * H + 5 * 60 * 1000)).toBe('3h 05m');
     expect(formatCountdown(4 * 60 * 1000 + 9000)).toBe('4m 09s');
     expect(formatCountdown(-5)).toBe('0m 00s');
+    expect(formatCountdown(79 * H + 31 * 60 * 1000)).toBe('3d 7h');
   });
 });
 

@@ -13,7 +13,7 @@ import { bindGameScreen } from './ui/screens/game.js';
 import { bindHome, goHome } from './ui/screens/home.js';
 import { bindLevels, openLevels } from './ui/screens/levels.js';
 import { bindProfile, openProfile } from './ui/screens/profileScreen.js';
-import { bindShop, openShop } from './ui/screens/shopScreen.js';
+import { bindShop, openShop } from './ui/screens/shop/index.js';
 import { mountBottomNav } from './ui/components/bottomNav.js';
 import { startPlayClock } from './ui/screens/game.js';
 import { bindBoosterBar } from './ui/screens/boosterBar.js';

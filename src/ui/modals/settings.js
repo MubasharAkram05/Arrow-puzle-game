@@ -5,7 +5,7 @@ import { resetProgress, saveProgress } from '../../storage/save.js';
 import { PREVIEW_SVG } from '../components/stylePreview.js';
 import { bindCosmeticChips, renderCosmeticChips } from './cosmeticChips.js';
 import { $ } from '../dom.js';
-import { openShop } from '../screens/shopScreen.js';
+import { openShop } from '../screens/shop/index.js';
 import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
 import { closeModals, onModalBack, openModal } from './modal.js';
@@ -78,7 +78,7 @@ export function bindSettings() {
   });
   $('btn-more-styles').addEventListener('click', () => {
     closeModals();
-    openShop();
+    openShop('styles');
   });
   $('btn-reset').addEventListener('click', () => openModal('modal-confirm'));
   $('btn-cancel-reset').addEventListener('click', openSettings);

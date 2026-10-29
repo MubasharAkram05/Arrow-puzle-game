@@ -54,6 +54,7 @@ export function defaultSave() {
     boosters: { shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 },
     cosmetics: newCosmetics(),
     offers: { starterBought: false, giftLast: 0 },
+    seenNew: [],
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -87,6 +88,16 @@ export function convertChapters(rewarded, oldSize) {
     if (all) out.push(c);
   }
   return out;
+}
+
+/**
+ * "New" badge keys already seen: short "category:id" strings, unique, capped.
+ * @param {unknown} v
+ * @returns {string[]}
+ */
+function seenKeys(v) {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.filter((k) => typeof k === 'string' && /^[a-z]+:[a-z0-9-]{1,24}$/i.test(k)))].slice(0, 200);
 }
 
 /**
@@ -174,6 +185,7 @@ export function sanitize(raw) {
     boosters: Object.fromEntries(BOOSTER_IDS.map((id) => [id, count(obj(d.boosters)[id])])),
     cosmetics,
     offers: { starterBought: bool(obj(d.offers).starterBought, false), giftLast: timestamp(obj(d.offers).giftLast) },
+    seenNew: seenKeys(d.seenNew),
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {

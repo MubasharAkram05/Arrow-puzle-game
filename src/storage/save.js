@@ -39,6 +39,7 @@ export function applySave(raw) {
   state.boosters = { ...d.boosters };
   state.cosmetics = d.cosmetics;
   state.offers = { ...d.offers };
+  state.seenNew = new Set(d.seenNew);
   state.xp = d.xp;
   state.stats = { ...newStats(), ...d.stats };
   state.claimed = new Set(d.achievements.claimed);
@@ -78,6 +79,7 @@ export function snapshot() {
     boosters: { ...state.boosters },
     cosmetics: state.cosmetics,
     offers: { ...state.offers },
+    seenNew: [...state.seenNew],
     xp: state.xp,
     stats: { ...state.stats },
     achievements: { claimed: [...state.claimed], progress },
@@ -117,6 +119,7 @@ export function resetProgress() {
   state.boosters = newInventory();
   state.cosmetics = newCosmetics();
   state.offers = { starterBought: false, giftLast: 0 };
+  state.seenNew = new Set();
   state.claimed = new Set();
   state.owned = { styles: ['classic'], themes: ['blue'] };
   state.style = 'classic';
