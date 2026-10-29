@@ -1,13 +1,31 @@
 /**
- * Save format v2, validation and migration from v1. Pure: storage is passed in, so tests can use a fake.
+ * Save format v3, validation and loading (v2 and v1 saves are migrated, see migrate.js).
+ * Pure: storage is passed in, so tests can use a fake.
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
 import { BOOSTER_IDS } from '../game/boosters.js';
-import { CATEGORIES, findItem, newCosmetics } from '../game/cosmetics.js';
+import { newCosmetics } from '../game/cosmetics.js';
+import { convertChapters, migrateV1, migrateV2, OLD_CHAPTER_SIZE } from './migrate.js';
+import {
+  avatarIndex,
+  bool,
+  count,
+  level,
+  levels,
+  obj,
+  oneOf,
+  ownedList,
+  sanitizeCosmetics,
+  seenKeys,
+  timestamp,
+} from './validators.js';
 
 export const V1_KEY = 'arrowEscape.save.v1';
 export const V2_KEY = 'arrowEscape:v2';
-export const BACKUP_KEY = 'arrowEscape:v2:backup';
+export const V2_BACKUP_KEY = 'arrowEscape:v2:backup';
+export const V3_KEY = 'arrowEscape:v3';
+export const BACKUP_KEY = 'arrowEscape:v3:backup';
+export const VERSION = 3;
 const STAT_KEYS = [
   'arrowsCleared',
   'wins',
@@ -20,27 +38,13 @@ const STAT_KEYS = [
   'boostersUsed',
   'hintsUsed',
 ];
-const LIMIT = 1e9; // keeps absurd numbers out of the UI
-
-/** Whole number >= 0; anything else (negative, NaN, string, Infinity) becomes the fallback. */
-const count = (v, fallback = 0) => (Number.isFinite(v) && v >= 0 ? Math.min(Math.floor(v), LIMIT) : fallback);
-/** Level number >= 1 or null. */
-const level = (v) => (Number.isInteger(v) && v >= 1 && v <= LIMIT ? v : null);
-/** Sorted, de-duplicated list of level numbers. */
-const levels = (v) => (Array.isArray(v) ? [...new Set(v.map(level).filter(Boolean))].sort((a, b) => a - b) : []);
-/** Millisecond timestamp (0 = never); anything invalid becomes 0. */
-const timestamp = (v) => (Number.isFinite(v) && v > 0 && v < 1e14 ? Math.floor(v) : 0);
-const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
-const bool = (v, fallback) => (typeof v === 'boolean' ? v : fallback);
-const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
-
 /**
  * A new player's save.
  * @returns {object}
  */
 export function defaultSave() {
   return {
-    version: 2,
+    version: VERSION,
     progress: {
       current: 1,
       unlocked: 1,
@@ -64,87 +68,10 @@ export function defaultSave() {
   };
 }
 
-/** Chapter size used by saves made before chapters had 40 levels. */
-export const OLD_CHAPTER_SIZE = 20;
+export { convertChapters, migrateV1, migrateV2, OLD_CHAPTER_SIZE, sanitizeCosmetics };
 
 /**
- * Convert rewarded chapter numbers from an older chapter size to the current one.
- * A new chapter counts as rewarded only when every old chapter inside it was rewarded,
- * so no player loses a chapter reward (at worst a half-rewarded chapter pays again).
- * @param {number[]} rewarded old chapter numbers
- * @param {number} oldSize
- * @returns {number[]}
- */
-export function convertChapters(rewarded, oldSize) {
-  const size = REWARDS.chapterSize;
-  if (oldSize === size) return rewarded;
-  const old = new Set(rewarded);
-  const lastLevel = Math.max(0, ...rewarded) * oldSize;
-  const out = [];
-  for (let c = 1; (c - 1) * size < lastLevel; c++) {
-    const first = (c - 1) * size + 1;
-    let all = true;
-    for (let l = first; l < first + size; l += oldSize) if (!old.has(Math.ceil(l / oldSize))) all = false;
-    if (all) out.push(c);
-  }
-  return out;
-}
-
-/**
- * "New" badge keys already seen: short "category:id" strings, unique, capped.
- * @param {unknown} v
- * @returns {string[]}
- */
-function seenKeys(v) {
-  if (!Array.isArray(v)) return [];
-  return [...new Set(v.filter((k) => typeof k === 'string' && /^[a-z]+:[a-z0-9-]{1,24}$/i.test(k)))].slice(0, 200);
-}
-
-/**
- * Validate cosmetics: owned lists keep only real items (plus the free defaults),
- * and an equipped item must be owned.
- * @param {unknown} raw
- * @returns {ReturnType<typeof newCosmetics>}
- */
-export function sanitizeCosmetics(raw) {
-  const def = newCosmetics();
-  const c = obj(raw);
-  const owned = obj(c.owned);
-  const equipped = obj(c.equipped);
-  const out = { owned: {}, equipped: {} };
-  for (const cat of [...CATEGORIES, 'avatar']) {
-    const list = Array.isArray(owned[cat])
-      ? owned[cat].filter((id) => typeof id === 'string' && findItem(cat, id))
-      : [];
-    out.owned[cat] = [...new Set([...def.owned[cat], ...list])];
-  }
-  for (const cat of CATEGORIES) {
-    out.equipped[cat] = out.owned[cat].includes(equipped[cat]) ? equipped[cat] : def.equipped[cat];
-  }
-  return out;
-}
-
-/**
- * Avatar index: 0-11 are free, 12-17 are premium and need to be owned; anything else wraps into the free ones.
- * @param {number} i
- * @param {{owned: Record<string, string[]>}} cosmetics
- * @returns {number}
- */
-function avatarIndex(i, cosmetics) {
-  if (i < 12) return i;
-  if (i < 18) return cosmetics.owned.avatar.includes(`p${i - 11}`) ? i : 0;
-  return i % 12;
-}
-
-/** Owned ids filtered to real items, always including the free one. */
-function ownedList(v, items) {
-  const ids = items.map((i) => i.id);
-  const list = Array.isArray(v) ? v.filter((id) => ids.includes(id)) : [];
-  return [...new Set([ids[0], ...list])];
-}
-
-/**
- * Validate any parsed value into a complete v2 save. Unknown keys are dropped,
+ * Validate any parsed value into a complete v3 save. Unknown keys are dropped,
  * bad numbers become 0, and an equipped item must be owned.
  * @param {unknown} raw
  * @returns {object}
@@ -170,7 +97,7 @@ export function sanitize(raw) {
   const ach = obj(d.achievements);
   const cosmetics = sanitizeCosmetics(d.cosmetics);
   return {
-    version: 2,
+    version: VERSION,
     progress: {
       current,
       unlocked,
@@ -207,37 +134,6 @@ export function sanitize(raw) {
   };
 }
 
-/**
- * Convert a v1 save to v2. Keeps level progress, hints, settings and the equipped style
- * (every style was free in v1, so the one in use stays owned). Daily records are dropped.
- * @param {unknown} raw
- * @returns {object} sanitized v2 save
- */
-export function migrateV1(raw) {
-  const v = obj(raw);
-  return sanitize({
-    progress: {
-      current: v.current,
-      unlocked: v.unlocked,
-      completed: v.completed,
-      perfect: v.perfect,
-      masks: v.masks,
-      chaptersRewarded: v.chaptersRewarded,
-    },
-    wallet: { coins: v.coins, diamonds: v.diamonds, hints: v.hints },
-    xp: v.xp,
-    stats: v.stats,
-    achievements: { claimed: v.claimed },
-    items: {
-      owned: { styles: ['classic', v.style, ...(obj(v.owned).styles || [])], themes: obj(v.owned).themes },
-      style: v.style,
-      accent: v.accent,
-    },
-    profile: { avatar: v.avatar, name: v.name },
-    settings: { theme: v.theme, sound: v.sound, vibration: v.vibration, grid: v.grid },
-  });
-}
-
 /** JSON.parse that returns undefined instead of throwing. */
 function parse(text) {
   if (typeof text !== 'string') return undefined;
@@ -248,25 +144,37 @@ function parse(text) {
   }
 }
 
+/** Parsed object stored under a key, or undefined. */
+function readKey(storage, key) {
+  const v = parse(storage.getItem(key));
+  return v && typeof v === 'object' ? v : undefined;
+}
+
 /**
- * Read the save: v2, then its backup, then v1 (migrated, after which v1 is removed), else defaults.
- * Never throws, even if storage itself is unavailable.
+ * Write a migrated save, then drop the old keys only once the new save is safely stored.
+ * @returns {object} the migrated data
+ */
+function upgrade(storage, data, oldKeys) {
+  if (writeSave(storage, data)) oldKeys.forEach((k) => storage.removeItem(k));
+  return data;
+}
+
+/**
+ * Read the save: v3, then its backup, then v2 (or its backup) and v1, migrated to v3. Old keys are
+ * removed only after v3 is written. Otherwise defaults. Never throws, even if storage is unavailable.
  * @param {{getItem: Function, setItem: Function, removeItem: Function}|null} storage
- * @returns {{data: object, source: 'v2'|'backup'|'v1'|'new'}}
+ * @returns {{data: object, source: 'v3'|'backup'|'v2'|'v1'|'new'}}
  */
 export function readSave(storage) {
   try {
-    const main = parse(storage.getItem(V2_KEY));
-    if (main && typeof main === 'object') return { data: sanitize(main), source: 'v2' };
-    const backup = parse(storage.getItem(BACKUP_KEY));
-    if (backup && typeof backup === 'object') return { data: sanitize(backup), source: 'backup' };
-    const old = parse(storage.getItem(V1_KEY));
-    if (old && typeof old === 'object') {
-      const data = migrateV1(old);
-      // drop v1 (and its daily data) only once v2 is safely written
-      if (writeSave(storage, data)) storage.removeItem(V1_KEY);
-      return { data, source: 'v1' };
-    }
+    const main = readKey(storage, V3_KEY);
+    if (main) return { data: sanitize(main), source: 'v3' };
+    const backup = readKey(storage, BACKUP_KEY);
+    if (backup) return { data: sanitize(backup), source: 'backup' };
+    const v2 = readKey(storage, V2_KEY) || readKey(storage, V2_BACKUP_KEY);
+    if (v2) return { data: upgrade(storage, migrateV2(v2), [V2_KEY, V2_BACKUP_KEY, V1_KEY]), source: 'v2' };
+    const v1 = readKey(storage, V1_KEY);
+    if (v1) return { data: upgrade(storage, migrateV1(v1), [V1_KEY]), source: 'v1' };
   } catch {
     // storage blocked: play with defaults
   }
@@ -282,9 +190,9 @@ export function readSave(storage) {
 export function writeSave(storage, data) {
   try {
     const text = JSON.stringify(data);
-    storage.setItem(V2_KEY, text);
+    storage.setItem(V3_KEY, text);
     storage.setItem(BACKUP_KEY, text);
-    return storage.getItem(V2_KEY) === text;
+    return storage.getItem(V3_KEY) === text;
   } catch {
     return false;
   }

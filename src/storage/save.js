@@ -1,5 +1,5 @@
 /**
- * Bridges the game state and the v2 save format (see schema.js for validation and migration).
+ * Bridges the game state and the v3 save format (see schema.js for validation and migration).
  */
 import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
@@ -19,7 +19,7 @@ function storage() {
 }
 
 /**
- * Copy a validated v2 save into the game state.
+ * Copy a validated v3 save into the game state.
  * @param {object} raw any parsed save (it is sanitized first)
  */
 export function applySave(raw) {
@@ -52,7 +52,7 @@ export function applySave(raw) {
 }
 
 /**
- * v2 save built from the game state.
+ * v3 save built from the game state.
  * @returns {object}
  */
 export function snapshot() {
@@ -65,7 +65,7 @@ export function snapshot() {
     progress[a.def.id] = a.value;
   }
   return {
-    version: 2,
+    version: 3,
     progress: {
       current: p.current,
       unlocked: p.unlocked,
@@ -91,7 +91,7 @@ export function snapshot() {
 
 /**
  * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
- * @returns {'v2'|'backup'|'v1'|'new'} where the data came from
+ * @returns {'v3'|'backup'|'v2'|'v1'|'new'} where the data came from
  */
 export function loadSave() {
   const s = storage();
