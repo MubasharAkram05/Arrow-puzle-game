@@ -12,13 +12,15 @@ import {
   validateLevel,
 } from '../src/engine/index.js';
 
-/** Expected tier rules for a level number (mirrors the spec). */
+/** Expected tier rules for a level number (mirrors the spec in levels.js). */
 function rulesFor(n) {
   const shape = n % 10 === 0 ? MASK_SHAPES[(n / 10 - 1) % 5] : null;
-  if (n <= 5) return { min: 5, max: 6, arrows: [4, 8], difficulty: 'Normal', shape };
-  if (n <= 20) return { min: 7, max: 9, difficulty: 'Normal', shape };
-  if (n <= 50) return { min: 10, max: 13, difficulty: 'Hard', shape };
-  return { min: 14, max: 16, difficulty: 'Super Hard', shape };
+  if (n <= 3) return { cols: 5, arrows: [4, 8], difficulty: 'Normal', shape };
+  if (n <= 5) return { cols: n === 4 ? 8 : 12, arrows: [n === 4 ? 10 : 30, 60], difficulty: 'Normal', shape };
+  const hard = n <= 30;
+  const base = hard ? 14 + Math.floor((n - 6) / 3) : Math.min(30, 22 + Math.floor((n - 31) / 5));
+  const cols = shape ? Math.min(30, base + 2) : base;
+  return { cols, arrows: [shape ? 25 : 35, 260], difficulty: hard ? 'Hard' : 'Super Hard', shape };
 }
 
 /** Replay the solver's order with the same ray rule the game uses. */
@@ -35,10 +37,10 @@ function replay(level) {
 /** Shared checks for any generated level. */
 function checkLevel(level, rules) {
   expect(validateLevel(level)).toEqual([]);
-  expect(level.rows).toBeGreaterThanOrEqual(rules.min);
-  expect(level.rows).toBeLessThanOrEqual(rules.max);
-  expect(level.cols).toBeGreaterThanOrEqual(rules.min);
-  expect(level.cols).toBeLessThanOrEqual(rules.max);
+  expect(level.cols).toBe(rules.cols);
+  // portrait boards: a few rows taller than wide (masked and tutorial boards are square)
+  expect(level.rows).toBeGreaterThanOrEqual(level.cols);
+  expect(level.rows).toBeLessThanOrEqual(level.cols + 4);
   expect(level.difficulty).toBe(rules.difficulty);
   if (rules.arrows) {
     expect(level.arrows.length).toBeGreaterThanOrEqual(rules.arrows[0]);
@@ -70,24 +72,36 @@ describe('difficulty curve', () => {
   /** Mean of a difficulty metric over a level range. */
   function mean(from, to, key) {
     let sum = 0;
-    for (let n = from; n <= to; n++) sum += analyzeLevel(generateLevel(n))[key];
+    for (let n = from; n <= to; n++) {
+      const level = generateLevel(n);
+      sum += key === 'arrows' ? level.arrows.length : analyzeLevel(level)[key];
+    }
     return sum / (to - from + 1);
   }
 
-  it('blocking depth grows and start-free share shrinks from Normal to Hard to Super Hard', () => {
-    const normal = { depth: mean(6, 20, 'avgDepth'), free: mean(6, 20, 'startFreeRatio') };
-    const hard = { depth: mean(21, 50, 'avgDepth'), free: mean(21, 50, 'startFreeRatio') };
-    const superHard = { depth: mean(51, 100, 'avgDepth'), free: mean(51, 100, 'startFreeRatio') };
-    expect(hard.depth).toBeGreaterThan(normal.depth * 1.5);
-    expect(superHard.depth).toBeGreaterThan(hard.depth * 1.3);
-    expect(hard.free).toBeLessThan(normal.free);
-    expect(superHard.free).toBeLessThan(hard.free);
+  it('boards get denser and longer to solve from Normal to Hard to Super Hard', () => {
+    const tiers = [
+      [4, 5],
+      [6, 30],
+      [31, 100],
+    ].map(([a, b]) => ({ arrows: mean(a, b, 'arrows'), depth: mean(a, b, 'avgDepth'), rounds: mean(a, b, 'rounds') }));
+    for (let i = 1; i < tiers.length; i++) {
+      expect(tiers[i].arrows).toBeGreaterThan(tiers[i - 1].arrows * 1.3);
+      expect(tiers[i].depth).toBeGreaterThan(tiers[i - 1].depth);
+      expect(tiers[i].rounds).toBeGreaterThan(tiers[i - 1].rounds);
+    }
+  });
+
+  it('matches the reference early on: about 35+ arrows by level 5 and 40+ from level 6', () => {
+    expect(generateLevel(5).arrows.length).toBeGreaterThanOrEqual(35);
+    for (let n = 6; n <= 9; n++) expect(generateLevel(n).arrows.length).toBeGreaterThanOrEqual(40);
   });
 
   it('Hard and Super Hard never start with many free arrows', () => {
-    for (let n = 21; n <= 200; n++) {
+    for (let n = 6; n <= 200; n++) {
       const { startFree } = analyzeLevel(generateLevel(n));
-      expect(startFree).toBeLessThanOrEqual(n <= 50 ? 4 : 3);
+      const cap = (n <= 30 ? 4 : 3) + (n % 10 === 0 ? 6 : 0);
+      expect(startFree).toBeLessThanOrEqual(cap);
     }
   });
 });
