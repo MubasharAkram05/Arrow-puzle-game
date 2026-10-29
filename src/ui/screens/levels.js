@@ -4,8 +4,9 @@
  * so thousands of levels stay light.
  */
 import { REWARDS } from '../../config.js';
-import { MASK_SHAPES } from '../../engine/index.js';
-import { chapterLevels, chapterOf, isMaskLevel } from '../../game/economy.js';
+import { shapeOf } from '../../engine/index.js';
+import { shapeIcon } from '../components/shapeIcon.js';
+import { chapterLevels, chapterOf } from '../../game/economy.js';
 import { startLevel } from '../../game/game.js';
 import { clearHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
@@ -34,7 +35,8 @@ function tileHTML(n) {
   const done = p.completed.has(n);
   const perfect = p.perfect.has(n);
   const cls = ['level-btn', done ? 'done' : '', n === p.current ? 'current' : ''].join(' ');
-  const shape = isMaskLevel(n) ? icon(`shape-${MASK_SHAPES[(n / 10 - 1) % MASK_SHAPES.length]}`, 'shape') : '';
+  const name = shapeOf(n);
+  const shape = name ? shapeIcon(name, 'shape') : '';
   const badges = (done ? icon('check', 'tick') : '') + (perfect ? icon('crown', 'solid crown-mark') : '');
   const label = `Level ${n}${done ? ', completed' : ''}${perfect ? ', perfect' : ''}`;
   return `<button class="${cls}" data-level="${n}" aria-label="${label}">${shape}<span>${n}</span>${badges}</button>`;

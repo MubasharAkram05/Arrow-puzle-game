@@ -2,6 +2,19 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.4.0] - 2026-10-29
+
+### Added
+
+- 15 new board shapes inspired by the reference games: arrow, mushroom, plane, whale, cat, letter A, donut, dog, house, fish, bird, apple, plus, tree and letter Z (20 shapes in total).
+- The Levels page shows each shape level's silhouette, drawn from the same mask the board uses.
+
+### Changed
+
+- A shape board now comes every 3rd level after the tutorial (6, 9, 12, ...) instead of every 10th.
+- The +1 diamond stays on every 10th level only (now called a milestone), so the economy doesn't change.
+- The "Shape Solver" achievement counts the new shape levels.
+
 ## [3.3.0] - 2026-10-29
 
 ### Changed

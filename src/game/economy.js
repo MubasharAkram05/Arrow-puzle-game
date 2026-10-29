@@ -28,12 +28,12 @@ export function chapterLevels(chapter) {
 }
 
 /**
- * Is level n a mask level (every 10th)?
+ * Is level n a milestone (every 10th, worth a diamond on its first clear)?
  * @param {number} n
  * @returns {boolean}
  */
-export function isMaskLevel(n) {
-  return n % REWARDS.maskEvery === 0;
+export function isMilestoneLevel(n) {
+  return n % REWARDS.milestoneEvery === 0;
 }
 
 /**
@@ -80,9 +80,9 @@ export function levelReward(win) {
     coins += REWARDS.perfectBonus;
     lines.push({ label: 'Perfect bonus', coins: REWARDS.perfectBonus });
   }
-  if (isMaskLevel(win.level) && !win.wasCompleted) {
-    diamonds += REWARDS.maskDiamonds;
-    lines.push({ label: 'Shape level', diamonds: REWARDS.maskDiamonds });
+  if (isMilestoneLevel(win.level) && !win.wasCompleted) {
+    diamonds += REWARDS.milestoneDiamonds;
+    lines.push({ label: `Level ${win.level} milestone`, diamonds: REWARDS.milestoneDiamonds });
   }
   const chapter = win.chapterDone && !win.chapterRewarded;
   if (chapter) {

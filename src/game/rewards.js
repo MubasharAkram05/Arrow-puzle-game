@@ -5,7 +5,8 @@ import { BOOSTERS, BOOSTER_PACK, MAX_REFILLS_PER_LEVEL, PRICES } from '../config
 import { addBoosters, useBooster } from './boosters.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
-import { chapterLevels, chapterOf, grant, isMaskLevel, levelReward, spend } from './economy.js';
+import { shapeOf } from '../engine/index.js';
+import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.js';
 import { recordWin, xpForWin } from './stats.js';
 import { state } from './state.js';
 
@@ -75,7 +76,7 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   });
   if (reward.perfect) p.perfect.add(n);
   if (reward.chapter) p.chaptersRewarded.add(chapter);
-  if (isMaskLevel(n)) p.masks.add(n);
+  if (shapeOf(n)) p.masks.add(n);
   setWallet(grant(before, reward, 'level'));
   const xp = xpForWin(heartsLeft);
   state.xp += xp;
