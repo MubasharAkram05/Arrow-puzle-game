@@ -146,7 +146,7 @@ export function onLevelWon() {
   const p = state.progress;
   const n = state.levelNum;
   const firstClear = !p.completed.has(n);
-  const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts);
+  const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts, state.level.arrows.length);
   if (firstClear && p.completed.size % HINT_EVERY === 0) state.hints++;
   p.unlocked = Math.max(p.unlocked, n + 1);
   p.current = n + 1;

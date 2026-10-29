@@ -47,11 +47,13 @@ export function isMaskLevel(n) {
  * @property {boolean} chapterDone after this win every level of the chapter is completed
  * @property {boolean} chapterRewarded the chapter bonus was already paid
  * @property {boolean} [assisted] a booster or hint was used (the level can't be perfect)
+ * @property {number} [arrows] arrows on the board (bigger boards pay more)
  */
 
 /**
  * Coins and diamonds for a level win, with a line-by-line breakdown.
- * Coins: (base + hearts bonus) x difficulty, 25% of that on replays, plus one-time perfect and chapter bonuses.
+ * Coins: (base + hearts bonus + board size bonus) x difficulty, 25% of that on replays,
+ * plus one-time perfect and chapter bonuses.
  * @param {WinInfo} win
  * @returns {{coins: number, diamonds: number, perfect: boolean, chapter: boolean, lines: {label: string, coins?: number, diamonds?: number}[]}}
  */
@@ -61,10 +63,12 @@ export function levelReward(win) {
   const mult = REWARDS.multiplier[win.difficulty] || 1;
   const base = REWARDS.baseCoins;
   const hearts = REWARDS.coinsPerHeart * Math.max(0, win.heartsLeft);
-  let earned = Math.round((base + hearts) * mult);
+  const size = Math.floor(Math.max(0, win.arrows || 0) / REWARDS.arrowsPerSizeCoin);
+  let earned = Math.round((base + hearts + size) * mult);
   lines.push({ label: 'Level complete', coins: base });
   if (hearts) lines.push({ label: `Hearts bonus (${win.heartsLeft})`, coins: hearts });
-  if (mult !== 1) lines.push({ label: `${win.difficulty} x${mult}`, coins: earned - base - hearts });
+  if (size) lines.push({ label: `Board size (${win.arrows} arrows)`, coins: size });
+  if (mult !== 1) lines.push({ label: `${win.difficulty} x${mult}`, coins: earned - base - hearts - size });
   if (win.wasCompleted) {
     const replay = Math.round(earned * REWARDS.replayRate);
     lines.push({ label: `Replay: 25% of ${earned}`, coins: replay - earned });
