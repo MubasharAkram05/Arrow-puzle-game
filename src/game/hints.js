@@ -1,4 +1,5 @@
 import { freeArrows } from '../engine/index.js';
+import { fit } from '../input/zoom.js';
 import { saveProgress } from '../storage/save.js';
 import { renderHintButton } from '../render/hud.js';
 import { hidePointer, showPointer } from '../render/pointer.js';
@@ -20,6 +21,7 @@ export function currentFreeArrows() {
  */
 export function showHint(a) {
   clearHint();
+  fit();
   state.hintId = a.id;
   const m = state.metrics;
   const glow = a.shaft.cloneNode();

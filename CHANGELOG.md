@@ -2,7 +2,27 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [3.2.0] - 2026-10-29
+## [3.3.0] - 2026-10-29
+
+### Changed
+
+- Levels are much harder and denser, like the reference game:
+  - level 4: 8 cells wide (about 20 arrows); level 5: 12 wide (about 40)
+  - Hard from level 6: 14 cells wide (40+ arrows), growing to 22 wide (about 100 arrows) by level 30
+  - Super Hard from level 31: growing to 30 cells wide (up to about 190 arrows)
+  - shorter arrows (2-12 cells) so boards hold many more of them; stricter depth and rounds goals
+  - boards are portrait shaped; mask levels are square and slightly bigger
+  - every tier now starts with 3 hearts, like the reference
+- Lines and arrowheads stay thin on dense boards.
+- Taps on the board fire on release instead of on touch, so dragging or pinching never removes an arrow.
+- Existing saves keep all progress, coins and items. Only the boards themselves are new.
+
+### Added
+
+- Pinch to zoom and one-finger pan on big boards, with a "Pinch to zoom" tip on the first 3 dense boards, a button to show the whole board again, double tap on empty space to reset, and Ctrl + wheel zoom on desktop.
+- Hints and Reveal zoom back out first so the highlight is on screen.
+
+- 2026-10-29
 
 ### Added
 

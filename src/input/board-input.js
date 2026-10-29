@@ -2,6 +2,7 @@ import { CELL, HIT_FALLBACK } from '../config.js';
 import { state } from '../game/state.js';
 import { tapArrow } from '../game/game.js';
 import { $ } from '../ui/dom.js';
+import { bindZoom, emptyTap, releaseIsTap } from './zoom.js';
 
 /**
  * Squared distance from a point to a segment.
@@ -54,12 +55,16 @@ export function pickArrow(clientX, clientY) {
   return best;
 }
 
-/** Listen for taps on the board. */
+/**
+ * Listen for taps on the board. A tap fires on release, so a drag or pinch (zoom/pan) never removes an arrow.
+ */
 export function bindBoardInput() {
-  $('board').addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    if (state.locked || state.hearts <= 0) return;
+  bindZoom();
+  $('board').addEventListener('pointerdown', (e) => e.preventDefault());
+  $('board-wrap').addEventListener('pointerup', (e) => {
+    if (!releaseIsTap(e) || state.locked || state.hearts <= 0) return;
     const a = pickArrow(e.clientX, e.clientY);
     if (a && !a.escaped && !a.busy) tapArrow(a);
+    else if (!a) emptyTap();
   });
 }

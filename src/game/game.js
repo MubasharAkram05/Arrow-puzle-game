@@ -1,6 +1,7 @@
 import { buildOccupancy, clearArrow, generateLevel, rayBlocker } from '../engine/index.js';
 import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
+import { maybeShowZoomHint, resetZoom } from '../input/zoom.js';
 import { boardCellPx, drawArrows, layoutBoard, strokeMetrics } from '../render/board.js';
 import { renderGrid, renderHearts, renderHintButton, renderProgress } from '../render/hud.js';
 import { hidePointer } from '../render/pointer.js';
@@ -47,6 +48,8 @@ export function loadLevel(level) {
   renderBoosterBar();
   renderGrid();
   layoutBoard();
+  resetZoom(boardCellPx());
+  maybeShowZoomHint(level.cols);
 }
 
 /** Difficulty pill; Super Hard gets the crown and purple label. */

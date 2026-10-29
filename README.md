@@ -6,7 +6,8 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 40, with shape (mask) levels every 10th level
+- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 6, up to ~190), with shape (mask) levels every 10th level
+- Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing, spent on hints, boosters, heart refills, continues, skips and cosmetics
 - Boosters: Shield, Reveal, Auto-Clear and Extra Heart Start, with a booster bar on the game screen
@@ -62,7 +63,7 @@ src/
     offerActions.js     applies offers to the game state
   render/               SVG board, HUD, pointing hand, animations, confetti, booster effects
     effects/            escape effects (one file each) on a small particle canvas
-  input/                board taps, Android/browser back button
+  input/                board taps, pinch zoom and pan, Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
     schema.js           v3 save format, validation, loading and backup (pure)
@@ -92,14 +93,20 @@ Difficulty is measured, not guessed:
 | Free at start  | Arrows you can safely tap on the first move             |
 | Rounds         | Longest chain of "this must go before that"             |
 
-| Tier       | Levels | Board | Max free at start | Min avg depth | Min rounds |
-| ---------- | ------ | ----- | ----------------- | ------------- | ---------- |
-| Tutorial   | 1-5    | 5-6   | -                 | -             | -          |
-| Normal     | 6-20   | 7-9   | 6                 | 1.2           | 3          |
-| Hard       | 21-50  | 10-13 | 4                 | 3             | 6          |
-| Super Hard | 51+    | 14-16 | 3                 | 6             | 8          |
+Boards follow the reference game: dense grids with many short and medium arrows (length 2-12), portrait shaped (2-4 rows taller than wide).
 
-Mask levels (every 10th) scale the depth and rounds goals by 0.8 because shapes have shorter rays. If a board misses its goals, the generator retries with the next derived seed.
+| Tier       | Levels | Board width (cells)              | Typical arrows | Max free at start | Min avg depth | Min rounds |
+| ---------- | ------ | -------------------------------- | -------------- | ----------------- | ------------- | ---------- |
+| Tutorial   | 1-3    | 5                                | 4-8            | -                 | -             | -          |
+| Normal     | 4-5    | 8 (level 4), 12 (level 5)        | 20-40          | 5                 | 3             | 6          |
+| Hard       | 6-30   | 14, +1 every 3 levels (up to 22) | 40-110         | 4                 | 9             | 12         |
+| Super Hard | 31+    | 22, +1 every 5 levels (up to 30) | 80-190         | 3                 | 20            | 20         |
+
+Mask levels (every 10th) are square, 2 cells wider, and ease the goals: depth and rounds x0.7, and up to 6 more arrows free at the start (a shape's jagged edge lets more arrows out). If a board misses its goals, the generator retries with the next derived seed. Every level of 1-200 generates in under ~70 ms on a laptop.
+
+### Zoom
+
+Big boards can be zoomed with two fingers (pinch) up to the point where a cell is about a fingertip wide, and dragged with one finger while zoomed. Taps fire on release, so a drag or pinch never removes an arrow. A button in the top-right corner (or a double tap on empty space) shows the whole board again. "Pinch to zoom" appears on the first 3 dense boards. Using a hint or Reveal zooms back out so the highlight is visible. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
 
 ## Economy
 

@@ -7,6 +7,17 @@ export const BASE_CELL_PX = 24;
 /** Width a small board aims for (px), so 3x3 gets big cells and 8x8 stays at BASE_CELL_PX. */
 export const SMALL_BOARD_PX = 140;
 /** Arrow line width and head size in screen px (constant across board sizes, as in the reference). */
+/** Pinch zoom on big boards. */
+export const ZOOM = Object.freeze({
+  targetCellPx: 46, // zoom in until a cell is about a fingertip wide
+  maxScale: 5,
+  dragPx: 10, // movement that turns a tap into a drag
+  doubleTapMs: 350, // double tap on empty space resets the zoom
+  hintKey: 'arrowEscape:zoomHint',
+  hintMinCols: 14, // only on dense boards
+  hintTimes: 3, // "Pinch to zoom" shows on the first 3 big boards
+  hintMs: 3500,
+});
 export const STROKE_PX = 4.2;
 export const HEAD_W_PX = 15;
 export const HEAD_L_PX = 14;

@@ -2,6 +2,7 @@
  * Visual effects for boosters: shield badge break and the timed "reveal" glow.
  * Transform/opacity only.
  */
+import { fit } from '../input/zoom.js';
 import { state } from '../game/state.js';
 import { $ } from '../ui/dom.js';
 
@@ -25,6 +26,7 @@ function addGlow(a, cls) {
  * @param {number} ms duration
  */
 export function revealArrows(ids, ms) {
+  fit();
   const lvl = state.level;
   const arrows = ids.map((id) => state.arrows[id]).filter((a) => a && a.el);
   arrows.forEach((a) => addGlow(a, 'reveal-glow'));
