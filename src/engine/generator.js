@@ -1,9 +1,10 @@
-import { DIRS, opposite } from './directions.js';
+import { DIRS } from './directions.js';
 import { hashSeed, mulberry32, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
-import { makePlan } from './shapes.js';
+import { absorbLeftovers, growArrow, pickLength } from './grow.js';
 import { MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig } from './levels.js';
 import { analyzeLevel } from './difficulty.js';
+import { joinLongArrows } from './longArrows.js';
 
 const MAX_ATTEMPTS = 500;
 
@@ -27,106 +28,51 @@ function createGrid(rows, cols, usable) {
 /**
  * Every free cell whose way out only crosses taken or unused cells can be a head.
  * Reverse peeling: such an arrow is only blocked by arrows placed before it.
+ * Each line is swept once from the far end per direction, so a pass costs O(cells), not O(cells x ray).
  */
 function headCandidates(grid, cfg, rng) {
-  const { rows, cols, free, owner, inB, isFree, degree } = grid;
+  const { rows, cols, free, owner, isFree, degree } = grid;
   const cands = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (!free[r * cols + c]) continue;
-      for (let d = 0; d < 4; d++) {
-        if (!isFree(r - DIRS[d].dr, c - DIRS[d].dc)) continue;
-        let rr = r + DIRS[d].dr;
-        let cc = c + DIRS[d].dc;
-        let depth = 0;
-        let ok = true;
-        while (inB(rr, cc)) {
-          const i = rr * cols + cc;
-          if (free[i]) {
-            ok = false;
-            break;
+  for (let d = 0; d < 4; d++) {
+    const { dr, dc } = DIRS[d];
+    const lines = dc ? rows : cols;
+    const len = dc ? cols : rows;
+    for (let line = 0; line < lines; line++) {
+      let blocked = false; // a free cell lies ahead
+      let depth = 0; // taken cells ahead
+      for (let k = 0; k < len; k++) {
+        // walk against the direction, starting at the far edge the arrow would leave through
+        const step = (dc || dr) > 0 ? len - 1 - k : k;
+        const r = dc ? line : step;
+        const c = dc ? step : line;
+        const i = r * cols + c;
+        if (free[i]) {
+          if (!blocked && isFree(r - dr, c - dc)) {
+            const score = degree(r, c) - depth * cfg.depthBias + rng() * 1.2;
+            cands.push({ r, c, d, depth, score });
           }
-          if (owner[i] !== -1) depth++;
-          rr += DIRS[d].dr;
-          cc += DIRS[d].dc;
-        }
-        if (!ok) continue;
-        const score = degree(r, c) - depth * cfg.depthBias + rng() * 1.2;
-        cands.push({ r, c, d, score });
+          blocked = true;
+        } else if (owner[i] !== -1) depth++;
       }
     }
   }
   return cands;
 }
 
-/** Grow an arrow body away from its head following a shape plan. */
-function growArrow(grid, cfg, rng, id, head, dir, targetLen, style) {
-  const { isFree, degree, take } = grid;
-  const neck = { r: head.r - DIRS[dir].dr, c: head.c - DIRS[dir].dc };
-  const path = [head, neck];
-  take(head.r, head.c, id);
-  take(neck.r, neck.c, id);
-  const plan = makePlan(style, targetLen, rng);
-  let heading = opposite(dir);
-  let step = 1;
-  while (path.length < targetLen) {
-    const cur = path[path.length - 1];
-    const opts = [];
-    for (let k = 0; k < 4; k++) if (isFree(cur.r + DIRS[k].dr, cur.c + DIRS[k].dc)) opts.push(k);
-    if (!opts.length) break;
-    // a neighbour that would be left alone forever is absorbed right away
-    const orphan = opts.find((k) => degree(cur.r + DIRS[k].dr, cur.c + DIRS[k].dc) === 0);
-    const want = (heading + plan[Math.min(step, plan.length - 1)]) % 4;
-    step++;
-    let next;
-    if (orphan !== undefined && path.length >= cfg.lenMin) next = orphan;
-    else if (opts.indexOf(want) !== -1) next = want;
-    else {
-      if (style !== 'snake' && path.length >= Math.max(3, cfg.lenMin) && rng() < 0.3) break;
-      let best = Infinity;
-      for (const k of opts) {
-        const s = degree(cur.r + DIRS[k].dr, cur.c + DIRS[k].dc) + (k === heading ? -0.4 : 0) + rng() * 0.6;
-        if (s < best) {
-          best = s;
-          next = k;
-        }
-      }
-    }
-    const nr = cur.r + DIRS[next].dr;
-    const nc = cur.c + DIRS[next].dc;
-    take(nr, nc, id);
-    path.push({ r: nr, c: nc });
-    heading = next;
-  }
-  return { id, dir, path };
-}
-
-/** Leftover cells join a neighbouring tail. They sit in no arrow's way out, so solvability holds. */
-function absorbLeftovers(grid, cfg, arrows) {
-  const { rows, cols, free, owner, inB, take } = grid;
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let i = 0; i < rows * cols; i++) {
-      if (!free[i]) continue;
-      const r = Math.floor(i / cols);
-      const c = i % cols;
-      for (const d of DIRS) {
-        const rr = r + d.dr;
-        const cc = c + d.dc;
-        if (!inB(rr, cc)) continue;
-        const a = arrows[owner[rr * cols + cc]];
-        if (!a || a.path.length >= cfg.lenMax) continue;
-        const tail = a.path[a.path.length - 1];
-        if (tail.r === rr && tail.c === cc) {
-          a.path.push({ r, c });
-          take(r, c, a.id);
-          changed = true;
-          break;
-        }
-      }
+/** The three lowest-score candidates in order (a full sort per arrow is the slow part on big boards). */
+function lowest3(cands) {
+  const top = [];
+  for (const k of cands) {
+    if (top.length === 3 && k.score >= top[2].score) continue;
+    let i = Math.min(top.length, 2);
+    if (top.length < 3) top.push(k);
+    else top[2] = k;
+    while (i > 0 && top[i].score < top[i - 1].score) {
+      [top[i], top[i - 1]] = [top[i - 1], top[i]];
+      i--;
     }
   }
+  return top;
 }
 
 /**
@@ -140,25 +86,36 @@ export function buildLevel(cfg, rng) {
   const usable = makeMask(cfg.mask, rows, cols);
   const grid = createGrid(rows, cols, usable);
   const arrows = [];
+  const total = usable.reduce((n, u) => n + u, 0);
+  let startFree = 0;
+  const freeLimit = cfg.goals ? cfg.goals.maxStartFree : Infinity;
   for (;;) {
-    const cands = headCandidates(grid, cfg, rng);
-    if (!cands.length) break;
-    cands.sort((a, b) => a.score - b.score);
-    const pick = cands[Math.floor(rng() * Math.min(3, cands.length))];
-    const span = cfg.lenMax - cfg.lenMin;
-    const targetLen = cfg.lenMin + Math.round(span * (0.25 + 0.75 * rng()) * (0.5 + 0.5 * rng()));
-    const style = weightedPick(rng, cfg.styles);
-    arrows.push(
-      growArrow(grid, cfg, rng, arrows.length, { r: pick.r, c: pick.c }, pick.d, Math.max(2, targetLen), style),
+    const all = headCandidates(grid, cfg, rng);
+    // a head with nothing in front stays free at the start: once the tier's limit is used up,
+    // only take one when nothing else can be placed
+    let cands = startFree >= freeLimit ? all.filter((k) => k.depth > 0) : all;
+    if (!cands.length) {
+      if (!all.length) break;
+      cands = all;
+    }
+    const pick = lowest3(cands)[Math.floor(rng() * Math.min(3, cands.length))];
+    if (!pick.depth) startFree++;
+    const a = growArrow(
+      grid,
+      cfg,
+      rng,
+      arrows.length,
+      pick,
+      pick.d,
+      pickLength(cfg, rng),
+      weightedPick(rng, cfg.styles),
     );
+    arrows.push(a);
   }
   absorbLeftovers(grid, cfg, arrows);
+  const joined = joinLongArrows({ rows, cols, arrows }, cfg, rng);
   let used = 0;
-  let total = 0;
-  for (let i = 0; i < rows * cols; i++) {
-    total += usable[i];
-    if (grid.owner[i] !== -1) used++;
-  }
+  for (let i = 0; i < rows * cols; i++) if (grid.owner[i] !== -1) used++;
   return {
     rows,
     cols,
@@ -167,7 +124,7 @@ export function buildLevel(cfg, rng) {
     difficulty: cfg.difficulty,
     hearts: cfg.hearts,
     fill: used / total,
-    arrows,
+    arrows: joined,
   };
 }
 
@@ -194,7 +151,10 @@ export function meetsGoals(report, goals) {
   if (!report.solvable) return false;
   if (!goals) return true;
   return (
-    report.startFree <= goals.maxStartFree && report.avgDepth >= goals.minAvgDepth && report.rounds >= goals.minRounds
+    report.startFree <= goals.maxStartFree &&
+    report.startFree >= (goals.minStartFree || 0) &&
+    report.avgDepth >= goals.minAvgDepth &&
+    report.rounds >= goals.minRounds
   );
 }
 

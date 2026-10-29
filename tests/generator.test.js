@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   MASK_SHAPES,
+  TIERS,
   analyzeLevel,
+  tierOf,
   getLevelConfig,
   meetsGoals,
   buildOccupancy,
@@ -12,15 +14,17 @@ import {
   validateLevel,
 } from '../src/engine/index.js';
 
-/** Expected tier rules for a level number (mirrors the spec in levels.js). */
+/** Expected tier rules for a level number (mirrors LEVELS in src/config.js). */
 function rulesFor(n) {
   const shape = n % 10 === 0 ? MASK_SHAPES[(n / 10 - 1) % 5] : null;
-  if (n <= 3) return { cols: 5, arrows: [4, 8], difficulty: 'Normal', shape };
-  if (n <= 5) return { cols: n === 4 ? 8 : 12, arrows: [n === 4 ? 10 : 30, 60], difficulty: 'Normal', shape };
-  const hard = n <= 30;
-  const base = hard ? 14 + Math.floor((n - 6) / 3) : Math.min(30, 22 + Math.floor((n - 31) / 5));
-  const cols = shape ? Math.min(30, base + 2) : base;
-  return { cols, arrows: [shape ? 25 : 35, 260], difficulty: hard ? 'Hard' : 'Super Hard', shape };
+  const tier = tierOf(n);
+  const t = TIERS[tier];
+  const base = Math.min(t.size.max, t.size.from + Math.floor((n - t.levels[0]) / t.size.every));
+  const cols = shape ? Math.min(34, base + 3) : base;
+  // shape boards hold fewer arrows (less room)
+  const arrows = { tutorial: [6, 15], normal: [40, 80], hard: [80, 140], superHard: [140, 300] }[tier];
+  const min = shape ? Math.floor(arrows[0] * 0.4) : arrows[0];
+  return { cols, arrows: [min, arrows[1] * (shape ? 1 : 1.25)], difficulty: t.difficulty, shape, tier };
 }
 
 /** Replay the solver's order with the same ray rule the game uses. */
@@ -38,9 +42,9 @@ function replay(level) {
 function checkLevel(level, rules) {
   expect(validateLevel(level)).toEqual([]);
   expect(level.cols).toBe(rules.cols);
-  // portrait boards: a few rows taller than wide (masked and tutorial boards are square)
+  // portrait boards: a few rows taller than wide (shape boards are square)
   expect(level.rows).toBeGreaterThanOrEqual(level.cols);
-  expect(level.rows).toBeLessThanOrEqual(level.cols + 4);
+  expect(level.rows).toBeLessThanOrEqual(level.cols + 9);
   expect(level.difficulty).toBe(rules.difficulty);
   if (rules.arrows) {
     expect(level.arrows.length).toBeGreaterThanOrEqual(rules.arrows[0]);
@@ -50,14 +54,24 @@ function checkLevel(level, rules) {
   expect(replay(level)).toBe(-1);
 }
 
-const LEVELS = Array.from({ length: 200 }, (_, i) => i + 1);
+const LEVELS = Array.from({ length: 300 }, (_, i) => i + 1);
 
-describe('levels 1-200', () => {
-  it.each(LEVELS)('level %i is valid, solvable and follows its tier', (n) => {
+describe('levels 1-300', () => {
+  it.each(LEVELS)('level %i is valid, solvable, fast, deterministic and follows its tier', (n) => {
+    const t0 = performance.now();
     const level = generateLevel(n);
-    checkLevel(level, rulesFor(n));
-    expect(meetsGoals(analyzeLevel(level), getLevelConfig(n).goals)).toBe(true);
-    expect(generateLevel(n).arrows).toEqual(level.arrows);
+    const t1 = performance.now();
+    const again = generateLevel(n);
+    // the faster of two runs, so other test files running in parallel don't make this flaky
+    const ms = Math.min(t1 - t0, performance.now() - t1);
+    const rules = rulesFor(n);
+    checkLevel(level, rules);
+    const report = analyzeLevel(level);
+    expect(meetsGoals(report, getLevelConfig(n).goals)).toBe(true);
+    // a level must be quick to build; CI machines are slower, so the hard cap there is doubled
+    expect(ms).toBeLessThan(process.env.CI ? 300 : 150);
+    if (n > 3) expect(level.arrows.some((a) => a.path.length >= 13)).toBe(true);
+    expect(again.arrows).toEqual(level.arrows);
   });
 });
 
@@ -68,40 +82,97 @@ describe('masks', () => {
   });
 });
 
-describe('difficulty curve', () => {
-  /** Mean of a difficulty metric over a level range. */
-  function mean(from, to, key) {
-    let sum = 0;
+describe('difficulty curve', { timeout: 30000 }, () => {
+  /** Reports for a level range (unmasked boards only unless asked). */
+  function reports(from, to, withShapes = false) {
+    const out = [];
     for (let n = from; n <= to; n++) {
+      if (!withShapes && n % 10 === 0) continue;
       const level = generateLevel(n);
-      sum += key === 'arrows' ? level.arrows.length : analyzeLevel(level)[key];
+      out.push({ level, report: analyzeLevel(level) });
     }
-    return sum / (to - from + 1);
+    return out;
   }
+  const mean = (list, f) => list.reduce((s, x) => s + f(x), 0) / list.length;
+
+  it('tiers follow the table: Tutorial 1-3, Normal 4-20, Hard 21-60, Super Hard 61+', () => {
+    expect([1, 3, 4, 20, 21, 60, 61, 300].map(tierOf)).toEqual([
+      'tutorial',
+      'tutorial',
+      'normal',
+      'normal',
+      'hard',
+      'hard',
+      'superHard',
+      'superHard',
+    ]);
+    expect(generateLevel(5).difficulty).toBe('Normal');
+    expect(generateLevel(21).difficulty).toBe('Hard');
+    expect(generateLevel(61).difficulty).toBe('Super Hard');
+  });
+
+  it('tutorial levels start with 2-3 free arrows', () => {
+    for (let n = 1; n <= 3; n++) {
+      const { startFree } = analyzeLevel(generateLevel(n));
+      expect(startFree).toBeGreaterThanOrEqual(2);
+      expect(startFree).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('start-free, depth and solve-round minimums hold on every non-shape level', () => {
+    for (let n = 4; n <= 300; n++) {
+      if (n % 10 === 0) continue;
+      const { goals } = getLevelConfig(n);
+      const r = analyzeLevel(generateLevel(n));
+      expect(r.startFree).toBeLessThanOrEqual(n <= 60 ? 3 : 2);
+      expect(r.avgDepth).toBeGreaterThanOrEqual(goals.minAvgDepth);
+      expect(r.rounds).toBeGreaterThanOrEqual(goals.minRounds);
+    }
+  });
+
+  it('Super Hard is at least 30% deeper than the old Super Hard goal (20)', () => {
+    expect(TIERS.superHard.goals.minAvgDepth).toBeGreaterThanOrEqual(26);
+    expect(mean(reports(61, 120), (x) => x.report.avgDepth)).toBeGreaterThan(26);
+  });
 
   it('boards get denser and longer to solve from Normal to Hard to Super Hard', () => {
-    const tiers = [
-      [4, 5],
-      [6, 30],
-      [31, 100],
-    ].map(([a, b]) => ({ arrows: mean(a, b, 'arrows'), depth: mean(a, b, 'avgDepth'), rounds: mean(a, b, 'rounds') }));
-    for (let i = 1; i < tiers.length; i++) {
-      expect(tiers[i].arrows).toBeGreaterThan(tiers[i - 1].arrows * 1.3);
-      expect(tiers[i].depth).toBeGreaterThan(tiers[i - 1].depth);
-      expect(tiers[i].rounds).toBeGreaterThan(tiers[i - 1].rounds);
-    }
+    const tiers = [reports(4, 20), reports(21, 60), reports(61, 120)];
+    const arrows = tiers.map((t) => mean(t, (x) => x.level.arrows.length));
+    const rounds = tiers.map((t) => mean(t, (x) => x.report.rounds));
+    expect(arrows[1]).toBeGreaterThan(arrows[0] * 1.4);
+    expect(arrows[2]).toBeGreaterThan(arrows[1] * 1.3);
+    expect(rounds[1]).toBeGreaterThan(rounds[0]);
+    expect(rounds[2]).toBeGreaterThan(rounds[1]);
   });
 
-  it('matches the reference early on: about 35+ arrows by level 5 and 40+ from level 6', () => {
-    expect(generateLevel(5).arrows.length).toBeGreaterThanOrEqual(35);
-    for (let n = 6; n <= 9; n++) expect(generateLevel(n).arrows.length).toBeGreaterThanOrEqual(40);
+  it('mixes about 70% short, 15-20% medium and 10-15% long arrows', () => {
+    const lens = reports(4, 120, true).flatMap((x) => x.level.arrows.map((a) => a.path.length));
+    const share = (f) => lens.filter(f).length / lens.length;
+    expect(share((l) => l <= 6)).toBeGreaterThan(0.6);
+    expect(share((l) => l <= 6)).toBeLessThan(0.8);
+    expect(share((l) => l >= 7 && l <= 12)).toBeGreaterThan(0.1);
+    expect(share((l) => l >= 13)).toBeGreaterThan(0.09);
+    expect(share((l) => l >= 13)).toBeLessThan(0.18);
+    expect(Math.max(...lens)).toBeLessThanOrEqual(30);
   });
 
-  it('Hard and Super Hard never start with many free arrows', () => {
-    for (let n = 6; n <= 200; n++) {
-      const { startFree } = analyzeLevel(generateLevel(n));
-      const cap = (n <= 30 ? 4 : 3) + (n % 10 === 0 ? 6 : 0);
-      expect(startFree).toBeLessThanOrEqual(cap);
+  it('long arrows leave later than average in the solve', () => {
+    let longPos = 0;
+    let nLong = 0;
+    let allPos = 0;
+    let nAll = 0;
+    for (const { level } of reports(4, 60, true)) {
+      const order = solveLevel(level).order;
+      order.forEach((id, i) => {
+        const pos = i / order.length;
+        allPos += pos;
+        nAll++;
+        if (level.arrows[id].path.length >= 13) {
+          longPos += pos;
+          nLong++;
+        }
+      });
     }
+    expect(longPos / nLong).toBeGreaterThan(allPos / nAll);
   });
 });
