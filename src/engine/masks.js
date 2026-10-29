@@ -1,7 +1,29 @@
 import { DIRS } from './directions.js';
+import { insideArt, SHAPE_ART } from './shapeArt.js';
 
-/** Mask shapes, in the order they appear every 10th level. */
-export const MASK_SHAPES = Object.freeze(['heart', 'circle', 'diamond', 'hourglass', 'star']);
+/** Board shapes, in the order shape levels cycle through them (geometric ones mixed with pixel art). */
+export const MASK_SHAPES = Object.freeze([
+  'heart',
+  'arrow',
+  'mushroom',
+  'circle',
+  'plane',
+  'whale',
+  'diamond',
+  'cat',
+  'letterA',
+  'donut',
+  'star',
+  'dog',
+  'house',
+  'fish',
+  'hourglass',
+  'bird',
+  'apple',
+  'plus',
+  'tree',
+  'letterZ',
+]);
 
 /** Point-in-polygon test (even-odd rule). */
 function insidePolygon(x, y, poly) {
@@ -50,7 +72,7 @@ export function insideShape(shape, x, y) {
     case 'star':
       return insidePolygon(x, y, STAR);
     default:
-      return true;
+      return SHAPE_ART[shape] ? insideArt(shape, x, y) : true;
   }
 }
 

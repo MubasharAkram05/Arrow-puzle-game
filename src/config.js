@@ -39,8 +39,8 @@ export const REWARDS = Object.freeze({
   chapterSize: 40,
   chapterCoins: 200,
   chapterDiamonds: 4,
-  maskEvery: 10, // every 10th level is a mask level
-  maskDiamonds: 1, // first clear of a mask level
+  milestoneEvery: 10, // every 10th level...
+  milestoneDiamonds: 1, // ...gives a diamond on its first clear
 });
 
 /** Prices. Each price is { coins } or { diamonds }. */
@@ -195,7 +195,8 @@ export const LEVELS = Object.freeze({
   maxLen: 30,
   minFill: 0.9, // share of usable cells covered by arrows
   maxCols: 34,
-  maskEvery: 10, // every 10th level is a shape
+  shapeEvery: 3, // every 3rd level is a shape board...
+  shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
   maskExtraCols: 3, // shape boards are square and a bit wider
   maskGoalScale: 0.6, // shapes have shorter rays and less room: depth and rounds goals x0.6
   maskExtraFree: 12, // and their jagged edge lets a few more arrows out at the start

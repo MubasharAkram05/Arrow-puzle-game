@@ -12,6 +12,17 @@ export const MIN_FILL = LEVELS.minFill;
 /** Tier settings (numbers in src/config.js). */
 export const TIERS = LEVELS.tiers;
 
+/**
+ * Board shape of a level, or null for a plain rectangle. Every 3rd level after the tutorial
+ * is a shape, cycling through MASK_SHAPES.
+ * @param {number} n
+ * @returns {string|null}
+ */
+export function shapeOf(n) {
+  if (n < LEVELS.shapeFrom || n % LEVELS.shapeEvery !== 0) return null;
+  return MASK_SHAPES[(n / LEVELS.shapeEvery - Math.ceil(LEVELS.shapeFrom / LEVELS.shapeEvery)) % MASK_SHAPES.length];
+}
+
 /** Tier name for a level number. */
 export function tierOf(n) {
   return Object.keys(TIERS).find((k) => n >= TIERS[k].levels[0] && n <= TIERS[k].levels[1]);
@@ -60,7 +71,7 @@ export function getLevelConfig(n) {
   const t = TIERS[tier];
   const z = t.size;
   let cols = Math.min(z.max, z.from + Math.floor((n - t.levels[0]) / z.every));
-  const mask = n % LEVELS.maskEvery === 0 ? MASK_SHAPES[(n / LEVELS.maskEvery - 1) % MASK_SHAPES.length] : null;
+  const mask = shapeOf(n);
   // portrait boards like a phone screen; shape boards are square so the shape isn't stretched
   let rows;
   if (mask) cols = rows = Math.min(MAX_COLS, cols + LEVELS.maskExtraCols);

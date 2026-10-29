@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   MASK_SHAPES,
+  SHAPE_ART,
   TIERS,
+  makeMask,
+  shapeOf,
   analyzeLevel,
   tierOf,
   getLevelConfig,
@@ -16,7 +19,7 @@ import {
 
 /** Expected tier rules for a level number (mirrors LEVELS in src/config.js). */
 function rulesFor(n) {
-  const shape = n % 10 === 0 ? MASK_SHAPES[(n / 10 - 1) % 5] : null;
+  const shape = shapeOf(n);
   const tier = tierOf(n);
   const t = TIERS[tier];
   const base = Math.min(t.size.max, t.size.from + Math.floor((n - t.levels[0]) / t.size.every));
@@ -75,10 +78,32 @@ describe('levels 1-300', () => {
   });
 });
 
-describe('masks', () => {
-  it('every 10th level cycles through all five shapes', () => {
-    const shapes = new Set([10, 20, 30, 40, 50].map((n) => generateLevel(n).shape));
-    expect([...shapes].sort()).toEqual([...MASK_SHAPES].sort());
+describe('shapes', () => {
+  it('every 3rd level after the tutorial is a shape, cycling through all 20', () => {
+    expect([1, 2, 3, 4, 5, 7, 8, 10, 11].map(shapeOf)).toEqual(Array(9).fill(null));
+    expect(shapeOf(6)).toBe(MASK_SHAPES[0]);
+    expect(shapeOf(9)).toBe(MASK_SHAPES[1]);
+    const levels = Array.from({ length: 20 }, (_, i) => 6 + i * 3);
+    expect(new Set(levels.map((n) => generateLevel(n).shape)).size).toBe(20);
+    expect(shapeOf(6 + 20 * 3)).toBe(MASK_SHAPES[0]);
+  });
+
+  it('pixel-art shapes are 16x16 and every shape fills a good part of the board', () => {
+    for (const art of Object.values(SHAPE_ART)) {
+      expect(art).toHaveLength(16);
+      for (const row of art) expect(row).toMatch(/^[.#]{16}$/);
+    }
+    expect(MASK_SHAPES).toHaveLength(20);
+    for (const name of MASK_SHAPES) {
+      const used = makeMask(name, 24, 24).reduce((n, x) => n + x, 0) / (24 * 24);
+      expect(used, name).toBeGreaterThan(0.3);
+      expect(used, name).toBeLessThan(0.95);
+    }
+  });
+
+  it('every shape looks different', () => {
+    const keys = MASK_SHAPES.map((n) => makeMask(n, 16, 16).join(''));
+    expect(new Set(keys).size).toBe(MASK_SHAPES.length);
   });
 });
 
@@ -87,7 +112,7 @@ describe('difficulty curve', { timeout: 30000 }, () => {
   function reports(from, to, withShapes = false) {
     const out = [];
     for (let n = from; n <= to; n++) {
-      if (!withShapes && n % 10 === 0) continue;
+      if (!withShapes && shapeOf(n)) continue;
       const level = generateLevel(n);
       out.push({ level, report: analyzeLevel(level) });
     }
@@ -121,7 +146,7 @@ describe('difficulty curve', { timeout: 30000 }, () => {
 
   it('start-free, depth and solve-round minimums hold on every non-shape level', () => {
     for (let n = 4; n <= 300; n++) {
-      if (n % 10 === 0) continue;
+      if (shapeOf(n)) continue;
       const { goals } = getLevelConfig(n);
       const r = analyzeLevel(generateLevel(n));
       expect(r.startFree).toBeLessThanOrEqual(n <= 60 ? 3 : 2);

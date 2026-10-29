@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows and shape (mask) levels every 10th level
+- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (20 shapes)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing, spent on hints, boosters, heart refills, continues, skips and cosmetics
@@ -45,7 +45,9 @@ src/
   engine/               pure logic, no DOM (tested in Node)
     rng.js              seeded mulberry32 RNG and seed hashing
     directions.js       up/right/down/left
-    masks.js            heart, circle, diamond, hourglass, star masks
+    masks.js            shape list, geometric shapes, mask building
+    shapeArt.js         pixel-art shapes (letters, objects) and scaling
+    animalArt.js        pixel-art animals (whale, cat, dog, bird, fish)
     levels.js           tier and board size for a level number (numbers from config.js)
     shapes.js           turn plans for straight, L, U, zig-zag, spiral, snake
     generator.js        reverse-peeling generator with retries
@@ -109,7 +111,7 @@ Solve rounds: how many removal waves are needed if every free arrow leaves at on
 
 Two arrows pointing straight at each other on the same line can never appear: each would block the other forever.
 
-**Shape levels** (every 10th) are square and 3 cells wider. They are exempt from the arrow-count range (less room), and their goals are eased: depth and rounds x0.6, and up to 12 more arrows free at the start (a jagged edge lets more arrows out).
+**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board, cycling through 20 shapes: heart, arrow, mushroom, circle, plane, whale, diamond, cat, letter A, donut, star, dog, house, fish, hourglass, bird, apple, plus, tree and letter Z. The geometric ones are formulas in `src/engine/masks.js`; the others are 16x16 pixel art in `src/engine/shapeArt.js`, scaled to the board with their proportions kept. The Levels page shows each shape's silhouette under the level number. Shape boards are square and 3 cells wider. They are exempt from the arrow-count range (less room), and their goals are eased: depth and rounds x0.6, and up to 12 more arrows free at the start (a jagged edge lets more arrows out).
 
 If a board misses its goals, the generator retries with the next derived seed. Levels 1-300 are tested for solvability, goals, determinism, and build time (under 150 ms each; most take under 20 ms on a laptop).
 
@@ -131,7 +133,7 @@ All numbers live in `src/config.js`.
 | Difficulty multiplier (base + hearts + size) | Normal x1, Hard x1.5, Super Hard x2 |          |
 | Perfect level (no heart lost), first time    | +20                                 |          |
 | Replay of a completed level                  | 25% of base + hearts                |          |
-| Shape level (every 10th), first clear        |                                     | +1       |
+| Every 10th level, first clear                |                                     | +1       |
 | Chapter complete (40 levels), once           | +200                                | +4       |
 | Achievements                                 |                                     | 1-5 each |
 | Free hint every 3 levels completed           | (+1 hint)                           |          |

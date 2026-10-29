@@ -4,7 +4,7 @@ import {
   chapterLevels,
   chapterOf,
   grant,
-  isMaskLevel,
+  isMilestoneLevel,
   levelReward,
   priceLabel,
   shortfall,
@@ -70,8 +70,13 @@ describe('levelReward: coins', () => {
 });
 
 describe('levelReward: diamonds', () => {
-  it('gives +1 for the first clear of every 10th level', () => {
+  it('gives +1 for the first clear of every 10th level (not every shape level)', () => {
     expect(levelReward(win({ level: 10, heartsLeft: 1 })).diamonds).toBe(1);
+    expect(levelReward(win({ level: 10, heartsLeft: 1 })).lines).toContainEqual({
+      label: 'Level 10 milestone',
+      diamonds: 1,
+    });
+    expect(levelReward(win({ level: 9 })).diamonds).toBe(0);
     expect(levelReward(win({ level: 10, heartsLeft: 1, wasCompleted: true })).diamonds).toBe(0);
     expect(levelReward(win({ level: 11 })).diamonds).toBe(0);
   });
@@ -82,15 +87,15 @@ describe('levelReward: diamonds', () => {
   });
 });
 
-describe('chapters and mask levels', () => {
+describe('chapters and milestone levels', () => {
   it('groups levels in chapters of 40', () => {
     expect(chapterOf(1)).toBe(1);
     expect(chapterOf(40)).toBe(1);
     expect(chapterOf(41)).toBe(2);
     expect(chapterLevels(2)[0]).toBe(41);
     expect(chapterLevels(2)).toHaveLength(40);
-    expect(isMaskLevel(30)).toBe(true);
-    expect(isMaskLevel(31)).toBe(false);
+    expect(isMilestoneLevel(30)).toBe(true);
+    expect(isMilestoneLevel(33)).toBe(false);
   });
 });
 
