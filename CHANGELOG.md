@@ -6,13 +6,21 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ### Changed
 
-- Levels are much harder and denser, like the reference game:
-  - level 4: 8 cells wide (about 20 arrows); level 5: 12 wide (about 40)
-  - Hard from level 6: 14 cells wide (40+ arrows), growing to 22 wide (about 100 arrows) by level 30
-  - Super Hard from level 31: growing to 30 cells wide (up to about 190 arrows)
-  - shorter arrows (2-12 cells) so boards hold many more of them; stricter depth and rounds goals
-  - boards are portrait shaped; mask levels are square and slightly bigger
-  - every tier now starts with 3 hearts, like the reference
+- Difficulty tiers moved up and every number lives in `LEVELS` in `src/config.js`:
+
+  | Tier       | Levels | Board width              | Arrows | Free at start | Min avg depth | Min solve rounds |
+  | ---------- | ------ | ------------------------ | ------ | ------------- | ------------- | ---------------- |
+  | Tutorial   | 1-3    | 5-7                      | 6-15   | 2-3           | -             | 2                |
+  | Normal     | 4-20   | 16, +1 every 3 (max 21)  | 40-80  | max 3         | 9             | 12               |
+  | Hard       | 21-60  | 22, +1 every 8 (max 27)  | 80-140 | max 3         | 20            | 20               |
+  | Super Hard | 61+    | 30, +1 every 20 (max 34) | 140+   | max 2         | 26            | 28               |
+
+- Arrow lengths are mixed like the reference: about 70% short (2-6), 15-20% medium (7-12) and 10-15% long (13-30). Long arrows are made by joining neighbours onto deep arrows, so they leave late and act as walls (straights across the board, U-turns, combs, snakes).
+- Solve rounds (removal waves) are now a checked goal for every tier.
+- Coins scale with board size: +1 coin per 10 arrows, before the difficulty multiplier.
+- Generation is faster (one sweep per line to find heads): every level of 1-300 builds in well under 150 ms.
+- Boards are portrait shaped; shape levels are square, a bit wider, and have eased goals.
+- Every tier starts with 3 hearts, like the reference.
 - Lines and arrowheads stay thin on dense boards.
 - Taps on the board fire on release instead of on touch, so dragging or pinching never removes an arrow.
 - Existing saves keep all progress, coins and items. Only the boards themselves are new.
@@ -22,7 +30,7 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - Pinch to zoom and one-finger pan on big boards, with a "Pinch to zoom" tip on the first 3 dense boards, a button to show the whole board again, double tap on empty space to reset, and Ctrl + wheel zoom on desktop.
 - Hints and Reveal zoom back out first so the highlight is on screen.
 
-- 2026-10-29
+## [3.2.0] - 2026-10-29
 
 ### Added
 
