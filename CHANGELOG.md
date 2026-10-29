@@ -2,6 +2,36 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.2.0] - 2026-10-29
+
+### Added
+
+- Boosters, stored as inventory counts, with a compact booster bar next to the hint button (tap with 0 left to buy):
+  - Shield (60 coins): the next wrong tap costs no heart. Pulses while active, breaks with an animation. Does not stack.
+  - Reveal (40 coins): highlights every free arrow for 3 seconds.
+  - Auto-Clear (70 coins): removes one free arrow with its normal escape. Max 1 per level.
+  - Extra Heart Start (1 diamond): start the level with +1 heart.
+  - Booster Pack (350 coins): 3 Shields + 3 Reveals + 2 Auto-Clears.
+  - Using any booster or hint means the level is not "perfect". Boosters and hints used are new Profile stats.
+- Cosmetics with a free default in every category, equipped from the Shop or Settings:
+  - escape effects (Spark Trail, Comet Glow, Burst, Rocket Flame) on a small particle canvas, off with reduced motion
+  - board backgrounds (Soft Paper, Gradient Sky, Chalkboard, Night Stars) with arrow and dot colours checked in light and dark mode
+  - arrowhead shapes (Chevron, Round, Feather), drawing only, hit detection unchanged
+  - victory confetti (Hearts, Coins, Stars) and sound packs (Retro 8-bit, Nature), all Web Audio
+  - 6 premium avatars and Silver, Gold and Diamond frames. Silver and Gold also unlock free with Perfectionist and Chapter Master.
+- Offers: one-time Starter Pack from level 5, a Free Gift of 30 coins every 4 hours (safe if the clock moves backward), coin to diamond exchange (x1 and x5) and a Weekly Sale (30% off one item, same for everyone that ISO week).
+- Shop tabs: Offers, Boosters, Styles, Effects and Profile. Sticky, tap or swipe, remembers the last tab, live previews, Sale and New badges, locked and empty states. A dot on the Shop tab when the free gift is ready.
+
+### Changed
+
+- Saves move to `arrowEscape:v3`. v2 saves (and their backups) migrate automatically and keep all progress, coins, diamonds, items and achievements. Old keys are removed only after v3 is safely written.
+- `src/storage/schema.js` split into `validators.js` and `migrate.js`.
+
+### Fixed
+
+- Coins and diamonds counters now stay in sync on every screen after a level, even when you leave the victory screen before the coins finish flying (regression test added).
+- Levels page opens the chapter with the current level and scrolls to its tile.
+
 ## [3.1.0] - 2026-10-27
 
 ### Changed

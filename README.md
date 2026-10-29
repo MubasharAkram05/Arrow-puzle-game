@@ -8,7 +8,10 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 - Endless generated levels in chapters of 40, with shape (mask) levels every 10th level
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
-- Coins and diamonds: earned by playing, spent on hints, heart refills, continues, skips, arrow styles and accent themes
+- Coins and diamonds: earned by playing, spent on hints, boosters, heart refills, continues, skips and cosmetics
+- Boosters: Shield, Reveal, Auto-Clear and Extra Heart Start, with a booster bar on the game screen
+- Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
+- Shop with tabs (Offers, Boosters, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
 - Profile with 12 built-in avatars, an editable name, player level/XP, stats and 7 achievements
 - Light, dark and auto theme, 4 arrow styles, 4 accent themes
@@ -53,15 +56,23 @@ src/
     rewards.js          applies rewards and purchases to the game state
     achievements.js     achievement goals, progress and claiming (pure)
     stats.js            stats, streaks, XP levels, name validation (pure)
-  render/               SVG board, HUD, pointing hand, animations, confetti
+    boosters.js         booster inventory, per-level limits, shield and "perfect" rules (pure)
+    cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
+    offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
+    offerActions.js     applies offers to the game state
+  render/               SVG board, HUD, pointing hand, animations, confetti, booster effects
+    effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, Android/browser back button
-  audio/                Web Audio sounds, vibration
+  audio/                Web Audio sounds and sound packs, vibration
   storage/
-    schema.js           v2 save format, validation, v1 migration, backup (pure)
+    schema.js           v3 save format, validation, loading and backup (pure)
+    validators.js       number, list, cosmetics and avatar validators (pure)
+    migrate.js          v1 and v2 to v3 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
-    screens/            home, levels, game, shop, profile
+    screens/            home, levels, game, booster bar, profile
+      shop/             shop shell and one file per tab, cards, previews, actions
     modals/             settings, game over, victory, purchase dialog, shared modal logic
   styles/               tokens, base and per-screen CSS
 tests/                  Vitest suites
@@ -123,6 +134,65 @@ All numbers live in `src/config.js`.
 | Themes: Royal Purple, Lagoon Teal          | 400 coins  |
 | Theme: Sunset Coral                        | 8 diamonds |
 
+### Boosters
+
+Bought in the Shop (Boosters tab) or from the booster bar next to the hint button. Tapping a booster with 0 left asks to buy one.
+
+| Booster           | What it does                                                    | Price     |
+| ----------------- | --------------------------------------------------------------- | --------- |
+| Shield            | Your next wrong tap costs no heart (does not stack)             | 60 coins  |
+| Reveal            | Highlights every free arrow for 3 seconds                       | 40 coins  |
+| Auto-Clear        | Removes one free arrow with its normal escape (max 1 per level) | 70 coins  |
+| Extra Heart Start | Use before your first move: start the level with +1 heart       | 1 diamond |
+| Booster Pack      | 3 Shields + 3 Reveals + 2 Auto-Clears                           | 350 coins |
+
+Using any booster or a hint means the level does not count as perfect. Boosters and hints used are tracked in the Profile stats.
+
+### Cosmetics
+
+Each category has a free default. Owned items are equipped from the Shop or from Settings.
+
+| Category         | Item                             | Price           |
+| ---------------- | -------------------------------- | --------------- |
+| Escape effect    | Classic Slide (default)          | Free            |
+| Escape effect    | Spark Trail                      | 250 coins       |
+| Escape effect    | Comet Glow                       | 400 coins       |
+| Escape effect    | Burst                            | 3 diamonds      |
+| Escape effect    | Rocket Flame                     | 6 diamonds      |
+| Board background | Plain (default)                  | Free            |
+| Board background | Soft Paper                       | 200 coins       |
+| Board background | Gradient Sky                     | 300 coins       |
+| Board background | Chalkboard                       | 4 diamonds      |
+| Board background | Night Stars                      | 6 diamonds      |
+| Arrowhead        | Triangle (default)               | Free            |
+| Arrowhead        | Chevron                          | 200 coins       |
+| Arrowhead        | Round                            | 250 coins       |
+| Arrowhead        | Feather                          | 3 diamonds      |
+| Victory confetti | Classic (default)                | Free            |
+| Victory confetti | Hearts                           | 150 coins       |
+| Victory confetti | Coins                            | 200 coins       |
+| Victory confetti | Stars                            | 250 coins       |
+| Sound pack       | Soft (default)                   | Free            |
+| Sound pack       | Retro 8-bit                      | 300 coins       |
+| Sound pack       | Nature                           | 3 diamonds      |
+| Avatar           | 6 premium avatars                | 2 diamonds each |
+| Avatar frame     | Silver (free with Perfectionist) | 500 coins       |
+| Avatar frame     | Gold (free with Chapter Master)  | 1000 coins      |
+| Avatar frame     | Diamond                          | 10 diamonds     |
+
+Escape effects use transform, opacity and a small particle canvas, and are skipped with `prefers-reduced-motion`. Sound packs are generated with the Web Audio API (no audio files). Arrowhead shapes only change the drawing, not hit detection.
+
+### Offers
+
+| Offer        | Details                                                                                        | Price                 |
+| ------------ | ---------------------------------------------------------------------------------------------- | --------------------- |
+| Starter Pack | One time, from level 5: 5 hints + 3 Shields + 3 Reveals + Dark Slate style. Hidden once bought | 3 diamonds            |
+| Free Gift    | 30 coins every 4 hours. If the device clock moves backward, no reward and the timer restarts   | Free                  |
+| Exchange     | 1 diamond, or 5 diamonds at once (confirm first)                                               | 500 coins per diamond |
+| Weekly Sale  | One cosmetic, style or theme at 30% off, picked from the ISO week number (same for everyone)   | 30% off               |
+
+The Shop has five tabs: Offers, Boosters, Styles, Effects and Profile. The last opened tab is remembered on this device. Items from this update show a "New" badge until you first see them.
+
 ### Achievements
 
 | Achievement    | Goal                                     | Reward     |
@@ -139,8 +209,9 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Saves
 
-- Key `arrowEscape:v2`, plus a backup copy in `arrowEscape:v2:backup` written on every save.
-- On first launch after updating, a v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v2 is written and read back.
+- Key `arrowEscape:v3`, plus a backup copy in `arrowEscape:v3:backup` written on every save.
+- A v2 save (or its backup) is migrated to v3 automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after v3 is written and read back.
+- A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v3 is written and read back.
 - Saves made with 20-level chapters are converted to 40-level chapters: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
 - Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
 
