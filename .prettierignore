@@ -5,3 +5,6 @@ legacy/
 node_modules/
 package-lock.json
 reference/
+src/engine/shapes/library.json
+scripts/shapes-preview.html
+scripts/shape-sources/
