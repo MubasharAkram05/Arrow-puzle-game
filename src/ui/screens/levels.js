@@ -4,7 +4,7 @@
  * so thousands of levels stay light.
  */
 import { REWARDS } from '../../config.js';
-import { shapeOf } from '../../engine/index.js';
+import { isShapeLevel, loadShapeLibrary, shapeLibraryReady, shapeOf } from '../../engine/index.js';
 import { isPlayable } from '../../game/unlock.js';
 import { shapeIcon } from '../components/shapeIcon.js';
 import { chapterLevels, chapterOf, chapterWindow } from '../../game/economy.js';
@@ -28,6 +28,22 @@ function chapterTitle(c) {
   return NAMES[c - 1] ? `Chapter ${c}: ${NAMES[c - 1]}` : `Chapter ${c}`;
 }
 
+/** Small shape silhouette for a shape level; a placeholder until the shape library chunk has loaded. */
+function shapeMark(n) {
+  if (!isShapeLevel(n)) return '';
+  if (shapeLibraryReady()) return shapeIcon(shapeOf(n), 'shape');
+  loadShapeLibrary()
+    .then(fillPendingShapes)
+    .catch(() => {});
+  return `<i class="shape shape-pending" data-shape-level="${n}"></i>`;
+}
+
+/** Swap the placeholders for real icons once the library is in. */
+function fillPendingShapes() {
+  for (const el of $('level-grid').querySelectorAll('.shape-pending'))
+    el.outerHTML = shapeIcon(shapeOf(Number(el.dataset.shapeLevel)), 'shape');
+}
+
 /** Markup for one level tile. */
 function tileHTML(n) {
   const p = state.progress;
@@ -37,8 +53,7 @@ function tileHTML(n) {
   const done = p.completed.has(n);
   const perfect = p.perfect.has(n);
   const cls = ['level-btn', done ? 'done' : '', n === p.current ? 'current' : ''].join(' ');
-  const name = shapeOf(n);
-  const shape = name ? shapeIcon(name, 'shape') : '';
+  const shape = shapeMark(n);
   const badges = (done ? icon('check', 'tick') : '') + (perfect ? icon('crown', 'solid crown-mark') : '');
   const label = `Level ${n}${done ? ', completed' : ''}${perfect ? ', perfect' : ''}`;
   return `<button class="${cls}" data-level="${n}" aria-label="${label}">${shape}<span>${n}</span>${badges}</button>`;

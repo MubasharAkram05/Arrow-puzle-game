@@ -1,4 +1,12 @@
-import { buildOccupancy, clearArrow, generateLevel, rayBlocker } from '../engine/index.js';
+import {
+  buildOccupancy,
+  clearArrow,
+  generateLevel,
+  isShapeLevel,
+  loadShapeLibrary,
+  rayBlocker,
+  shapeLibraryReady,
+} from '../engine/index.js';
 import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
 import { resetZoom } from '../input/zoom.js';
@@ -12,6 +20,7 @@ import { saveProgress } from '../storage/save.js';
 import { $ } from '../ui/dom.js';
 import { navigate } from '../ui/navigation.js';
 import { closeModals } from '../ui/modals/modal.js';
+import { toast } from '../ui/components/toast.js';
 import { showGameOver } from '../ui/modals/gameover.js';
 import { showVictory } from '../ui/modals/victory.js';
 import { clearHint, updateTutorial } from './hints.js';
@@ -67,6 +76,13 @@ function setDifficultyBadge(difficulty) {
  * @param {number} n
  */
 export function startLevel(n) {
+  // shape boards need the shape library chunk (usually already loaded at start)
+  if (isShapeLevel(n) && !shapeLibraryReady()) {
+    loadShapeLibrary()
+      .then(() => startLevel(n))
+      .catch(() => toast('Could not load the shapes. Check your connection and try again.'));
+    return;
+  }
   state.levelNum = n;
   // a test-mode play of a locked level must not move the saved "current" level
   if (!isTestPlay(n, state.progress)) {

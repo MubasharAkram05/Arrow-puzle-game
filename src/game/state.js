@@ -5,7 +5,7 @@ import { newCosmetics } from './cosmetics.js';
 
 /**
  * Fresh progress record.
- * @returns {{current: number, unlocked: number, completed: Set<number>, perfect: Set<number>, masks: Set<number>, chaptersRewarded: Set<number>}}
+ * @returns {{current: number, unlocked: number, completed: Set<number>, perfect: Set<number>, masks: Set<number>, shapes: Set<string>, chaptersRewarded: Set<number>}}
  */
 export function newProgress() {
   return {
@@ -14,6 +14,7 @@ export function newProgress() {
     completed: new Set(),
     perfect: new Set(), // finished without losing a heart
     masks: new Set(), // mask levels completed
+    shapes: new Set(), // shape ids collected (Shape Collection)
     chaptersRewarded: new Set(),
   };
 }

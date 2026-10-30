@@ -1,5 +1,5 @@
 /**
- * Profile: avatar, editable name, player level/XP, stats and achievements.
+ * Profile: avatar, editable name, player level/XP, stats, shape collection and achievements.
  */
 import { achievementStatus } from '../../game/achievements.js';
 import { achievementContext, claim } from '../../game/rewards.js';
@@ -16,6 +16,7 @@ import { flyCurrency } from '../components/currencyBar.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
+import { bindCollection, collectionSkeleton, renderCollection } from './shapeCollection.js';
 import { onReturn, openTab } from '../navigation.js';
 
 /** Static skeleton, built once. */
@@ -38,6 +39,7 @@ function buildSkeleton() {
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
     <h3 class="section-title">Stats</h3>
     <div class="stat-grid" id="stat-grid"></div>
+    ${collectionSkeleton()}
     <h3 class="section-title">Achievements</h3>
     <ul class="ach-list" id="ach-list"></ul>`;
 }
@@ -108,6 +110,7 @@ function renderAchievements() {
 function renderProfile() {
   renderHeader();
   renderStats();
+  renderCollection();
   renderAchievements();
 }
 
@@ -197,5 +200,6 @@ export function bindProfile() {
     const b = e.target.closest('[data-claim]');
     if (b) onClaim(b);
   });
+  bindCollection();
   onReturn('screen-profile', renderProfile);
 }

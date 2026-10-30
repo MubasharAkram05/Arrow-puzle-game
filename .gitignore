@@ -6,3 +6,4 @@ ios/
 .DS_Store
 *.log
 .vite/
+scripts/shape-sources/node_modules/

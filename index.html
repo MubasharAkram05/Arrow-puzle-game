@@ -198,11 +198,33 @@
         <button class="link-btn" id="btn-zoom-tips">
           <svg class="icon"><use href="#i-pinch" /></svg>Show zoom tips again
         </button>
+        <button class="link-btn" id="btn-credits">
+          <svg class="icon"><use href="#i-image" /></svg>Credits
+        </button>
         <button class="link-btn more-styles" id="btn-more-styles">
           <svg class="icon"><use href="#i-shop" /></svg>More in the Shop
         </button>
         <button class="btn danger" id="btn-reset">
           <svg class="icon"><use href="#i-trash" /></svg>Reset progress
+        </button>
+      </div>
+    </div>
+
+    <!-- Credits: open sources of the board shapes (filled from the shape library) -->
+    <div class="modal" id="modal-credits">
+      <div class="card">
+        <div class="card-head">
+          <h3>Credits</h3>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <p class="muted credits-intro">
+          Board shapes are silhouettes made from these open icon sets and fonts (filled, resized and trimmed for play).
+        </p>
+        <ul class="credits-list" id="credits-list"></ul>
+        <button class="link-btn" id="btn-credits-back">
+          <svg class="icon"><use href="#i-back" /></svg>Back to settings
         </button>
       </div>
     </div>

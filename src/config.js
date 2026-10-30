@@ -208,6 +208,19 @@ export const LEVELS = Object.freeze({
   }),
   shapeEvery: 3, // every 3rd level is a shape board...
   shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
+  // shape levels take turns between categories (first round in this order), easy shapes first
+  shapeRotation: [
+    'animals',
+    'food',
+    'letters',
+    'transport',
+    'nature',
+    'objects',
+    'fruits',
+    'symbols',
+    'others',
+    'numbers',
+  ],
   maskMaxCols: 90,
   // a shape's jagged edge (diagonal sides are staircases) lets more arrows out at the start, so shape
   // boards may start with the level's cap + maskExtraFree free arrows, or maskFreeShare of all arrows if higher

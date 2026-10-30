@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { loadShapeLibrary, shapeOf } from '../src/engine/index.js';
 import { applyWin, pay, wallet } from '../src/game/rewards.js';
 import { state } from '../src/game/state.js';
 import { applySave, snapshot } from '../src/storage/save.js';
@@ -47,5 +48,21 @@ describe('winning levels pays coins that are saved (regression: counters stuck a
     reload();
     expect(state.coins).toBe(5);
     expect(state.stats.coinsSpent).toBe(40);
+  });
+});
+
+describe('shape collection', () => {
+  beforeAll(() => loadShapeLibrary());
+  beforeEach(() => boot(defaultSave()));
+
+  it('a won shape level unlocks its shape once, and it survives a reload', () => {
+    expect(applyWin(5, 'Normal', 3, 3).newShape).toBeNull();
+    const first = applyWin(6, 'Normal', 3, 3);
+    expect(first.newShape).toBe(shapeOf(6));
+    expect(state.progress.shapes.has(shapeOf(6))).toBe(true);
+    expect(applyWin(6, 'Normal', 3, 3).newShape).toBeNull();
+    applyWin(9, 'Normal', 3, 3);
+    reload();
+    expect([...state.progress.shapes]).toEqual([shapeOf(6), shapeOf(9)]);
   });
 });

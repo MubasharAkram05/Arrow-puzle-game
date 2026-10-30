@@ -1,11 +1,11 @@
 /**
- * Save format v3, validation and loading (v2 and v1 saves are migrated, see migrate.js).
+ * Save format v4, validation and loading (v3, v2 and v1 saves are migrated, see migrate.js).
  * Pure: storage is passed in, so tests can use a fake.
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
 import { BOOSTER_IDS } from '../game/boosters.js';
 import { newCosmetics } from '../game/cosmetics.js';
-import { convertChapters, migrateV1, migrateV2, OLD_CHAPTER_SIZE } from './migrate.js';
+import { convertChapters, legacyShapes, migrateV1, migrateV2, migrateV3, OLD_CHAPTER_SIZE } from './migrate.js';
 import {
   avatarIndex,
   bool,
@@ -17,6 +17,7 @@ import {
   ownedList,
   sanitizeCosmetics,
   seenKeys,
+  shapeIds,
   timestamp,
 } from './validators.js';
 
@@ -24,8 +25,10 @@ export const V1_KEY = 'arrowEscape.save.v1';
 export const V2_KEY = 'arrowEscape:v2';
 export const V2_BACKUP_KEY = 'arrowEscape:v2:backup';
 export const V3_KEY = 'arrowEscape:v3';
-export const BACKUP_KEY = 'arrowEscape:v3:backup';
-export const VERSION = 3;
+export const V3_BACKUP_KEY = 'arrowEscape:v3:backup';
+export const V4_KEY = 'arrowEscape:v4';
+export const BACKUP_KEY = 'arrowEscape:v4:backup';
+export const VERSION = 4;
 const STAT_KEYS = [
   'arrowsCleared',
   'wins',
@@ -51,6 +54,7 @@ export function defaultSave() {
       completed: [],
       perfect: [],
       masks: [],
+      shapes: [],
       chaptersRewarded: [],
       chapterSize: REWARDS.chapterSize,
     },
@@ -68,11 +72,12 @@ export function defaultSave() {
   };
 }
 
-export { convertChapters, migrateV1, migrateV2, OLD_CHAPTER_SIZE, sanitizeCosmetics };
+export { convertChapters, migrateV1, migrateV2, migrateV3, OLD_CHAPTER_SIZE, sanitizeCosmetics };
 
 /**
- * Validate any parsed value into a complete v3 save. Unknown keys are dropped,
- * bad numbers become 0, and an equipped item must be owned.
+ * Validate any parsed value into a complete v4 save. Unknown keys are dropped,
+ * bad numbers become 0, and an equipped item must be owned. Saves from before the shape collection
+ * (no `shapes` list) get the shapes of their finished shape levels.
  * @param {unknown} raw
  * @returns {object}
  */
@@ -104,6 +109,7 @@ export function sanitize(raw) {
       completed,
       perfect: levels(p.perfect).filter((n) => completed.includes(n)),
       masks: levels(p.masks).filter((n) => completed.includes(n)),
+      shapes: Array.isArray(p.shapes) ? shapeIds(p.shapes) : legacyShapes(completed),
       // saves without chapterSize were made with 20-level chapters
       chaptersRewarded: convertChapters(levels(p.chaptersRewarded), count(p.chapterSize) || OLD_CHAPTER_SIZE),
       chapterSize: REWARDS.chapterSize,
@@ -160,21 +166,24 @@ function upgrade(storage, data, oldKeys) {
 }
 
 /**
- * Read the save: v3, then its backup, then v2 (or its backup) and v1, migrated to v3. Old keys are
- * removed only after v3 is written. Otherwise defaults. Never throws, even if storage is unavailable.
+ * Read the save: v4, then its backup, then v3 (or its backup), v2 (or its backup) and v1, migrated to v4.
+ * Old keys are removed only after v4 is written. Otherwise defaults. Never throws, even if storage is unavailable.
  * @param {{getItem: Function, setItem: Function, removeItem: Function}|null} storage
- * @returns {{data: object, source: 'v3'|'backup'|'v2'|'v1'|'new'}}
+ * @returns {{data: object, source: 'v4'|'backup'|'v3'|'v2'|'v1'|'new'}}
  */
 export function readSave(storage) {
   try {
-    const main = readKey(storage, V3_KEY);
-    if (main) return { data: sanitize(main), source: 'v3' };
+    const main = readKey(storage, V4_KEY);
+    if (main) return { data: sanitize(main), source: 'v4' };
     const backup = readKey(storage, BACKUP_KEY);
     if (backup) return { data: sanitize(backup), source: 'backup' };
+    const old = [V3_KEY, V3_BACKUP_KEY, V2_KEY, V2_BACKUP_KEY, V1_KEY];
+    const v3 = readKey(storage, V3_KEY) || readKey(storage, V3_BACKUP_KEY);
+    if (v3) return { data: upgrade(storage, migrateV3(v3), old), source: 'v3' };
     const v2 = readKey(storage, V2_KEY) || readKey(storage, V2_BACKUP_KEY);
-    if (v2) return { data: upgrade(storage, migrateV2(v2), [V2_KEY, V2_BACKUP_KEY, V1_KEY]), source: 'v2' };
+    if (v2) return { data: upgrade(storage, migrateV2(v2), old), source: 'v2' };
     const v1 = readKey(storage, V1_KEY);
-    if (v1) return { data: upgrade(storage, migrateV1(v1), [V1_KEY]), source: 'v1' };
+    if (v1) return { data: upgrade(storage, migrateV1(v1), old), source: 'v1' };
   } catch {
     // storage blocked: play with defaults
   }
@@ -190,9 +199,9 @@ export function readSave(storage) {
 export function writeSave(storage, data) {
   try {
     const text = JSON.stringify(data);
-    storage.setItem(V3_KEY, text);
+    storage.setItem(V4_KEY, text);
     storage.setItem(BACKUP_KEY, text);
-    return storage.getItem(V3_KEY) === text;
+    return storage.getItem(V4_KEY) === text;
   } catch {
     return false;
   }

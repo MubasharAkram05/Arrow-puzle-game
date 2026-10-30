@@ -1,8 +1,13 @@
 import { DIRS } from './directions.js';
 import { insideArt, SHAPE_ART } from './shapeArt.js';
+import { getShape } from './shapes/library.js';
+import { insideMask } from './shapes/quality.js';
 
-/** Board shapes, in the order shape levels cycle through them (geometric ones mixed with pixel art). */
-export const MASK_SHAPES = Object.freeze([
+/**
+ * The game's first 20 shapes, in the order shape levels used before the shape library (3.7.0).
+ * Kept to migrate old saves (level number -> shape id) and as a source for scripts/build-shapes.mjs.
+ */
+export const ORIGINAL_SHAPES = Object.freeze([
   'heart',
   'arrow',
   'mushroom',
@@ -49,7 +54,8 @@ function starPolygon() {
 const STAR = starPolygon();
 
 /**
- * Is a normalized point inside a shape? x and y are in [-1, 1], y points down.
+ * Is a normalized point inside one of the 20 original shapes (formula or pixel art)? x and y are in [-1, 1],
+ * y points down. Used by scripts/build-shapes.mjs; the game samples the shape library instead.
  * @param {string} shape
  * @param {number} x
  * @param {number} y
@@ -75,8 +81,9 @@ export function insideShape(shape, x, y) {
 }
 
 /**
- * Build a 0/1 usable-cell array for a shape. Cells with no usable neighbour are dropped.
- * @param {string|null} shape null = every cell usable
+ * Build a 0/1 usable-cell array for a library shape (the library must be loaded).
+ * Cells with no usable neighbour are dropped.
+ * @param {string|null} shape shape id, null = every cell usable
  * @param {number} rows
  * @param {number} cols
  * @returns {number[]}
@@ -84,11 +91,13 @@ export function insideShape(shape, x, y) {
 export function makeMask(shape, rows, cols) {
   const m = new Array(rows * cols).fill(1);
   if (!shape) return m;
+  const art = getShape(shape);
+  if (!art) throw new Error(`Unknown shape: ${shape}`);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const x = ((c + 0.5) / cols) * 2 - 1;
       const y = ((r + 0.5) / rows) * 2 - 1;
-      m[r * cols + c] = insideShape(shape, x, y) ? 1 : 0;
+      m[r * cols + c] = insideMask(art, x, y);
     }
   }
   for (let r = 0; r < rows; r++) {

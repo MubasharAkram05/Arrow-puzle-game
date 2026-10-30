@@ -2,6 +2,22 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.7.0] - 2026-10-30
+
+### Added
+
+- Shape library: 624 board shapes in 10 categories (letters, numbers, symbols, transport, objects, food, fruits, nature, animals, others), each above its target. Built by `scripts/build-shapes.mjs` from open icon sets (Font Awesome solid, game-icons.net, Material Symbols, Tabler, Fluent Emoji) and fonts (Inter, Roboto Slab), with an automatic quality filter and a review contact sheet (`scripts/shapes-preview.html`).
+- Shape levels rotate between categories, compact shapes first; the 624 shapes repeat every 1,872 levels on bigger boards.
+- Shape Collection on the Profile page: category chips with counts, total progress, coloured shapes you won and locked grey silhouettes for the rest.
+- Achievements: Collector (50 shapes, 3 diamonds), Alphabet (all letters, 5 diamonds), Zoo Keeper (all animals, 10 diamonds).
+- Settings > Credits and `CREDITS.md` for the shape sources and their licenses.
+
+### Changed
+
+- The shape library is a lazy chunk (77 KB, 30 KB gzipped) loaded after the home screen; shape levels wait for it.
+- Save format v4 (`arrowEscape:v4`) with the collected shapes. v3, v2 and v1 saves migrate with nothing lost.
+- The 20 original shapes keep their ids (letter A and Z are now drawn from the font).
+
 ## [3.6.0] - 2026-10-30
 
 ### Added
