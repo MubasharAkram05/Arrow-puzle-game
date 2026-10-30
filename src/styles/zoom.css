@@ -29,3 +29,121 @@
   background: color-mix(in srgb, var(--primary) 15%, transparent);
   pointer-events: none;
 }
+
+/* Zoom guide (src/ui/zoomGuide.js): two hands pinching apart, one finger dragging. Never takes taps. */
+.zoom-guide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 22px 12px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -40%);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+.zoom-guide.show {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+.zg-pinch {
+  position: relative;
+  width: 150px;
+  height: 66px;
+}
+.zg-hand {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.18));
+}
+.zg-hand svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.zg-left {
+  left: 50%;
+  top: 4px;
+  margin-left: -58px;
+  animation: zg-left 1.6s ease-in-out infinite;
+}
+.zg-right {
+  left: 50%;
+  top: 4px;
+  margin-left: 2px;
+  animation: zg-right 1.6s ease-in-out infinite;
+}
+.zg-left svg {
+  transform: rotate(20deg);
+}
+.zg-right svg {
+  transform: scaleX(-1) rotate(20deg);
+}
+@keyframes zg-left {
+  0%,
+  15% {
+    transform: translateX(14px);
+  }
+  60%,
+  100% {
+    transform: translateX(-18px);
+  }
+}
+@keyframes zg-right {
+  0%,
+  15% {
+    transform: translateX(-14px);
+  }
+  60%,
+  100% {
+    transform: translateX(18px);
+  }
+}
+.zg-label {
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.zg-label.small {
+  font-size: 14px;
+  color: var(--muted);
+}
+.zg-drag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zg-one {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  animation: zg-drag 1.6s ease-in-out infinite;
+}
+@keyframes zg-drag {
+  0%,
+  10% {
+    transform: translateX(-8px);
+  }
+  60%,
+  100% {
+    transform: translateX(10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zg-left,
+  .zg-right,
+  .zg-one {
+    animation: none;
+  }
+}

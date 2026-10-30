@@ -151,37 +151,6 @@ html:not([data-style='classic']) .board-card {
 .board-wrap.zoomed .board-card {
   will-change: transform;
 }
-.zoom-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 124px;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: 16px;
-  background: var(--pill);
-  color: var(--primary);
-  font-weight: 800;
-  font-size: 18px;
-  white-space: nowrap;
-  box-shadow: var(--shadow);
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 8px);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-.zoom-hint.show {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-.zoom-hint .icon {
-  width: 22px;
-  height: 22px;
-}
 .board-wrap .fit-btn {
   position: absolute;
   top: 8px;

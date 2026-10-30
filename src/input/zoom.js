@@ -6,6 +6,7 @@ import { ZOOM } from '../config.js';
 import { onMinimapTap, setMinimapLevel, updateMinimap } from '../render/minimap.js';
 import { placePointer } from '../render/pointer.js';
 import { $ } from '../ui/dom.js';
+import { hideZoomGuide, notePinch } from '../ui/zoomGuide.js';
 import { maxScaleFor, startScale, translateFor } from './zoomMath.js';
 
 const pointers = new Map(); // pointerId -> {x, y}
@@ -143,11 +144,12 @@ function zoomAt(s, px, py, from) {
  * @param {PointerEvent} e
  */
 function onDown(e) {
+  hideZoomGuide(); // the guide fades on the first touch
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
   if (pointers.size === 2 && canZoom()) {
     const p = pinchInfo();
     gesture = { kind: 'pinch', ...p, from: { ...view } };
-    hideZoomHint();
+    notePinch();
   }
 }
 
@@ -223,31 +225,6 @@ function onWheel(e) {
   if (!canZoom()) return;
   e.preventDefault();
   zoomAt(view.s * Math.exp(-e.deltaY * 0.0025), e.clientX, e.clientY, { ...view });
-}
-
-/**
- * Show "Pinch to zoom" on the first few dense boards (remembered per device).
- * @param {number} cols board width in cells
- */
-export function maybeShowZoomHint(cols) {
-  if (!canZoom() || cols < ZOOM.hintMinCols) return;
-  let seen = 0;
-  try {
-    seen = Number(localStorage.getItem(ZOOM.hintKey)) || 0;
-    localStorage.setItem(ZOOM.hintKey, String(seen + 1));
-  } catch {
-    // storage blocked: show it anyway
-  }
-  if (seen >= ZOOM.hintTimes) return;
-  const el = $('zoom-hint');
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(hideZoomHint, ZOOM.hintMs);
-}
-
-/** Hide the zoom hint. */
-export function hideZoomHint() {
-  $('zoom-hint').classList.remove('show');
 }
 
 /** Wire zoom gestures on the board area once. */

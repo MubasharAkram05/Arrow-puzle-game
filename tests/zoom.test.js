@@ -34,3 +34,14 @@ describe('default zoom', () => {
     expect(320 + t.y + 2 * -20).toBe(300);
   });
 });
+
+describe('zoom guide', () => {
+  it('shows on the first 3 zoomed levels, then only while the player never pinched', async () => {
+    const { shouldShowGuide } = await import('../src/ui/zoomGuide.js');
+    expect(shouldShowGuide({ shown: 0, pinched: true })).toBe(true);
+    expect(shouldShowGuide({ shown: 2, pinched: true })).toBe(true);
+    expect(shouldShowGuide({ shown: 3, pinched: true })).toBe(false);
+    expect(shouldShowGuide({ shown: 3, pinched: false })).toBe(true);
+    expect(shouldShowGuide({ shown: 50, pinched: false })).toBe(true);
+  });
+});

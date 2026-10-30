@@ -14,10 +14,9 @@ export const ZOOM = Object.freeze({
   maxScale: 6,
   dragPx: 10, // movement that turns a tap into a drag
   doubleTapMs: 350, // double tap on empty space resets the zoom
-  hintKey: 'arrowEscape:zoomHint',
-  hintMinCols: 14, // only on dense boards
-  hintTimes: 3, // "Pinch to zoom" shows on the first 3 big boards
-  hintMs: 3500,
+  guideKey: 'arrowEscape:zoomGuide',
+  guideTimes: 3, // the zoom guide shows on the first 3 zoomed levels, then only until the first pinch
+  guideMs: 3000,
 });
 /** Arrow line width and head size in screen px (constant across board sizes, as in the reference). */
 export const STROKE_PX = 4.2;

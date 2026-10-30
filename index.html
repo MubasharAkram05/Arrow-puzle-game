@@ -11,6 +11,20 @@
   </head>
   <body>
     <!-- Icon sprite is mounted by src/ui/components/icons.js -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <!-- cartoon glove, fingertip at (6, 6) of a 64px box (pointer and zoom guide) -->
+      <symbol id="glove-art" viewBox="0 0 64 64">
+        <g transform="translate(-14 2) rotate(-35 20 4)" stroke="#1E2533" stroke-width="2.2" stroke-linejoin="round">
+          <path
+            fill="#FFFFFF"
+            d="M14 30V10a6 6 0 0 1 12 0v16q2-3 6-2.5 3.5.5 4.5 4 2-2.5 5.5-2 4 .7 4.5 5 2.5-1.2 5 .5 2.5 2 2.5 6v8q0 12-13 13H28q-10 0-13-9z"
+          />
+          <path fill="#DCE1EB" stroke="none" d="M50 40v6q0 10-11 11h-8q8-3 9-11 1-5 0-9 5 0 10 3z" />
+          <path fill="none" stroke-linecap="round" d="M26 26v6M36.5 28.5v5M46.5 31.5v4" />
+          <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9" d="M18 9v6" />
+        </g>
+      </symbol>
+    </svg>
 
     <!-- Home screen -->
     <section id="screen-home" class="screen tab-screen" aria-label="Home">
@@ -109,22 +123,7 @@
         </div>
         <div class="pointer" id="pointer">
           <!-- cartoon glove, fingertip at (6, 6) -->
-          <svg class="glove" viewBox="0 0 64 64" aria-hidden="true">
-            <g
-              transform="translate(-14 2) rotate(-35 20 4)"
-              stroke="#1E2533"
-              stroke-width="2.2"
-              stroke-linejoin="round"
-            >
-              <path
-                fill="#FFFFFF"
-                d="M14 30V10a6 6 0 0 1 12 0v16q2-3 6-2.5 3.5.5 4.5 4 2-2.5 5.5-2 4 .7 4.5 5 2.5-1.2 5 .5 2.5 2 2.5 6v8q0 12-13 13H28q-10 0-13-9z"
-              />
-              <path fill="#DCE1EB" stroke="none" d="M50 40v6q0 10-11 11h-8q8-3 9-11 1-5 0-9 5 0 10 3z" />
-              <path fill="none" stroke-linecap="round" d="M26 26v6M36.5 28.5v5M46.5 31.5v4" />
-              <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".9" d="M18 9v6" />
-            </g>
-          </svg>
+          <svg class="glove" viewBox="0 0 64 64" aria-hidden="true"><use href="#glove-art" /></svg>
         </div>
         <div class="tip-bubble" id="tip-bubble">Tap to remove</div>
         <canvas class="fx-canvas" id="fx-canvas" aria-hidden="true"></canvas>
@@ -132,8 +131,23 @@
         <button class="fab fit-btn" id="btn-fit" aria-label="Show the whole board" hidden>
           <svg class="icon"><use href="#i-fit" /></svg>
         </button>
-        <div class="zoom-hint" id="zoom-hint" aria-live="polite">
-          <svg class="icon"><use href="#i-pinch" /></svg>Pinch to zoom
+        <!-- Zoom guide (src/ui/zoomGuide.js): never takes taps -->
+        <div class="zoom-guide" id="zoom-guide" aria-live="polite">
+          <div class="zg-pinch">
+            <span class="zg-hand zg-left"
+              ><svg viewBox="0 0 64 64"><use href="#glove-art" /></svg
+            ></span>
+            <span class="zg-hand zg-right"
+              ><svg viewBox="0 0 64 64"><use href="#glove-art" /></svg
+            ></span>
+          </div>
+          <div class="zg-label">Pinch to zoom</div>
+          <div class="zg-drag">
+            <span class="zg-hand zg-one"
+              ><svg viewBox="0 0 64 64"><use href="#glove-art" /></svg
+            ></span>
+            <span class="zg-label small">Drag to move</span>
+          </div>
         </div>
       </div>
       <div class="fab-row">
@@ -185,6 +199,9 @@
         <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
         <div class="section-label">Cosmetics</div>
         <div class="cosmetic-equip" id="cosmetic-equip"></div>
+        <button class="link-btn" id="btn-zoom-tips">
+          <svg class="icon"><use href="#i-pinch" /></svg>Show zoom tips again
+        </button>
         <button class="link-btn more-styles" id="btn-more-styles">
           <svg class="icon"><use href="#i-shop" /></svg>More in the Shop
         </button>
