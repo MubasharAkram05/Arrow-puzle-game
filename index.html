@@ -74,6 +74,9 @@
         <div data-currency-bar></div>
       </header>
       <div class="levels-scroll tab-scroll" id="levels-scroll"><div class="chapters" id="level-grid"></div></div>
+      <button class="fab jump-current" id="btn-jump-current" aria-label="Jump to the current level" hidden>
+        <svg class="icon"><use href="#i-nav" /></svg>
+      </button>
     </section>
 
     <!-- Shop screen (content built by src/ui/screens/shopScreen.js) -->
@@ -249,6 +252,19 @@
         <p class="muted daily-sub" id="daily-sub"></p>
         <ol class="daily-row" id="daily-row"></ol>
         <p class="buy-note daily-note" id="daily-note" role="status"></p>
+      </div>
+    </div>
+
+    <!-- Award badge sheet (src/ui/components/badgeSheet.js) -->
+    <div class="modal sheet" id="modal-badge">
+      <div class="card center badge-sheet">
+        <div class="card-head">
+          <span></span>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <div id="badge-sheet-body"></div>
       </div>
     </div>
 

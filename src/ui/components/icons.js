@@ -18,6 +18,11 @@ const OUTLINED = {
   'i-close': '<path d="M18 6 6 18M6 6l12 12"/>',
   'i-lock': '<rect width="16" height="11" x="4" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   'i-check': '<path d="M20 6 9 17l-5-5"/>',
+  'i-mountain': '<path d="m3 20 6.5-11 4 6.5 2.5-4L21 20z"/><path d="m8 11.5 1.5 1.5 1.5-1.5"/>',
+  'i-heart':
+    '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  'i-dumbbell':
+    '<path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/>',
   'i-paw':
     '<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.05Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>',
   'i-letter': '<path d="M4 20 12 4l8 16"/><path d="M7.5 13h9"/>',

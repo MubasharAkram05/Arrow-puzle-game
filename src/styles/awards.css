@@ -1,0 +1,215 @@
+/* ---------- Award badges (src/ui/components/badge.js, profile/awardsView.js, badgeSheet.js) ---------- */
+.bdg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.bdg-rim {
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.tier-bronze .bdg-rim {
+  fill: #c47a3a;
+}
+.tier-silver .bdg-rim {
+  fill: #b9c3d0;
+}
+.tier-gold .bdg-rim {
+  fill: #f2b100;
+}
+.tier-diamond .bdg-rim {
+  fill: #6fd3f5;
+}
+.bdg-body {
+  fill: var(--hue);
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.bdg-shine {
+  fill: rgba(255, 255, 255, 0.3);
+}
+.bdg-ico {
+  overflow: visible;
+  color: #ffffff;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bdg-tag rect {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+.tier-bronze .bdg-tag rect {
+  fill: #a8612a;
+}
+.tier-silver .bdg-tag rect {
+  fill: #8592a3;
+}
+.tier-gold .bdg-tag rect {
+  fill: #d99a00;
+}
+.tier-diamond .bdg-tag rect {
+  fill: #2fa6d6;
+}
+.bdg-tag text {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+/* locked: grey silhouette with a progress ring */
+.bdg-locked .bdg-rim,
+.bdg-locked .bdg-body {
+  fill: var(--lost);
+  stroke: none;
+}
+.bdg-locked .bdg-ico {
+  stroke: var(--surface);
+}
+.bdg-locked .bdg-shine {
+  opacity: 0.4;
+}
+.bdg-track,
+.bdg-progress {
+  fill: none;
+  stroke-width: 4;
+}
+.bdg-track {
+  stroke: var(--pill);
+}
+.bdg-progress {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Grid */
+.awards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+@media (min-width: 600px) {
+  .awards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.award {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 6px 10px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+.award:active {
+  transform: scale(0.96);
+}
+.award:focus-visible,
+.ra-item:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.award .bdg {
+  width: 74px;
+  margin-bottom: 4px;
+}
+.award b {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.award small {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.award-ready small {
+  color: var(--primary);
+  font-weight: 800;
+}
+/* ready: soft glow and a small bounce */
+.award-ready::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 92px;
+  height: 92px;
+  margin-left: -46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, #f2b100 45%, transparent), transparent 70%);
+  animation: award-glow 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.award-ready .bdg {
+  animation: award-bounce 1.6s ease-in-out infinite;
+}
+.award-dot {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--error);
+}
+@keyframes award-glow {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes award-bounce {
+  50% {
+    transform: translateY(-4px) scale(1.03);
+  }
+}
+
+/* Newest badges under the name */
+.recent-awards {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 12px auto 0;
+}
+.recent-awards[hidden] {
+  display: none;
+}
+.ra-list {
+  display: flex;
+  gap: 8px;
+}
+.ra-item {
+  width: 48px;
+  min-height: 48px;
+}
+.ra-all {
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .award-ready::before,
+  .award-ready .bdg {
+    animation: none;
+  }
+}

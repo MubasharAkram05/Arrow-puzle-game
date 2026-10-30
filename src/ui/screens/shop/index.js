@@ -1,6 +1,6 @@
 /**
- * Shop shell: sticky tabs (Offers, Boosters, Styles, Effects, Profile), tap or swipe to switch,
- * remembers the last tab, and shows "New" dots on tabs with unseen items.
+ * Shop shell: sticky tabs (All, Offers, Boosters, Styles, Effects, Profile), tap or swipe to switch,
+ * opens on All the first time, then remembers the last tab, and shows "New" dots on tabs with unseen items.
  */
 import { formatCountdown, giftStatus } from '../../../game/offers.js';
 import { state } from '../../../game/state.js';
@@ -10,6 +10,7 @@ import { icon } from '../../components/icons.js';
 import { $ } from '../../dom.js';
 import { currentScreen, onReturn, openTab } from '../../navigation.js';
 import { onShopChange } from './actions.js';
+import * as all from './allTab.js';
 import * as boosters from './boostersTab.js';
 import { hasNew, markShownSeen } from './cards.js';
 import * as effects from './effectsTab.js';
@@ -17,7 +18,8 @@ import * as offers from './offersTab.js';
 import * as profile from './profileTab.js';
 import * as styles from './stylesTab.js';
 
-const TABS = [
+export const TABS = [
+  { id: 'all', label: 'All', icon: 'levels', mod: all },
   { id: 'offers', label: 'Offers', icon: 'gift', mod: offers },
   { id: 'boosters', label: 'Boosters', icon: 'bolt', mod: boosters },
   { id: 'styles', label: 'Styles', icon: 'palette', mod: styles },
@@ -30,9 +32,9 @@ const STORE_KEY = 'arrowEscape:shopTab';
 function loadTab() {
   try {
     const t = localStorage.getItem(STORE_KEY);
-    return TABS.some((x) => x.id === t) ? t : 'offers';
+    return TABS.some((x) => x.id === t) ? t : 'all';
   } catch {
-    return 'offers';
+    return 'all';
   }
 }
 
@@ -72,6 +74,9 @@ function renderShop(dir = 0) {
   }
   if (markShownSeen()) saveProgress();
   renderTabs();
+  // keep the active tab fully in view in the scrolling tab row
+  const on = $('shop-tabs').querySelector('.on');
+  if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
 /** Switch tab with a slide in the right direction. */
@@ -82,7 +87,6 @@ function selectTab(id) {
   storeTab(id);
   renderShop(dir);
   $('shop-body').scrollTo({ top: 0 });
-  $('shop-tabs').querySelector('.on')?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
 }
 
 /** Keep the gift countdown live while the Offers tab is visible. */
