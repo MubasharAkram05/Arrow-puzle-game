@@ -1,6 +1,7 @@
 import { state } from '../game/state.js';
 
-const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const darkQuery =
+  typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
 /** Apply the chosen theme (auto follows the system) and arrow style. */
 export function applyTheme() {
