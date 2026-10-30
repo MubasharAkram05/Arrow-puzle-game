@@ -2,10 +2,9 @@
  * Profile: avatar, editable name, player level/XP, stats, shape collection and achievements.
  */
 import { visibleAchievements } from '../../game/achievements.js';
-import { currentStreak } from '../../game/daily.js';
 import { achievementContext, claim } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
-import { formatPlayTime, playerLevel, validateName } from '../../game/stats.js';
+import { playerLevel, validateName } from '../../game/stats.js';
 import { saveProgress } from '../../storage/save.js';
 import { AVATAR_TOTAL, avatarSVG, premiumId } from '../components/avatars.js';
 import { COSMETICS, SHOW_SHAPE_COLLECTION } from '../../config.js';
@@ -17,6 +16,7 @@ import { flyCurrency } from '../components/currencyBar.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
+import { renderStatsView, statsSkeleton } from './profile/statsView.js';
 import { bindCollection, collectionSkeleton, renderCollection } from './shapeCollection.js';
 import { onReturn, openTab } from '../navigation.js';
 
@@ -38,8 +38,7 @@ function buildSkeleton() {
       </div>
     </div>
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
-    <h3 class="section-title">Stats</h3>
-    <div class="stat-grid" id="stat-grid"></div>
+    ${statsSkeleton()}
     ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
     <h3 class="section-title">Achievements</h3>
     <ul class="ach-list" id="ach-list"></ul>`;
@@ -59,32 +58,6 @@ function renderHeader() {
   $('lvl-badge').textContent = `Lv ${lv.level}`;
   $('xp-fill').style.transform = `scaleX(${lv.into / lv.need})`;
   $('xp-text').textContent = `${lv.into} / ${lv.need} XP to level ${lv.level + 1}`;
-}
-
-/** The eight stat cards. */
-function renderStats() {
-  const p = state.progress;
-  const s = state.stats;
-  const cards = [
-    ['levels', p.completed.size, 'Levels completed'],
-    ['coin', state.coins, 'Coins', true],
-    ['gem', state.diamonds, 'Diamonds', true],
-    ['target', s.arrowsCleared, 'Arrows cleared'],
-    ['crown-o', p.perfect.size, 'Perfect levels'],
-    ['fire', s.streak, 'Win streak'],
-    ['trophy', s.bestStreak, 'Best streak'],
-    ['fire', currentStreak(state.daily, Date.now()), 'Daily streak'],
-    ['calendar', state.daily.best, 'Best daily streak'],
-    ['clock', formatPlayTime(s.playSeconds), 'Play time'],
-    ['bolt', s.boostersUsed, 'Boosters used'],
-    ['bulb', s.hintsUsed, 'Hints used'],
-  ];
-  $('stat-grid').innerHTML = cards
-    .map(([ic, value, label, colored]) => {
-      const pic = colored ? `<svg class="cur-icon"><use href="#i-${ic}" /></svg>` : icon(ic);
-      return `<div class="stat-card">${pic}<b>${typeof value === 'number' ? value.toLocaleString('en-US') : value}</b><small>${label}</small></div>`;
-    })
-    .join('');
 }
 
 /** Achievement rows with progress bars and claim buttons. */
@@ -109,17 +82,20 @@ function renderAchievements() {
     .join('');
 }
 
-/** Refresh everything on the page. */
-function renderProfile() {
+/**
+ * Refresh everything on the page.
+ * @param {boolean} [animate] count the stat numbers up (when the page opens)
+ */
+function renderProfile(animate = false) {
   renderHeader();
-  renderStats();
+  renderStatsView(state, animate);
   if (SHOW_SHAPE_COLLECTION) renderCollection();
   renderAchievements();
 }
 
 /** Open the profile tab. */
 export function openProfile() {
-  renderProfile();
+  renderProfile(true);
   openTab('screen-profile');
 }
 
@@ -136,7 +112,7 @@ function onClaim(btn) {
   flyCurrency(btn, 'diamonds', before, res.diamonds);
   setTimeout(() => {
     renderAchievements();
-    renderStats();
+    renderStatsView(state);
     updateBottomNav('screen-profile');
   }, 700);
 }
@@ -204,5 +180,5 @@ export function bindProfile() {
     if (b) onClaim(b);
   });
   if (SHOW_SHAPE_COLLECTION) bindCollection();
-  onReturn('screen-profile', renderProfile);
+  onReturn('screen-profile', () => renderProfile());
 }
