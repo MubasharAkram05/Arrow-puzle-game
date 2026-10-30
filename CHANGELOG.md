@@ -2,6 +2,19 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.10.0] - 2026-10-30
+
+### Added
+
+- Levels page as a winding path: sticky gradient chapter banners, round 3D level nodes in an S-curve (completed, perfect, current with START bubble, locked, shape and every-10th star nodes), a treasure chest after each chapter that opens when its reward is paid, light doodles and a "jump to current level" button. Stays light with 50,000+ levels.
+- Shop "All" tab (first and default) with every section under its heading.
+- Award badges on the Profile: one original badge per achievement group with Bronze/Silver/Gold/Diamond tiers, locked/ready/earned states, a bottom sheet with Claim and an unlock animation, and the 3 newest badges under the name.
+
+### Changed
+
+- Profile stats: three highlight tiles (Daily streak, Levels completed, Perfect) and a compact list (Arrows cleared, Win streak, Best streak, Play time) that count up. Coins, Diamonds, Best daily streak, Boosters used and Hints used are no longer shown (still saved).
+- The achievements list is replaced by the badge grid (same rules and rewards).
+
 ## [3.9.0] - 2026-10-30
 
 ### Changed

@@ -15,7 +15,8 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Shop with tabs (Offers, Boosters, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
-- Profile with 12 built-in avatars, an editable name, player level/XP, stats and 12 achievement groups (some with several steps)
+- Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
+- Profile with 12 built-in avatars, an editable name, player level/XP, highlight stats and award badges for 12 achievement groups (some with Bronze to Diamond steps)
 - Light, dark and auto theme, 4 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
@@ -65,6 +66,7 @@ src/
     economy.js          pure reward and wallet rules (+ grant() hook for ads/IAP later)
     rewards.js          applies rewards and purchases to the game state
     achievements.js     achievement goals, progress and claiming (pure)
+    badges.js           award badge tier and state per achievement group (pure)
     stats.js            stats, streaks, XP levels, name validation (pure)
     daily.js            daily reward and streak, with clock checks (pure)
     boosters.js         booster inventory, per-level limits, shield and "perfect" rules (pure)
@@ -82,7 +84,7 @@ src/
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
-    screens/            home, levels, game, booster bar, profile, shape collection
+    screens/            home, levels (path), game, booster bar, profile (stats, awards), shape collection
       shop/             shop shell and one file per tab, cards, previews, actions
     modals/             settings, credits, daily reward, game over, victory, purchase dialog, shared modal logic
   styles/               tokens, base and per-screen CSS
@@ -122,7 +124,7 @@ There is no last level: any level number works (tested up to 1,000,000) with the
 
 Two arrows pointing straight at each other on the same line can never appear: each would block the other forever.
 
-**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board from the shape library (see [Shape library](#shape-library)). The Levels page shows each shape's silhouette under the level number.
+**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board from the shape library (see [Shape library](#shape-library)). On the Levels path, a shape level's node shows its shape.
 
 Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same arrow count, depth and solve-round floors as plain levels of that number. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
@@ -165,6 +167,17 @@ Won shapes are always saved (`progress.shapes`). The Profile section that shows 
 - **Zoom guide:** when a level starts zoomed, two hands show "Pinch to zoom" and one finger shows "Double-tap to see full board". It appears on the first 3 zoomed levels, then only while the player has never pinched. It fades on the first touch or after 3 seconds and never takes taps. Settings has "Show zoom tips again".
 - **Hints:** a hint pans (keeping the zoom) so the highlighted arrow is on screen.
 - **Levels page:** only a few chapters around the current level are rendered; more load while scrolling up or down, with no end.
+
+### Levels page (path)
+
+The Levels page is a winding path (`src/ui/screens/levels/`), our own design:
+
+- **Chapter banner** (`chapterBanner.js`): gradient card with "CHAPTER n", the chapter name, progress (e.g. 12/20) and the chapter reward; it sticks to the top while its chapter scrolls by.
+- **Nodes** (`pathNode.js`): round 3D buttons (darker bottom edge, soft shine) in a gentle S-curve. Completed nodes show a check, perfect ones a crown, the current level is bigger with a pulsing ring and a START bubble, locked ones are grey with a lock. Shape levels show their shape and every 10th level is an amber star node (a corner badge marks them done).
+- **Chest** after each chapter's last level: closed, wiggling when the chapter is finished but not paid yet, and open once the chapter reward is paid (the opening animation plays once).
+- Light arrow and dot doodles fill the space beside the curve. A round button at the bottom right jumps back to the current level when it is off screen.
+- Performance (`pathView.js`): at most 8 chapters (160 nodes) are in the DOM; more are added while scrolling and far ones are removed, and off-screen chapters skip layout (`content-visibility`). Checked with 50,000 unlocked levels: no long tasks while scrolling.
+- Locked nodes shake with a "Complete level X first" toast; `TEST_UNLOCK_ALL` opens every node.
 
 ## Economy
 
@@ -210,7 +223,7 @@ Bought in the Shop (Boosters tab) or from the booster bar next to the hint butto
 | Extra Heart Start | Use before your first move: start the level with +1 heart | 1 diamond |
 | Booster Pack      | 4 Shields                                                 | 200 coins |
 
-Using any booster or a hint means the level does not count as perfect. Boosters and hints used are tracked in the Profile stats.
+Using any booster or a hint means the level does not count as perfect. Boosters and hints used are still tracked in the save (not shown on the Profile).
 
 ### Cosmetics
 
@@ -255,11 +268,17 @@ Escape effects use transform, opacity and a small particle canvas, and are skipp
 | Exchange     | 1 diamond, or 5 diamonds at once (confirm first)                                             | 500 coins per diamond |
 | Weekly Sale  | One cosmetic, style or theme at 30% off, picked from the ISO week number (same for everyone) | 30% off               |
 
-The Shop has five tabs: Offers, Boosters, Styles, Effects and Profile. The last opened tab is remembered on this device. Items from this update show a "New" badge until you first see them.
+The Shop has six tabs: All, Offers, Boosters, Styles, Effects and Profile. All (the default the first time) shows every section in order under its own heading (Offers, Boosters, Styles, Effects, Profile items). After that the last opened tab is remembered on this device. The tab row scrolls sideways on small screens and keeps the active tab in view. Items from this update show a "New" badge until you first see them.
 
-### Achievements
+### Profile stats
 
-Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. A group with several steps shows only its next unclaimed step with its progress bar; steps are claimed in order and each pays once. If saved progress already meets a step, it is claimable right away. Achievements removed in 3.8.0 (Collector, Alphabet, Zoo Keeper) keep the diamonds already claimed.
+Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two-column list (Arrows cleared, Win streak, Best streak, Play time). The numbers count up when the page opens. Coins, diamonds, best daily streak, boosters used and hints used are still saved but not shown.
+
+### Achievements and award badges
+
+Each achievement group is an award badge on the Profile (`src/game/badges.js`, `src/ui/components/badge.js`): an original hexagon badge in the group's colour with its icon. Tiered groups use Bronze, Silver, Gold and Diamond for steps 1-4; single-step achievements are Gold. A badge is locked (grey silhouette with a progress ring), ready (glowing, bouncing, red dot) or earned (full colour, tier rim and step numeral). Tapping one opens a bottom sheet with the details and a Claim button; claiming plays an unlock animation and the diamonds fly to the counter. The three newest earned badges show under the player's name.
+
+Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. Steps are claimed in order and each pays once. If saved progress already meets a step, it is claimable right away. Achievements removed in 3.8.0 (Collector, Alphabet, Zoo Keeper) keep the diamonds already claimed.
 
 | Achievement    | Goal                                                         | Reward (diamonds) |
 | -------------- | ------------------------------------------------------------ | ----------------- |

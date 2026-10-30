@@ -1,6 +1,6 @@
 {
   "name": "arrow-escape",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "private": true,
   "description": "Tap Away Arrows style puzzle game. Vanilla JS + Vite, packaged for Android with Capacitor.",
   "type": "module",
