@@ -11,6 +11,7 @@ import { openShop } from '../screens/shop/index.js';
 import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
 import { closeModals, onModalBack, openModal } from './modal.js';
+import { openCredits } from './credits.js';
 
 /** Build the style cards once (only owned ones are shown). */
 function buildStyleCards() {
@@ -82,6 +83,9 @@ export function bindSettings() {
     resetZoomGuide();
     toast('Zoom tips will show again');
   });
+  $('btn-credits').addEventListener('click', openCredits);
+  $('btn-credits-back').addEventListener('click', openSettings);
+  onModalBack('modal-credits', openSettings);
   $('btn-more-styles').addEventListener('click', () => {
     closeModals();
     openShop('styles');

@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (20 shapes)
+- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (624 shapes in 10 categories, with a Shape Collection on the Profile page)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing, spent on hints, boosters, heart refills, continues, skips and cosmetics
@@ -30,9 +30,11 @@ npm install
 npm run dev       # dev server with hot reload
 npm run build     # production build in dist/
 npm run preview   # serve the build locally
-npm test          # Vitest: engine, 200 levels, economy, achievements, storage
+npm test          # Vitest: engine, 700 levels, every shape at 3 sizes, economy, achievements, storage
 npm run lint      # ESLint + Prettier check
 npm run format    # auto-fix formatting and lint issues
+npm run shapes:sources  # once: install the icon sets and fonts the shape library is built from
+npm run shapes:build    # rebuild src/engine/shapes/library.json, index.json, CREDITS.md and the preview
 ```
 
 ## Folder structure
@@ -45,9 +47,12 @@ src/
   engine/               pure logic, no DOM (tested in Node)
     rng.js              seeded mulberry32 RNG and seed hashing
     directions.js       up/right/down/left
-    masks.js            shape list, geometric shapes, mask building
-    shapeArt.js         pixel-art shapes (letters, objects) and scaling
+    masks.js            mask building from library shapes; the 20 original shapes (formulas, old order)
+    shapeArt.js         pixel art of the original shapes (source for the shape build)
     animalArt.js        pixel-art animals (whale, cat, dog, bird, fish)
+    shapes/             shape library: library.json (lazy chunk), index.json (category -> ids),
+                        library.js (load, decode, level order), quality.js (board rules, RLE),
+                        collection.js (collected per category)
     levels.js           tier and board size for a level number (numbers from config.js)
     shapes.js           turn plans for straight, L, U, zig-zag, spiral, snake
     generator.js        reverse-peeling generator with retries
@@ -69,16 +74,18 @@ src/
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
-    schema.js           v3 save format, validation, loading and backup (pure)
-    validators.js       number, list, cosmetics and avatar validators (pure)
-    migrate.js          v1 and v2 to v3 migrations, chapter-size conversion (pure)
+    schema.js           v4 save format, validation, loading and backup (pure)
+    validators.js       number, list, cosmetics, avatar and shape-id validators (pure)
+    migrate.js          v1, v2 and v3 to v4 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
-    screens/            home, levels, game, booster bar, profile
+    screens/            home, levels, game, booster bar, profile, shape collection
       shop/             shop shell and one file per tab, cards, previews, actions
-    modals/             settings, game over, victory, purchase dialog, shared modal logic
+    modals/             settings, credits, game over, victory, purchase dialog, shared modal logic
   styles/               tokens, base and per-screen CSS
+scripts/                dev-only shape build (build-shapes.mjs, shape-catalog.mjs, shape-sources/),
+                        shapes-preview.html contact sheet (not shipped)
 tests/                  Vitest suites
 reference/              screenshots of the original game (design target)
 legacy/                 the old single-file version, kept for reference
@@ -113,11 +120,40 @@ There is no last level: any level number works (tested up to 1,000,000) with the
 
 Two arrows pointing straight at each other on the same line can never appear: each would block the other forever.
 
-**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board, cycling through 20 shapes: heart, arrow, mushroom, circle, plane, whale, diamond, cat, letter A, donut, star, dog, house, fish, hourglass, bird, apple, plus, tree and letter Z. The geometric ones are formulas in `src/engine/masks.js`; the others are 16x16 pixel art in `src/engine/shapeArt.js`, scaled to the board with their proportions kept. The Levels page shows each shape's silhouette under the level number.
+**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board from the shape library (see [Shape library](#shape-library)). The Levels page shows each shape's silhouette under the level number.
 
 Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same arrow count, depth and solve-round floors as plain levels of that number. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
 After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms each; the average is about 25 ms on a laptop).
+
+### Shape library
+
+624 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing):
+
+| Category  | Target |  Shapes |
+| --------- | -----: | ------: |
+| Letters   |     26 |      26 |
+| Numbers   |     10 |      10 |
+| Symbols   |     50 |      62 |
+| Transport |     50 |      55 |
+| Objects   |    100 |     134 |
+| Food      |     50 |      66 |
+| Fruits    |     40 |      42 |
+| Nature    |     60 |      62 |
+| Animals   |     80 |     110 |
+| Others    |     40 |      57 |
+| **Total** |        | **624** |
+
+- **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 32 cells on its longest side, small holes are filled, parts too thin for a board are trimmed (at most 12% of the shape) and only the main connected area stays. The game only reads the generated JSON.
+- **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 20x20, one connected area, and still connected and similar (70%+ overlap) on an 18x18 board, the smallest shape board. Every rejected source is logged with the reason; a name tries its next source until one passes.
+- **Excluded on purpose**: brand logos, copyrighted characters, country flags, religious or political symbols, weapons and anything offensive.
+- **Files**: `library.json` (77 KB, 30 KB gzipped; one row per shape with id, name, category, width, height, source, license and the run-length-encoded mask) is a lazy chunk preloaded after the home screen. `index.json` (7 KB, category -> ids) is in the main bundle for the collection counts and achievements. `scripts/shapes-preview.html` is a contact sheet of every shape plus the rejected list; it is not part of the build.
+- **Order**: shape levels take turns between categories, first in the order of `LEVELS.shapeRotation` (animals, food, letters, transport, nature, objects, fruits, symbols, others, numbers), then in proportion to what each category has left, so letters never come 26 in a row. Inside a category compact shapes come first. Never two of the same category back to back. The order is deterministic; after all 624 shapes (1,872 levels) it starts again on bigger boards.
+- **Credits**: sources that need attribution are listed in `CREDITS.md` and in Settings > Credits.
+
+### Shape Collection
+
+The Profile page shows every shape by category: a chip per category with its count (e.g. Animals 12/110), the total (e.g. 37 / 624) and a grid. Shapes from won shape levels show in colour with their name; the others are grey silhouettes with a lock. Winning a new shape shows a toast on the victory screen. Test-mode plays don't collect anything.
 
 ### Zoom
 
@@ -221,15 +257,18 @@ The Shop has five tabs: Offers, Boosters, Styles, Effects and Profile. The last 
 
 ### Achievements
 
-| Achievement    | Goal                                     | Reward     |
-| -------------- | ---------------------------------------- | ---------- |
-| First Escape   | Finish level 1                           | 1 diamond  |
-| Perfectionist  | 10 perfect levels                        | 3 diamonds |
-| Chapter Master | Finish chapter 1 (40 levels)             | 2 diamonds |
-| Arrow Hunter   | Clear 1000 arrows                        | 5 diamonds |
-| No Mistakes    | 5 levels in a row without losing a heart | 3 diamonds |
-| Shape Solver   | Finish 5 shape levels                    | 3 diamonds |
-| Big Spender    | Spend 1000 coins                         | 2 diamonds |
+| Achievement    | Goal                                     | Reward      |
+| -------------- | ---------------------------------------- | ----------- |
+| First Escape   | Finish level 1                           | 1 diamond   |
+| Perfectionist  | 10 perfect levels                        | 3 diamonds  |
+| Chapter Master | Finish chapter 1 (40 levels)             | 2 diamonds  |
+| Arrow Hunter   | Clear 1000 arrows                        | 5 diamonds  |
+| No Mistakes    | 5 levels in a row without losing a heart | 3 diamonds  |
+| Shape Solver   | Finish 5 shape levels                    | 3 diamonds  |
+| Collector      | Collect 50 shapes                        | 3 diamonds  |
+| Alphabet       | Collect all 26 letters                   | 5 diamonds  |
+| Zoo Keeper     | Collect all 110 animals                  | 10 diamonds |
+| Big Spender    | Spend 1000 coins                         | 2 diamonds  |
 
 Currency from outside the game (rewarded ads, in-app purchases) should go through `grant()` in `economy.js` (via `credit()` in `rewards.js`) with source `'ad'` or `'purchase'`.
 
@@ -239,10 +278,11 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Saves
 
-- Key `arrowEscape:v3`, plus a backup copy in `arrowEscape:v3:backup` written on every save.
-- A v2 save (or its backup) is migrated to v3 automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after v3 is written and read back.
+- Key `arrowEscape:v4`, plus a backup copy in `arrowEscape:v4:backup` written on every save.
+- v4 adds the Shape Collection (`progress.shapes`, shape ids). A v3 save (or its backup) is migrated automatically and nothing is lost: each finished shape level gives the shape it showed under the old 20-shape order. The v3 keys are removed only after v4 is written and read back.
+- A v2 save (or its backup) is migrated automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after the current save is written and read back.
 - The Reveal and Auto-Clear boosters were removed in 3.5.0: their saved counts are dropped on load, everything else is kept.
-- A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v3 is written and read back.
+- A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after the current save is written and read back.
 - Saves made with 20-level chapters are converted to 40-level chapters: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
 - Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
 
