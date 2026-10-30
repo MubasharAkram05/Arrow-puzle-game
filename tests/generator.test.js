@@ -78,14 +78,26 @@ describe('first levels', () => {
 });
 
 describe('difficulty curve', () => {
-  const harder = ['gridW', 'gridH', 'targetArrows', 'minAvgDepth', 'minSolveRounds', 'longArrowShare', 'shapeScale'];
+  const harder = [
+    'gridW',
+    'gridH',
+    'targetArrows',
+    'minAvgDepth',
+    'minSolveRounds',
+    'longArrowShare',
+    'shapeScale',
+    'minLongestChain',
+    'minDecoyRatio',
+  ];
+  // caps: lower is harder
+  const capped = ['maxStartFree', 'maxFreePerRound', 'maxEdgeFreeRatio'];
 
   it('never gets easier: level N+10 is equal or harder than level N on every metric (N up to 500)', () => {
     for (let n = 1; n <= 500; n++) {
       const a = difficultyFor(n);
       const b = difficultyFor(n + 10);
       for (const k of harder) expect(b[k], `${k} at ${n}`).toBeGreaterThanOrEqual(a[k]);
-      expect(b.maxStartFree, `maxStartFree at ${n}`).toBeLessThanOrEqual(a.maxStartFree);
+      for (const k of capped) expect(b[k], `${k} at ${n}`).toBeLessThanOrEqual(a[k]);
     }
   });
 
@@ -95,7 +107,7 @@ describe('difficulty curve', () => {
       const a = difficultyFor(points[i - 1]);
       const b = difficultyFor(points[i]);
       for (const k of harder) expect(b[k]).toBeGreaterThanOrEqual(a[k]);
-      expect(b.maxStartFree).toBeLessThanOrEqual(a.maxStartFree);
+      for (const k of capped) expect(b[k]).toBeLessThanOrEqual(a[k]);
     }
   });
 
@@ -106,7 +118,7 @@ describe('difficulty curve', () => {
     expect(late.minAvgDepth).toBeGreaterThan(full.minAvgDepth);
     expect(late.minSolveRounds).toBeGreaterThan(full.minSolveRounds);
     expect(late.longArrowShare).toBeGreaterThan(full.longArrowShare);
-    expect(late.maxStartFree).toBe(1);
+    expect(late.maxStartFree).toBe(2);
   });
 
   it('labels: Normal, Hard, Super Hard, then Expert for very high levels', () => {
@@ -138,7 +150,14 @@ describe('levels 1-500 and 200 random levels up to 1,000,000', { timeout: 120000
       expect(report.avgDepth).toBeGreaterThanOrEqual(d.minAvgDepth);
       expect(report.rounds).toBeGreaterThanOrEqual(d.minSolveRounds);
       expect(level.arrows.some((a) => a.path.length >= 13)).toBe(true);
-      if (!level.shape) expect(report.startFree).toBeLessThanOrEqual(d.maxStartFree);
+      expect(report.freePerRound).toBeLessThanOrEqual(d.maxFreePerRound);
+      expect(report.longestChain).toBeGreaterThanOrEqual(d.minLongestChain);
+      expect(report.decoyRatio).toBeGreaterThanOrEqual(d.minDecoyRatio);
+      // shapes keep their extra first moves on the shape's jagged edge (see getLevelConfig)
+      if (!level.shape) {
+        expect(report.startFree).toBeLessThanOrEqual(d.maxStartFree);
+        expect(report.edgeFreeRatio).toBeLessThanOrEqual(d.maxEdgeFreeRatio);
+      }
     }
     expect(again.arrows).toEqual(level.arrows);
     expect(ms).toBeLessThan(LIMIT_MS);

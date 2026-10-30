@@ -70,8 +70,24 @@ function solveRounds(deps, arrows) {
  * Try to grow arrow a past `target` cells by joining neighbours at its tail.
  * @returns {object[]|null} joined arrows (in order), or null when it can't reach the target
  */
-function growLong(occ, rows, cols, byId, deps, a, target, maxLen) {
-  const banned = closure(deps, a.id);
+function growLong(occ, rows, cols, byId, deps, round, a, target, maxLen) {
+  // does a wait for arrow id (directly or through a chain)? Only arrows that leave later than id can
+  // wait for it, so the search skips every arrow with an earlier or equal solve round
+  const waitsFor = (id) => {
+    if (round.get(id) >= round.get(a.id)) return false;
+    const seen = new Set([a.id]);
+    const stack = [a.id];
+    while (stack.length) {
+      for (const d of deps.get(stack.pop())) {
+        if (d === id) return true;
+        if (!seen.has(d) && round.get(d) > round.get(id)) {
+          seen.add(d);
+          stack.push(d);
+        }
+      }
+    }
+    return false;
+  };
   const joined = [];
   const used = new Set([a.id]);
   let path = a.path;
@@ -84,12 +100,12 @@ function growLong(occ, rows, cols, byId, deps, a, target, maxLen) {
       const c = tail.c + DIRS[k].dc;
       if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
       const id = occ[r * cols + c];
-      if (id === -1 || used.has(id) || banned.has(id)) continue;
+      if (id === -1 || used.has(id)) continue;
       const b = byId.get(id);
       const end = b.path[0].r === r && b.path[0].c === c ? 'head' : 'tail';
       const last = b.path[b.path.length - 1];
       if (end === 'tail' && (last.r !== r || last.c !== c)) continue; // touches its middle
-      if (path.length + b.path.length > maxLen) continue;
+      if (path.length + b.path.length > maxLen || waitsFor(id)) continue;
       // prefer keeping a straight line, then longer pieces
       const straight = tail.r - prev.r === DIRS[k].dr && tail.c - prev.c === DIRS[k].dc;
       const score = (straight ? 100 : 0) + b.path.length;
@@ -120,7 +136,10 @@ export function joinLongArrows(level, cfg, rng) {
   const occ = ownerGrid(rows, cols, arrows);
   // blockers of every arrow, computed once and kept up to date as arrows are joined
   const deps = new Map(arrows.map((a) => [a.id, blockers(occ, rows, cols, a)]));
-  // latest to leave first (highest solve round), with a little shuffle
+  // the other way round: arrows waiting for each arrow
+  const waiters = new Map(arrows.map((a) => [a.id, new Set()]));
+  for (const [id, set] of deps) for (const b of set) waiters.get(b).add(id);
+  // latest to leave first (highest solve round), with a little shuffle; rounds stay exact as arrows join
   const round = solveRounds(deps, arrows);
   const order = [...arrows].sort((x, y) => round.get(y.id) - round.get(x.id) + (rng() - 0.5) * 2);
   const want = Math.round(arrows.length * long.share);
@@ -128,20 +147,31 @@ export function joinLongArrows(level, cfg, rng) {
   for (const a of order) {
     if (made >= want) break;
     if (!byId.has(a.id) || a.path.length >= long.min) continue;
-    const res = growLong(occ, rows, cols, byId, deps, a, randInt(rng, long.min, long.max), long.max);
+    const res = growLong(occ, rows, cols, byId, deps, round, a, randInt(rng, long.min, long.max), long.max);
     if (!res) continue;
     a.path = res.path;
-    const gone = new Set(res.joined.map((b) => b.id));
     for (const b of res.joined) {
       byId.delete(b.id);
-      deps.delete(b.id);
       for (const p of b.path) occ[p.r * cols + p.c] = a.id;
+      // arrows that were blocked by a joined piece are now blocked by a (a's own blockers don't change)
+      for (const w of waiters.get(b.id)) {
+        deps.get(w).delete(b.id);
+        deps.get(w).add(a.id);
+        waiters.get(a.id).add(w);
+      }
+      for (const x of deps.get(b.id)) waiters.get(x)?.delete(b.id);
+      deps.delete(b.id);
+      waiters.delete(b.id);
     }
-    // arrows that were blocked by a joined piece are now blocked by a (a's own blockers don't change)
-    for (const set of deps.values()) {
-      let hit = false;
-      for (const id of gone) hit = set.delete(id) || hit;
-      if (hit) set.add(a.id);
+    // arrows that now wait for a may leave later: push their rounds (and their waiters') up
+    const queue = [a.id];
+    while (queue.length) {
+      const x = queue.pop();
+      for (const w of waiters.get(x)) {
+        if (round.get(w) > round.get(x)) continue;
+        round.set(w, round.get(x) + 1);
+        queue.push(w);
+      }
     }
     made++;
   }

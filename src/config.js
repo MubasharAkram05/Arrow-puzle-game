@@ -282,11 +282,16 @@ export const OFFERS = Object.freeze({
  * that, deeper blocking, more solve rounds and more long arrows keep it rising (log curve up to lateLevel).
  * Every value moves one way only, so no level is easier than an earlier one.
  *
- * Goals checked on every generated board (see analyzeLevel):
+ * Goals checked on every generated board (see analyzeLevel and src/engine/metrics.js):
  *   maxStartFree     arrows that can leave on the very first move
- *   minAvgDepth      mean number of arrows that must leave before each arrow (depthPerArrow x arrows)
- *   minSolveRounds   removal waves needed when every free arrow leaves at once (roundsPerArrow x arrows)
+ *   minAvgDepth      mean number of arrows that must leave before each arrow (depthPerArrow x arrows x boost)
+ *   minSolveRounds   removal waves needed when every free arrow leaves at once (roundsPerArrow x arrows x boost)
+ *   maxFreePerRound  arrows free per solve round on average (arrows / rounds): fewer options at a time
+ *   minLongestChain  longest nearest-blocker chain (A blocked by B blocked by C ...), in arrows
+ *   minDecoyRatio    share of arrows blocked by exactly one arrow (they look free but cost a heart)
+ *   maxEdgeFreeRatio share of first-move arrows with their head on the outer ring (lower = hidden inside)
  * Pairs [a, b] go from a at the first curve level to b at fullSizeLevel; triples add c at lateLevel.
+ * The per-tier floors only get stricter from one tier to the next, so the curve never drops.
  */
 export const LEVELS = Object.freeze({
   minLen: 2,
@@ -307,19 +312,27 @@ export const LEVELS = Object.freeze({
     mediumShare: 0.4, // chance a normal arrow aims for 7-12 cells
     depthBias: [0.6, 1],
     shapeScale: [1, 1.25], // shape boards hold this x the plain board's cells (their edges cut rays short)
-    // fewest arrows free on the first move, by level
-    maxStartFree: Object.freeze([
-      { from: 4, max: 3 },
-      { from: 31, max: 2 },
-      { from: 20000, max: 1 },
-    ]),
-    // display names only (the curve itself is smooth)
+    // display names and floors per tier (TIER_FLOORS below); depth and rounds also follow the smooth curve
     tiers: Object.freeze([
-      { from: 1, label: 'Normal' },
-      { from: 31, label: 'Hard' },
-      { from: 101, label: 'Super Hard' },
-      { from: 1000, label: 'Expert' },
+      Object.freeze({ from: 1, label: 'Normal' }),
+      Object.freeze({ from: 31, label: 'Hard' }),
+      Object.freeze({ from: 101, label: 'Super Hard' }),
+      Object.freeze({ from: 1000, label: 'Expert' }),
     ]),
+    // how the generator pushes boards toward hard structure (src/engine/generator.js, deepen.js)
+    hardness: Object.freeze({
+      roundBias: 0.3, // prefer heads behind the latest arrows (long chains)
+      decoyBias: 10, // prefer heads with exactly one arrow in front
+      sidePenalty: 6, // keep the first free arrow off the sides, so it can be hidden inside the board
+      pickWindow: 2, // pick among heads scoring within this of the best
+      deepen: Object.freeze({
+        passes: 3, // rounds of turning arrows around to make them leave later
+        decoys: true, // also turn arrows so only one arrow is in their way
+        decoyCells: 1, // share of the spare cells (above minFill) that may be cut to make decoys
+        maxCut: 30, // most cells one decoy cut may remove from an arrow's tail
+        joinMargin: 0.95, // join short arrows onto late ones until arrows / rounds is this x the floor
+      }),
+    }),
   }),
   // levels 1-3 teach the game; level 1 is drawn by hand (src/engine/levels.js)
   tutorial: Object.freeze({
@@ -351,4 +364,45 @@ export const LEVELS = Object.freeze({
   tutorialStyles: Object.freeze({ straight: 3, L: 3, U: 1 }),
   /** Long arrows: straights across a row/column, U-turns, square spirals, combs and snakes. */
   longStyles: Object.freeze({ straight: 3, U: 2, spiral: 2, snake: 3, zigzag: 1 }),
+});
+
+/**
+ * Difficulty floors per tier (from level 4; levels 1-3 are the tutorial). Each tier is stricter than the
+ * one before. boost multiplies the depth and rounds curve (1.4 = 40% deeper than before 3.12.0).
+ * Requested starting targets were tuned where the generator could not reach them fast enough; see
+ * README "Difficulty" for the targets and why some floors are lower.
+ */
+export const TIER_FLOORS = Object.freeze({
+  Normal: Object.freeze({
+    boost: 1.4,
+    maxStartFree: 2,
+    maxFreePerRound: 3,
+    minLongestChain: 8,
+    minDecoyRatio: 0.12,
+    maxEdgeFreeRatio: 0.6,
+  }),
+  Hard: Object.freeze({
+    boost: 1.4,
+    maxStartFree: 2,
+    maxFreePerRound: 3,
+    minLongestChain: 14,
+    minDecoyRatio: 0.12,
+    maxEdgeFreeRatio: 0.5,
+  }),
+  'Super Hard': Object.freeze({
+    boost: 1.4,
+    maxStartFree: 2,
+    maxFreePerRound: 3,
+    minLongestChain: 20,
+    minDecoyRatio: 0.12,
+    maxEdgeFreeRatio: 0.5,
+  }),
+  Expert: Object.freeze({
+    boost: 1.4,
+    maxStartFree: 2,
+    maxFreePerRound: 3,
+    minLongestChain: 22,
+    minDecoyRatio: 0.12,
+    maxEdgeFreeRatio: 0.5,
+  }),
 });

@@ -1,6 +1,7 @@
-import { LEVELS } from '../config.js';
+import { LEVELS, TIER_FLOORS } from '../config.js';
 import { buildOccupancy, rayArrows } from './board.js';
 import { solveLevel } from './solver.js';
+import { extraMetrics } from './metrics.js';
 
 /**
  * @typedef {object} DifficultyReport
@@ -11,6 +12,11 @@ import { solveLevel } from './solver.js';
  * @property {number} avgDepth  mean blocking depth
  * @property {number} rounds    solver waves (longest dependency chain)
  * @property {boolean} solvable
+ * @property {number} freePerRound average arrows free per solve round (see metrics.js)
+ * @property {number} minFree   fewest free arrows at any move (a bottleneck)
+ * @property {number} longestChain longest nearest-blocker chain, in arrows
+ * @property {number} decoyRatio share of arrows blocked by exactly one arrow
+ * @property {number} edgeFreeRatio share of start-free arrows with their head on the outer ring
  */
 
 /**
@@ -57,6 +63,7 @@ export function analyzeLevel(level) {
     avgDepth: depths.reduce((s, d) => s + d, 0) / n,
     rounds,
     solvable: solvable && !cyclic,
+    ...extraMetrics(level, occ, deps, rounds),
   };
 }
 
@@ -91,10 +98,11 @@ export function tierLabel(n) {
 
 /**
  * The difficulty curve: everything a level number needs to build its board. Every value grows
- * (or, for maxStartFree, shrinks) with the level and never goes back, for any level number.
+ * (or, for the max values, shrinks) with the level and never goes back, for any level number.
  * @param {number} level 1-based, any size
  * @returns {{gridW: number, gridH: number, targetArrows: number, maxStartFree: number,
- *   minAvgDepth: number, minSolveRounds: number, longArrowShare: number, shapeScale: number,
+ *   minAvgDepth: number, minSolveRounds: number, maxFreePerRound: number, minLongestChain: number,
+ *   minDecoyRatio: number, maxEdgeFreeRatio: number, longArrowShare: number, shapeScale: number,
  *   depthBias: number, tier: string}}
  */
 export function difficultyFor(level) {
@@ -103,16 +111,22 @@ export function difficultyFor(level) {
   const gridW = Math.round(lerp(C.gridW[0], C.gridW[1], e));
   const gridH = Math.round(lerp(C.gridH[0], C.gridH[1], e));
   const targetArrows = Math.round(gridW * gridH * C.arrowsPerCell);
+  const tier = tierLabel(n);
+  const f = TIER_FLOORS[tier];
   return {
     gridW,
     gridH,
     targetArrows,
-    maxStartFree: C.maxStartFree.reduce((m, s) => (n >= s.from ? s.max : m), C.maxStartFree[0].max),
-    minAvgDepth: Math.floor(ramp(C.depthPerArrow, n) * targetArrows * 10) / 10,
-    minSolveRounds: Math.floor(ramp(C.roundsPerArrow, n) * targetArrows),
+    maxStartFree: f.maxStartFree,
+    minAvgDepth: Math.floor(ramp(C.depthPerArrow, n) * targetArrows * f.boost * 10) / 10,
+    minSolveRounds: Math.floor(ramp(C.roundsPerArrow, n) * targetArrows * f.boost),
+    maxFreePerRound: f.maxFreePerRound,
+    minLongestChain: f.minLongestChain,
+    minDecoyRatio: f.minDecoyRatio,
+    maxEdgeFreeRatio: f.maxEdgeFreeRatio,
     longArrowShare: Math.round(ramp(C.longArrowShare, n) * 1000) / 1000,
     shapeScale: Math.round(lerp(C.shapeScale[0], C.shapeScale[1], e) * 1000) / 1000,
     depthBias: Math.round(lerp(C.depthBias[0], C.depthBias[1], e) * 100) / 100,
-    tier: tierLabel(n),
+    tier,
   };
 }

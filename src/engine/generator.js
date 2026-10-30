@@ -1,160 +1,75 @@
-import { DIRS } from './directions.js';
 import { hashSeed, mulberry32, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { absorbLeftovers, growArrow, pickLength } from './grow.js';
 import { LEVEL_ONE, MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig } from './levels.js';
 import { analyzeLevel } from './difficulty.js';
 import { joinLongArrows } from './longArrows.js';
+import { bestHeads, createGrid } from './heads.js';
+import { carveCorridor, hardenBoard, repairBoard } from './hardBoard.js';
 
 const MAX_ATTEMPTS = 500;
-
-/**
- * Mutable grid used while building one candidate board.
- * free[i] = 1 when the cell is usable and not taken yet.
- */
-function createGrid(rows, cols, usable) {
-  const free = Uint8Array.from(usable);
-  const owner = new Int16Array(rows * cols).fill(-1);
-  const inB = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;
-  const isFree = (r, c) => inB(r, c) && free[r * cols + c] === 1;
-  const degree = (r, c) => DIRS.reduce((n, d) => n + (isFree(r + d.dr, c + d.dc) ? 1 : 0), 0);
-  // lines whose first free cell may have moved (see bestHeads)
-  const dirtyRows = new Uint8Array(rows).fill(1);
-  const dirtyCols = new Uint8Array(cols).fill(1);
-  const take = (r, c, id) => {
-    free[r * cols + c] = 0;
-    owner[r * cols + c] = id;
-    dirtyRows[r] = 1;
-    dirtyCols[c] = 1;
-  };
-  // per direction and line: how many unusable cells come first from the far edge (shapes)
-  const skip = DIRS.map(({ dr, dc }) => {
-    const lines = dc ? rows : cols;
-    const len = dc ? cols : rows;
-    return Int16Array.from({ length: lines }, (_, line) => {
-      let k = 0;
-      for (; k < len; k++) {
-        const step = (dc || dr) > 0 ? len - 1 - k : k;
-        if (usable[dc ? line * cols + step : step * cols + line]) break;
-      }
-      return k;
-    });
-  });
-  // per direction and line: first free cell (-1 = none) and taken cells in front of it
-  const first = DIRS.map(({ dc }) => new Int16Array(dc ? rows : cols));
-  const ahead = DIRS.map(({ dc }) => new Int16Array(dc ? rows : cols));
-  return { rows, cols, free, owner, inB, isFree, degree, take, skip, first, ahead, dirtyRows, dirtyCols };
-}
-
-/** Keep the three lowest-score heads in `top` (sorted), without building a full candidate list. */
-function keep3(top, k) {
-  if (top.length === 3 && k.score >= top[2].score) return;
-  let i = Math.min(top.length, 2);
-  if (top.length < 3) top.push(k);
-  else top[2] = k;
-  while (i > 0 && top[i].score < top[i - 1].score) {
-    [top[i], top[i - 1]] = [top[i - 1], top[i]];
-    i--;
-  }
-}
-
-/** Re-scan one line: its first free cell from the far edge and the taken cells in front of it. */
-function scanLine(grid, d, line) {
-  const { cols, rows, free, owner, skip, first, ahead } = grid;
-  const { dr, dc } = DIRS[d];
-  const len = dc ? cols : rows;
-  let depth = 0;
-  // cells outside a shape at the start of the line can never matter: skip them
-  for (let k = skip[d][line]; k < len; k++) {
-    // walk against the direction, starting at the far edge the arrow would leave through
-    const step = (dc || dr) > 0 ? len - 1 - k : k;
-    const i = dc ? line * cols + step : step * cols + line;
-    if (free[i]) {
-      first[d][line] = step;
-      ahead[d][line] = depth;
-      return;
-    }
-    if (owner[i] !== -1) depth++;
-  }
-  first[d][line] = -1;
-}
-
-/**
- * Best heads for the next arrow. Every free cell whose way out only crosses taken or unused cells can
- * be a head (reverse peeling: such an arrow is only blocked by arrows placed before it). Only the first
- * free cell of a line can qualify (every cell behind it has a free cell ahead), so each line keeps that
- * cell cached and is re-scanned only after a cell in it was taken.
- * @returns {{any: object[], deep: object[]}} three best heads overall, and three best with arrows in front
- */
-function bestHeads(grid, cfg, rng) {
-  const { rows, cols, isFree, degree, first, ahead, dirtyRows, dirtyCols } = grid;
-  for (let d = 0; d < 4; d++) {
-    const dirty = DIRS[d].dc ? dirtyRows : dirtyCols;
-    for (let line = 0; line < dirty.length; line++) if (dirty[line]) scanLine(grid, d, line);
-  }
-  dirtyRows.fill(0);
-  dirtyCols.fill(0);
-  const any = [];
-  const deep = [];
-  for (let d = 0; d < 4; d++) {
-    const { dr, dc } = DIRS[d];
-    const lines = dc ? rows : cols;
-    for (let line = 0; line < lines; line++) {
-      const step = first[d][line];
-      if (step < 0) continue;
-      const r = dc ? line : step;
-      const c = dc ? step : line;
-      if (!isFree(r - dr, c - dc)) continue;
-      const depth = ahead[d][line];
-      const cand = { r, c, d, depth, score: degree(r, c) - depth * cfg.depthBias + rng() * 1.2 };
-      keep3(any, cand);
-      if (depth) keep3(deep, cand);
-    }
-  }
-  return { any, deep };
-}
 
 /**
  * Build one candidate board with reverse peeling (not yet verified).
  * @param {object} cfg level config from getLevelConfig
  * @param {() => number} rng
- * @returns {object} level
+ * @returns {object} level, or {rejected: true} when its first moves already miss the floors
  */
 export function buildLevel(cfg, rng) {
   const { rows, cols } = cfg;
   const usable = makeMask(cfg.mask, rows, cols);
-  const grid = createGrid(rows, cols, usable);
+  // hard plain boards: one short empty corridor from an edge, so the first free arrow sits inside
+  const corridor = cfg.deepen && !cfg.mask ? carveCorridor(rows, cols, rng) : null;
+  const grid = createGrid(rows, cols, corridor ? usable.map((u, i) => (corridor.cells.includes(i) ? 0 : u)) : usable);
+  grid.hidden = corridor ? corridor.head : -1;
   const arrows = [];
   const total = usable.reduce((n, u) => n + u, 0);
   let startFree = 0;
   const g = cfg.goals;
-  const freeLimit = g
-    ? Math.max(g.maxStartFree, Math.ceil((g.maxStartFreeShare || 0) * (cfg.arrowsMin || 0)))
-    : Infinity;
+  // hard plain boards choose one free arrow on purpose (the corridor's end); others only appear where
+  // nothing else fits and are joined, turned or dropped later
+  const freeLimit = !g
+    ? Infinity
+    : cfg.deepen && !g.maxStartFreeShare
+      ? 1
+      : Math.max(g.maxStartFree, Math.ceil((g.maxStartFreeShare || 0) * (cfg.arrowsMin || 0)));
   for (;;) {
-    const { any, deep } = bestHeads(grid, cfg, rng);
+    const { any, deep } = bestHeads(grid, cfg, rng, startFree === 0 ? cfg.sidePenalty || 0 : 0);
     if (!any.length) break;
+    // hard boards leave the last few pockets to neighbouring tails (or empty) instead of adding free
+    // arrows there: no arrow's way out crosses a cell that is still free, so no arrow gets freed by it
+    if (cfg.deepen && startFree >= freeLimit && !deep.length && grid.left <= (1 - MIN_FILL) * total * 0.5) break;
     // a head with nothing in front stays free at the start: once the tier's limit is used up,
     // only take one when nothing else can be placed
-    const cands = startFree >= freeLimit && deep.length ? deep : any;
+    const top3 = startFree >= freeLimit && deep.length ? deep : any;
+    // pick at random among the best heads (only those close to the best one, when pickWindow is set)
+    const cands = cfg.pickWindow === undefined ? top3 : top3.filter((k) => k.score <= top3[0].score + cfg.pickWindow);
     const pick = cands[Math.floor(rng() * cands.length)];
     if (!pick.depth) startFree++;
+    grid.round[arrows.length] = pick.depth ? pick.top + 1 : 1;
+    if (grid.round[arrows.length] > grid.maxRound) grid.maxRound = grid.round[arrows.length];
+    // a free arrow starts straight, so hideFreeMoves can pull its head in from the edge
+    const hide = !pick.depth && cfg.deepen;
     const a = growArrow(
       grid,
       cfg,
       rng,
       arrows.length,
-      pick,
+      { r: pick.r, c: pick.c },
       pick.d,
-      pickLength(cfg, rng),
-      weightedPick(rng, cfg.styles),
+      hide ? Math.max(4, pickLength(cfg, rng)) : pickLength(cfg, rng),
+      hide ? 'straight' : weightedPick(rng, cfg.styles),
     );
     arrows.push(a);
   }
   absorbLeftovers(grid, cfg, arrows);
-  const joined = joinLongArrows({ rows, cols, arrows }, { ...cfg, freeLimit }, rng);
-  let used = 0;
-  for (let i = 0; i < rows * cols; i++) if (grid.owner[i] !== -1) used++;
+  let joined = joinLongArrows({ rows, cols, arrows }, { ...cfg, freeLimit }, rng);
+  if (cfg.deepen) {
+    const board = { rows, cols, mask: cfg.mask ? usable : null, arrows: joined };
+    if (!hardenBoard(board, cfg, rng, total)) return { rejected: true };
+    joined = board.arrows;
+  }
+  const used = joined.reduce((n, a) => n + a.path.length, 0);
   return {
     rows,
     cols,
@@ -195,7 +110,11 @@ export function meetsGoals(report, goals) {
     report.startFree >= (goals.minStartFree || 0) &&
     report.avgDepth >= goals.minAvgDepth &&
     report.rounds >= goals.minRounds &&
-    report.rounds <= (goals.maxRounds ?? Infinity)
+    report.rounds <= (goals.maxRounds ?? Infinity) &&
+    report.freePerRound <= (goals.maxFreePerRound ?? Infinity) &&
+    report.longestChain >= (goals.minLongestChain || 0) &&
+    report.decoyRatio >= (goals.minDecoyRatio || 0) &&
+    report.edgeFreeRatio <= (goals.maxEdgeFreeRatio ?? Infinity)
   );
 }
 
@@ -208,9 +127,11 @@ export function generateFromConfig(cfg) {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
     const level = buildLevel(cfg, rng);
-    if (!meetsConstraints(level, cfg)) continue;
-    const report = analyzeLevel(level);
-    if (!meetsGoals(report, cfg.goals)) continue;
+    if (level.rejected || !meetsConstraints(level, cfg)) continue;
+    let report = analyzeLevel(level);
+    // a hard board just under a floor is repaired instead of thrown away
+    if (cfg.deepen && !meetsGoals(report, cfg.goals)) report = repairBoard(level, report, cfg);
+    if (!meetsConstraints(level, cfg) || !meetsGoals(report, cfg.goals)) continue;
     level.seed = cfg.seed;
     level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
     level.attempt = attempt;

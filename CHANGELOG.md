@@ -2,6 +2,19 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.12.0] - 2026-10-30
+
+### Changed
+
+- Every tier is harder (levels 1-3 unchanged): the depth and solve-round floors are 40% higher, and new per-tier floors cap free arrows per round (3.0) and ask for a longest blocker chain (8 / 14 / 20 / 22), decoys (12%) and hidden first moves (at most half on the edge). Max free arrows at the start is 2 for every tier.
+- New hard-board passes: a short empty corridor hides the first move inside the board, arrows are turned around to leave later, short arrows join late long walls, tail cuts make decoys, and a board just under a floor is repaired before a retry.
+- Super Hard and Expert floors were set close to what the generator reaches on the full-size board (requested: 1 free at start, 2 / 1.5 free per round, 25% / 30% decoys, Expert depth +50%); see README "Tier floors".
+- `joinLongArrows` uses solve rounds to skip most blocker searches, so it runs faster (same boards).
+
+### Added
+
+- Difficulty metrics: free per round, longest chain, decoy ratio, edge-free ratio (`src/engine/metrics.js`).
+
 ## [3.11.0] - 2026-10-30
 
 ### Removed
