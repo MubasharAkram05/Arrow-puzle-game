@@ -1,5 +1,6 @@
 import { LEVELS } from '../config.js';
-import { MASK_SHAPES, makeMask } from './masks.js';
+import { makeMask } from './masks.js';
+import { shapeOrder } from './shapes/library.js';
 import { difficultyFor, tierLabel } from './difficulty.js';
 
 /** Global arrow length limits. */
@@ -9,14 +10,29 @@ export const MAX_LEN = LEVELS.maxLen;
 export const MIN_FILL = LEVELS.minFill;
 
 /**
- * Board shape of a level, or null for a plain rectangle. Every 3rd level after the tutorial
- * is a shape, cycling through MASK_SHAPES.
+ * Is level n a shape level (every 3rd level after the tutorial: 6, 9, 12, ...)? Works without the library.
+ * @param {number} n
+ * @returns {boolean}
+ */
+export const isShapeLevel = (n) => n >= LEVELS.shapeFrom && n % LEVELS.shapeEvery === 0;
+
+/**
+ * Index of a shape level among all shape levels (level 6 -> 0, 9 -> 1, ...).
+ * @param {number} n
+ * @returns {number}
+ */
+export const shapeSlot = (n) => n / LEVELS.shapeEvery - Math.ceil(LEVELS.shapeFrom / LEVELS.shapeEvery);
+
+/**
+ * Board shape id of a level, or null for a plain rectangle. Shape levels walk through the library's order
+ * (see buildOrder) and start again after the last shape, on bigger boards. Needs the shape library.
  * @param {number} n
  * @returns {string|null}
  */
 export function shapeOf(n) {
-  if (n < LEVELS.shapeFrom || n % LEVELS.shapeEvery !== 0) return null;
-  return MASK_SHAPES[(n / LEVELS.shapeEvery - Math.ceil(LEVELS.shapeFrom / LEVELS.shapeEvery)) % MASK_SHAPES.length];
+  if (!isShapeLevel(n)) return null;
+  const order = shapeOrder();
+  return order[shapeSlot(n) % order.length];
 }
 
 const sizeCache = new Map();
@@ -71,9 +87,10 @@ export const LEVEL_ONE = Object.freeze({
  * Board size, goals and mask for a level number (any number). Levels 2-3 are small tutorial boards;
  * from level 4 everything follows difficultyFor.
  * @param {number} n level number (1-based)
+ * @param {string} [shape] play this shape at level n's difficulty instead of the level's own board (tests)
  * @returns {LevelConfig & object}
  */
-export function getLevelConfig(n) {
+export function getLevelConfig(n, shape) {
   const base = {
     seed: n,
     hearts: LEVELS.hearts,
@@ -100,7 +117,7 @@ export function getLevelConfig(n) {
     };
   }
   const d = difficultyFor(n);
-  const mask = shapeOf(n);
+  const mask = shape ?? shapeOf(n);
   let rows = d.gridH;
   let cols = d.gridW;
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells

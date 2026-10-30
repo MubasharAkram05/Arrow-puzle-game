@@ -3,11 +3,11 @@
  */
 import { makeMask } from '../../engine/index.js';
 
-const SIZE = 14;
+const SIZE = 16;
 const cache = new Map();
 
 /**
- * @param {string} name shape name (see MASK_SHAPES)
+ * @param {string} name shape id (see src/engine/shapes/library.js)
  * @param {string} [cls] extra classes
  * @returns {string} svg markup
  */

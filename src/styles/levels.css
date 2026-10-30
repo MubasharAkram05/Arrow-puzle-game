@@ -172,6 +172,13 @@
 .level-btn.current .shape {
   color: var(--on-primary);
 }
+/* shape library still loading: a soft dot where the silhouette goes */
+.level-btn .shape-pending {
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.25;
+  transform: scale(0.6);
+}
 .level-btn.shake {
   animation: shake 0.3s ease;
 }

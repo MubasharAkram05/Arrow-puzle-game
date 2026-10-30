@@ -19,6 +19,7 @@ import { startPlayClock } from './ui/screens/game.js';
 import { bindBoosterBar } from './ui/screens/boosterBar.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { $ } from './ui/dom.js';
+import { loadShapeLibrary } from './engine/index.js';
 
 /** App entry: load save, apply theme, wire every screen, show home. */
 function boot() {
@@ -49,6 +50,9 @@ function boot() {
   startPlayClock();
   initBackButton();
   goHome();
+  // the shape library is a separate chunk: fetch it once the home screen is up
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200));
+  idle(() => loadShapeLibrary().catch(() => {}));
 }
 
 boot();
