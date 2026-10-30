@@ -21,6 +21,13 @@ export const ZOOM = Object.freeze({
 export const STROKE_PX = 4.2;
 export const HEAD_W_PX = 15;
 export const HEAD_L_PX = 14;
+/**
+ * Testing only: every level on the Levels page is playable. Progress is never changed by it
+ * (wins on levels that aren't really unlocked pay nothing). Home shows a TEST MODE badge.
+ * Set to false before release.
+ */
+export const TEST_UNLOCK_ALL = true;
+
 /** Hints given to a new player. */
 export const START_HINTS = 3;
 /** Earn one hint every N completed levels. */

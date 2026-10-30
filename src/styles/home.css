@@ -70,3 +70,17 @@
   background: transparent;
   color: var(--primary);
 }
+
+/* Test mode badge (TEST_UNLOCK_ALL in config.js) */
+.test-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #d93025;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.test-badge[hidden] {
+  display: none;
+}

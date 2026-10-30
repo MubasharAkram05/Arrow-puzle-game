@@ -2,6 +2,7 @@ import { MAX_REFILLS_PER_LEVEL, PRICES } from '../../config.js';
 import { canAfford } from '../../game/economy.js';
 import { restart, resumePlay, startLevel } from '../../game/game.js';
 import { buyContinue, refillHeart, skipLevel, wallet } from '../../game/rewards.js';
+import { isTestPlay } from '../../game/unlock.js';
 import { state } from '../../game/state.js';
 import { saveProgress } from '../../storage/save.js';
 import { renderCurrency } from '../components/currencyBar.js';
@@ -32,7 +33,12 @@ export function showGameOver() {
     state.refillsUsed >= MAX_REFILLS_PER_LEVEL ? `Limit reached: ${MAX_REFILLS_PER_LEVEL} refills per level.` : '';
   setBuyButton('btn-refill', 'refill-note', PRICES.heartRefill, limit);
   setBuyButton('btn-continue', 'continue-note', PRICES.continueGame);
-  setBuyButton('btn-skip', 'skip-note', PRICES.skipLevel);
+  setBuyButton(
+    'btn-skip',
+    'skip-note',
+    PRICES.skipLevel,
+    isTestPlay(state.levelNum, state.progress) ? 'Not in test mode.' : '',
+  );
   openModal('modal-gameover');
 }
 

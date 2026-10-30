@@ -2,6 +2,21 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.5.0] - 2026-10-30
+
+### Removed
+
+- Reveal and Auto-Clear boosters: from the game screen booster bar, the Shop, the packs, the config, and their effects, icon and tests. Saved counts for them are dropped on load; everything else in the save is kept.
+
+### Changed
+
+- Booster Pack: 4 Shields for 200 coins (was 3 Shields + 3 Reveals + 2 Auto-Clears for 350).
+- Starter Pack: 5 hints + 3 Shields + Dark Slate style for 3 diamonds (no Reveals).
+
+### Added
+
+- `TEST_UNLOCK_ALL` in `src/config.js` (on for now): every level on the Levels page is playable, with a TEST MODE badge on Home. It never writes progress: wins on levels that aren't really unlocked pay nothing, don't move the current level and can't be skipped, so turning it off restores the exact lock state. Tests cover both states.
+
 ## [3.4.1] - 2026-10-30
 
 ### Fixed

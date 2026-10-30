@@ -39,12 +39,16 @@ function renderPreview() {
   svg.setAttribute('height', Math.floor(cell * rows));
 }
 
+/** Level the "Next Game" button starts. */
+let nextLevel = 1;
+
 /**
  * Show the victory screen; coins and diamonds fly from the card to the counters.
- * @param {{reward: object, xp: number, before: {coins: number, diamonds: number}}} summary from applyWin
+ * @param {{reward: object, xp: number, before: {coins: number, diamonds: number}, next?: number}} summary from applyWin
  */
 export function showVictory(summary) {
-  $('next-sub').textContent = `Level ${state.progress.current}`;
+  nextLevel = summary.next ?? state.progress.current;
+  $('next-sub').textContent = `Level ${nextLevel}`;
   renderRewards(summary.reward, summary.xp);
   renderCurrency(summary.before, $('modal-victory'));
   openModal('modal-victory');
@@ -59,7 +63,7 @@ export function showVictory(summary) {
 export function bindVictory() {
   $('btn-next').addEventListener('click', () => {
     closeModals();
-    startLevel(state.progress.current);
+    startLevel(nextLevel);
   });
   $('btn-main').addEventListener('click', goHome);
   onModalBack('modal-victory', goHome);

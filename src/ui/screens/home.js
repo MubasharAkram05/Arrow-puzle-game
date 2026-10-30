@@ -1,4 +1,5 @@
 import { initAudio } from '../../audio/sound.js';
+import { TEST_UNLOCK_ALL } from '../../config.js';
 import { startLevel } from '../../game/game.js';
 import { clearHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
@@ -11,6 +12,7 @@ import { onReturn, resetTo } from '../navigation.js';
 /** Fill in the home screen labels. */
 function renderHome() {
   $('play-sub').textContent = `Level ${state.progress.current}`;
+  $('test-badge').hidden = !TEST_UNLOCK_ALL;
   renderCurrency();
 }
 

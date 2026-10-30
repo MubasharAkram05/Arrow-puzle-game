@@ -10,7 +10,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing, spent on hints, boosters, heart refills, continues, skips and cosmetics
-- Boosters: Shield, Reveal, Auto-Clear and Extra Heart Start, with a booster bar on the game screen
+- Boosters: Shield and Extra Heart Start, with a booster bar on the game screen
 - Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
 - Shop with tabs (Offers, Boosters, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
@@ -119,7 +119,7 @@ If a board misses its goals, the generator retries with the next derived seed. L
 
 ### Zoom
 
-Big boards can be zoomed with two fingers (pinch) up to the point where a cell is about a fingertip wide, and dragged with one finger while zoomed. Taps fire on release, so a drag or pinch never removes an arrow. A button in the top-right corner (or a double tap on empty space) shows the whole board again. "Pinch to zoom" appears on the first 3 dense boards. Using a hint or Reveal zooms back out so the highlight is visible. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
+Big boards can be zoomed with two fingers (pinch) up to the point where a cell is about a fingertip wide, and dragged with one finger while zoomed. Taps fire on release, so a drag or pinch never removes an arrow. A button in the top-right corner (or a double tap on empty space) shows the whole board again. "Pinch to zoom" appears on the first 3 dense boards. Using a hint zooms back out so the highlight is visible. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
 
 ## Economy
 
@@ -159,13 +159,11 @@ All numbers live in `src/config.js`.
 
 Bought in the Shop (Boosters tab) or from the booster bar next to the hint button. Tapping a booster with 0 left asks to buy one.
 
-| Booster           | What it does                                                    | Price     |
-| ----------------- | --------------------------------------------------------------- | --------- |
-| Shield            | Your next wrong tap costs no heart (does not stack)             | 60 coins  |
-| Reveal            | Highlights every free arrow for 3 seconds                       | 40 coins  |
-| Auto-Clear        | Removes one free arrow with its normal escape (max 1 per level) | 70 coins  |
-| Extra Heart Start | Use before your first move: start the level with +1 heart       | 1 diamond |
-| Booster Pack      | 3 Shields + 3 Reveals + 2 Auto-Clears                           | 350 coins |
+| Booster           | What it does                                              | Price     |
+| ----------------- | --------------------------------------------------------- | --------- |
+| Shield            | Your next wrong tap costs no heart (does not stack)       | 60 coins  |
+| Extra Heart Start | Use before your first move: start the level with +1 heart | 1 diamond |
+| Booster Pack      | 4 Shields                                                 | 200 coins |
 
 Using any booster or a hint means the level does not count as perfect. Boosters and hints used are tracked in the Profile stats.
 
@@ -205,12 +203,12 @@ Escape effects use transform, opacity and a small particle canvas, and are skipp
 
 ### Offers
 
-| Offer        | Details                                                                                        | Price                 |
-| ------------ | ---------------------------------------------------------------------------------------------- | --------------------- |
-| Starter Pack | One time, from level 5: 5 hints + 3 Shields + 3 Reveals + Dark Slate style. Hidden once bought | 3 diamonds            |
-| Free Gift    | 30 coins every 4 hours. If the device clock moves backward, no reward and the timer restarts   | Free                  |
-| Exchange     | 1 diamond, or 5 diamonds at once (confirm first)                                               | 500 coins per diamond |
-| Weekly Sale  | One cosmetic, style or theme at 30% off, picked from the ISO week number (same for everyone)   | 30% off               |
+| Offer        | Details                                                                                      | Price                 |
+| ------------ | -------------------------------------------------------------------------------------------- | --------------------- |
+| Starter Pack | One time, from level 5: 5 hints + 3 Shields + Dark Slate style. Hidden once bought           | 3 diamonds            |
+| Free Gift    | 30 coins every 4 hours. If the device clock moves backward, no reward and the timer restarts | Free                  |
+| Exchange     | 1 diamond, or 5 diamonds at once (confirm first)                                             | 500 coins per diamond |
+| Weekly Sale  | One cosmetic, style or theme at 30% off, picked from the ISO week number (same for everyone) | 30% off               |
 
 The Shop has five tabs: Offers, Boosters, Styles, Effects and Profile. The last opened tab is remembered on this device. Items from this update show a "New" badge until you first see them.
 
@@ -228,10 +226,15 @@ The Shop has five tabs: Offers, Boosters, Styles, Effects and Profile. The last 
 
 Currency from outside the game (rewarded ads, in-app purchases) should go through `grant()` in `economy.js` (via `credit()` in `rewards.js`) with source `'ad'` or `'purchase'`.
 
+## Test mode
+
+`TEST_UNLOCK_ALL` in `src/config.js` opens every level on the Levels page for testing (no locks, no "Complete level X first"). Home shows a red **TEST MODE** badge while it is on. It never changes the save: a level that isn't really unlocked pays no coins, diamonds or XP when won, doesn't move the current level, records no stats, and can't be skipped. Set it to `false` before a release and the normal lock state is back exactly as it was.
+
 ## Saves
 
 - Key `arrowEscape:v3`, plus a backup copy in `arrowEscape:v3:backup` written on every save.
 - A v2 save (or its backup) is migrated to v3 automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after v3 is written and read back.
+- The Reveal and Auto-Clear boosters were removed in 3.5.0: their saved counts are dropped on load, everything else is kept.
 - A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after v3 is written and read back.
 - Saves made with 20-level chapters are converted to 40-level chapters: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
 - Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
