@@ -7,13 +7,15 @@ import { isShapeLevel, ORIGINAL_SHAPES, shapeSlot } from '../engine/index.js';
 import { sanitize } from './schema.js';
 import { obj } from './validators.js';
 
-/** Chapter size used by saves made before chapters had 40 levels. */
+/** Chapter size of saves that don't store one (made before chapters ever changed size, with 20 levels). */
 export const OLD_CHAPTER_SIZE = 20;
 
 /**
- * Convert rewarded chapter numbers from an older chapter size to the current one.
- * A new chapter counts as rewarded only when every old chapter inside it was rewarded,
- * so no player loses a chapter reward (at worst a half-rewarded chapter pays again).
+ * Convert rewarded chapter numbers from the chapter size a save was made with to the current one.
+ * A new chapter counts as rewarded only when every old chapter it overlaps was rewarded.
+ * Smaller chapters (40 -> 20): both halves of a rewarded chapter are rewarded, so nothing pays twice; a
+ * half of an unrewarded chapter can still pay its first reward. Bigger chapters (20 -> 40): a chapter
+ * needs both old halves, so no reward is lost (at worst a half-rewarded chapter pays again).
  * @param {number[]} rewarded old chapter numbers
  * @param {number} oldSize
  * @returns {number[]}

@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 40, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (621 shapes in 10 categories)
+- Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (621 shapes in 10 categories)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, boosters, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
@@ -181,7 +181,7 @@ All numbers live in `src/config.js`.
 | Perfect level (no heart lost, no hint or booster), first time | +20                                                    | +1                             |
 | Replay of a completed level                                   | 25% of base + hearts                                   |                                |
 | Every 10th level, first clear (adds to the perfect diamond)   |                                                        | +1                             |
-| Chapter complete (40 levels), once                            | +200                                                   | +4                             |
+| Chapter complete (20 levels), once                            | +100                                                   | +2                             |
 | Daily reward (7-day cycle)                                    | 20 / 30 / 40 / 50 / - / 70 / -                         | day 5: +1, day 7: +2 (+1 hint) |
 | Achievements                                                  |                                                        | 1-15 per step                  |
 | Free hint every 3 levels completed                            | (+1 hint)                                              |                                |
@@ -265,7 +265,7 @@ Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. A group with se
 | -------------- | ------------------------------------------------------------ | ----------------- |
 | First Escape   | Finish level 1                                               | 1                 |
 | Perfectionist  | 10 levels without losing a heart                             | 3                 |
-| Chapter Master | Finish chapter 1 (40 levels)                                 | 2                 |
+| Chapter Master | Finish chapter 1 (20 levels)                                 | 2                 |
 | Arrow Hunter   | Clear 1,000 arrows                                           | 5                 |
 | No Mistakes    | 5 levels in a row without losing a heart                     | 3                 |
 | Shape Solver   | Finish 5 shape levels                                        | 3                 |
@@ -305,7 +305,7 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 - A v2 save (or its backup) is migrated automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after the current save is written and read back.
 - The Reveal and Auto-Clear boosters were removed in 3.5.0: their saved counts are dropped on load, everything else is kept.
 - A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after the current save is written and read back.
-- Saves made with 20-level chapters are converted to 40-level chapters: a new chapter counts as rewarded only if both old halves were, so no chapter reward is lost.
+- Chapters have 20 levels again since 3.9.0. The save stores its chapter size, so a save made with 40-level chapters is converted once: both 20-level halves of a rewarded 40-level chapter count as rewarded (no chapter pays twice), and a half of an unrewarded chapter can still pay its first reward. Progress, coins and diamonds are untouched.
 - Every load is validated: negative, NaN or non-number values become 0, unknown keys are ignored, equipped items must be owned, and `unlocked` never falls behind completed levels.
 
 ## Back button

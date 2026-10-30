@@ -50,9 +50,9 @@ export const REWARDS = Object.freeze({
   perfectBonus: 20, // no heart lost, first time per level
   perfectDiamonds: 1, // no heart lost and no hint or booster, first time per level
   replayRate: 0.25, // share of coins for a level already completed
-  chapterSize: 40,
-  chapterCoins: 200,
-  chapterDiamonds: 4,
+  chapterSize: 20,
+  chapterCoins: 100,
+  chapterDiamonds: 2,
   milestoneEvery: 10, // every 10th level...
   milestoneDiamonds: 1, // ...gives a diamond on its first clear
 });

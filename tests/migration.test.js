@@ -52,7 +52,7 @@ describe('v2 migration', () => {
   it('keeps all progress, coins, diamonds, items, achievements, profile and settings', () => {
     const d = migrateV2(V2);
     expect(d.version).toBe(5);
-    expect(d.progress).toMatchObject({ current: 23, unlocked: 24, perfect: [2, 5], chaptersRewarded: [1] });
+    expect(d.progress).toMatchObject({ current: 23, unlocked: 24, perfect: [2, 5], chaptersRewarded: [1, 2] });
     expect(d.progress.completed).toHaveLength(22);
     expect(d.wallet).toEqual({ coins: 1234, diamonds: 17, hints: 4 });
     expect(d.xp).toBe(880);

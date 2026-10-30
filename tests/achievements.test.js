@@ -103,7 +103,8 @@ describe('achievement progress', () => {
     const s = byId(c);
     expect(s['first-escape'].done).toBe(true);
     expect(s.perfectionist.value).toBe(4);
-    expect(s['chapter-master'].done).toBe(true);
+    expect(s['chapter-master']).toMatchObject({ done: true, value: 20 });
+    expect(s['chapter-master'].def.goal).toBe(20);
     expect(s['arrow-hunter'].value).toBe(1000);
     expect(s['no-mistakes'].value).toBe(2);
     expect(s['shape-solver'].value).toBe(2);
@@ -243,5 +244,14 @@ describe('very large numbers', () => {
     }
     // only the first step of each group is claimable before the earlier ones are claimed
     expect(claimableCount(c, new Set())).toBe(ACHIEVEMENT_DEFS.length);
+  });
+});
+
+describe('Chapter Master with 20-level chapters', () => {
+  it('needs exactly levels 1-20', () => {
+    const at = (completed) => byId(ctx({ completed }))['chapter-master'];
+    expect(at(range(1, 19))).toMatchObject({ value: 19, done: false });
+    expect(at(range(2, 40))).toMatchObject({ value: 19, done: false });
+    expect(at(range(1, 20))).toMatchObject({ value: 20, done: true, claimable: true });
   });
 });

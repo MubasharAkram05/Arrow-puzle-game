@@ -150,24 +150,64 @@ describe('corrupted data', () => {
   });
 });
 
-describe('40-level chapters', () => {
-  it('maps old 20-level chapter rewards to new 40-level chapters', () => {
-    expect(convertChapters([1, 2], 20)).toEqual([1]);
-    expect(convertChapters([1, 2, 3, 4], 20)).toEqual([1, 2]);
-    expect(convertChapters([1, 2, 3], 20)).toEqual([1]);
-    expect(convertChapters([], 20)).toEqual([]);
+describe('20-level chapters (back from 40)', () => {
+  it('a rewarded 40-level chapter marks both of its 20-level halves as rewarded', () => {
+    expect(convertChapters([1], 40)).toEqual([1, 2]);
+    expect(convertChapters([1, 2], 40)).toEqual([1, 2, 3, 4]);
+    expect(convertChapters([2], 40)).toEqual([3, 4]);
+    expect(convertChapters([1, 3], 40)).toEqual([1, 2, 5, 6]);
+    expect(convertChapters([], 40)).toEqual([]);
   });
 
-  it('does not mark a half-rewarded chapter, so its reward is not lost', () => {
-    expect(convertChapters([1], 20)).toEqual([]);
-    expect(convertChapters([2, 3], 20)).toEqual([]);
+  it('saves made with 20-level chapters (or without a size) stay as they are', () => {
+    expect(convertChapters([1, 2, 5], 20)).toEqual([1, 2, 5]);
+    const old = sanitize({ progress: { completed: [1, 2], chaptersRewarded: [1, 3] } });
+    expect(old.progress.chaptersRewarded).toEqual([1, 3]);
+    expect(old.progress.chapterSize).toBe(20);
   });
 
-  it('converts saves without a chapter size once and keeps new saves as they are', () => {
-    const old = sanitize({ progress: { completed: [1, 2], chaptersRewarded: [1, 2, 3, 4] } });
-    expect(old.progress.chaptersRewarded).toEqual([1, 2]);
-    expect(old.progress.chapterSize).toBe(40);
-    expect(sanitize(old).progress.chaptersRewarded).toEqual([1, 2]);
+  it('a 40-level save keeps all progress and converts once', () => {
+    const completed = Array.from({ length: 85 }, (_, i) => i + 1);
+    const d = sanitize({
+      progress: { current: 86, unlocked: 86, completed, perfect: [4, 50], chaptersRewarded: [1, 2], chapterSize: 40 },
+      wallet: { coins: 900, diamonds: 14, hints: 3 },
+    });
+    expect(d.progress).toMatchObject({ current: 86, unlocked: 86, perfect: [4, 50], chapterSize: 20 });
+    expect(d.progress.completed).toEqual(completed);
+    expect(d.progress.chaptersRewarded).toEqual([1, 2, 3, 4]);
+    expect(d.wallet).toEqual({ coins: 900, diamonds: 14, hints: 3 });
+    // loading the converted save again changes nothing
+    expect(sanitize(d).progress.chaptersRewarded).toEqual([1, 2, 3, 4]);
+  });
+
+  it('no chapter reward is paid twice after the switch', async () => {
+    const { chapterLevels, levelReward } = await import('../src/game/economy.js');
+    // a 40-level save: chapter 1 (levels 1-40) was rewarded, levels 41-60 done but chapter 2 not rewarded
+    const d = sanitize({
+      progress: {
+        completed: Array.from({ length: 60 }, (_, i) => i + 1),
+        chaptersRewarded: [1],
+        chapterSize: 40,
+      },
+    });
+    const rewarded = new Set(d.progress.chaptersRewarded);
+    const done = new Set(d.progress.completed);
+    const pays = (level, ch) =>
+      levelReward({
+        level,
+        difficulty: 'Normal',
+        heartsLeft: 2,
+        maxHearts: 3,
+        wasCompleted: true,
+        wasPerfect: true,
+        chapterDone: chapterLevels(ch).every((l) => done.has(l)),
+        chapterRewarded: rewarded.has(ch),
+      }).chapter;
+    // replaying a level of the old rewarded chapter (now chapters 1 and 2) pays nothing
+    expect(pays(10, 1)).toBe(false);
+    expect(pays(30, 2)).toBe(false);
+    // levels 41-60 (new chapter 3) were never rewarded as a chapter: it may pay once
+    expect(pays(50, 3)).toBe(true);
   });
 });
 

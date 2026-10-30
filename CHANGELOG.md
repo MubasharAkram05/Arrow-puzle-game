@@ -2,6 +2,13 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.9.0] - 2026-10-30
+
+### Changed
+
+- Chapters have 20 levels again (were 40). Chapter complete pays +100 coins and +2 diamonds (was +200 and +4). Chapter Master means finishing chapter 1 (levels 1-20).
+- Saves made with 40-level chapters convert once: both halves of a rewarded chapter count as rewarded, so no chapter reward is paid twice; all progress, coins and diamonds are kept.
+
 ## [3.8.0] - 2026-10-30
 
 ### Added
