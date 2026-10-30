@@ -20,11 +20,17 @@ import { bindBoosterBar } from './ui/screens/boosterBar.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { $ } from './ui/dom.js';
 import { loadShapeLibrary } from './engine/index.js';
+import { noteDailyOpen } from './game/rewards.js';
+import { saveProgress } from './storage/save.js';
+import { maybeShowDaily } from './ui/modals/daily.js';
+import { renderHome } from './ui/screens/home.js';
 
 /** App entry: load save, apply theme, wire every screen, show home. */
 function boot() {
   mountIcons();
   loadSave();
+  noteDailyOpen();
+  saveProgress();
   applyTheme();
   watchSystemTheme();
   bindBoardInput();
@@ -50,6 +56,16 @@ function boot() {
   startPlayClock();
   initBackButton();
   goHome();
+  // back in front on a new day: the daily reward may be waiting
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    noteDailyOpen();
+    saveProgress();
+    if ($('screen-home').classList.contains('active')) {
+      renderHome();
+      maybeShowDaily();
+    }
+  });
   // the shape library is a separate chunk: fetch it once the home screen is up
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200));
   idle(() => loadShapeLibrary().catch(() => {}));

@@ -56,11 +56,11 @@ describe('levelReward: coins', () => {
     expect(levelReward(win({ wasCompleted: true, heartsLeft: 3 })).coins).toBe(6 + 20);
   });
 
-  it('adds the chapter bonus (200 coins) once', () => {
-    const r = levelReward(win({ level: 40, heartsLeft: 1, chapterDone: true }));
+  it('adds the chapter bonus (100 coins) once', () => {
+    const r = levelReward(win({ level: 20, heartsLeft: 1, chapterDone: true }));
     expect(r.chapter).toBe(true);
-    expect(r.coins).toBe(15 + 200);
-    expect(levelReward(win({ level: 40, heartsLeft: 1, chapterDone: true, chapterRewarded: true })).coins).toBe(15);
+    expect(r.coins).toBe(15 + 100);
+    expect(levelReward(win({ level: 20, heartsLeft: 1, chapterDone: true, chapterRewarded: true })).coins).toBe(15);
   });
 
   it('lists a breakdown that sums to the total', () => {
@@ -77,24 +77,57 @@ describe('levelReward: diamonds', () => {
       label: 'Level 10 milestone',
       diamonds: 1,
     });
-    expect(levelReward(win({ level: 9 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 9, heartsLeft: 2 })).diamonds).toBe(0);
     expect(levelReward(win({ level: 10, heartsLeft: 1, wasCompleted: true })).diamonds).toBe(0);
-    expect(levelReward(win({ level: 11 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 11, heartsLeft: 2 })).diamonds).toBe(0);
   });
 
-  it('gives +4 on chapter completion', () => {
-    expect(levelReward(win({ level: 40, chapterDone: true })).diamonds).toBe(1 + 4);
-    expect(levelReward(win({ level: 39, chapterDone: true })).diamonds).toBe(4);
+  it('gives +2 on chapter completion, once', () => {
+    expect(levelReward(win({ level: 20, heartsLeft: 2, chapterDone: true })).diamonds).toBe(1 + 2);
+    expect(levelReward(win({ level: 19, heartsLeft: 2, chapterDone: true })).diamonds).toBe(2);
+    expect(levelReward(win({ level: 19, heartsLeft: 2, chapterDone: true, chapterRewarded: true })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 19, heartsLeft: 2, chapterDone: true })).lines).toContainEqual({
+      label: 'Chapter 1 complete',
+      coins: 100,
+      diamonds: 2,
+    });
+  });
+});
+
+describe('levelReward: perfect diamond', () => {
+  it('gives +1 diamond for no heart lost and no hint or booster', () => {
+    const r = levelReward(win({ level: 7 }));
+    expect(r.perfect).toBe(true);
+    expect(r.diamonds).toBe(1);
+    expect(r.lines).toContainEqual({ label: 'Perfect', diamonds: 1 });
+  });
+
+  it('only the first time per level: replays never give it again', () => {
+    expect(levelReward(win({ level: 7, wasCompleted: true, wasPerfect: true })).diamonds).toBe(0);
+    // a level first finished with a lost heart can still earn it once later
+    expect(levelReward(win({ level: 7, wasCompleted: true, wasPerfect: false })).diamonds).toBe(1);
+  });
+
+  it('not with a lost heart, a hint or a booster', () => {
+    expect(levelReward(win({ level: 7, heartsLeft: 2 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 7, assisted: true })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 7, assisted: true })).perfect).toBe(false);
+  });
+
+  it('adds to the every-10th-level diamond: a perfect level 10 gives 2', () => {
+    const r = levelReward(win({ level: 10 }));
+    expect(r.diamonds).toBe(2);
+    expect(r.lines.filter((l) => l.diamonds).map((l) => l.label)).toEqual(['Perfect', 'Level 10 milestone']);
   });
 });
 
 describe('chapters and milestone levels', () => {
-  it('groups levels in chapters of 40', () => {
+  it('groups levels in chapters of 20', () => {
     expect(chapterOf(1)).toBe(1);
-    expect(chapterOf(40)).toBe(1);
-    expect(chapterOf(41)).toBe(2);
-    expect(chapterLevels(2)[0]).toBe(41);
-    expect(chapterLevels(2)).toHaveLength(40);
+    expect(chapterOf(20)).toBe(1);
+    expect(chapterOf(21)).toBe(2);
+    expect(chapterLevels(2)[0]).toBe(21);
+    expect(chapterLevels(2)).toHaveLength(20);
     expect(isMilestoneLevel(30)).toBe(true);
     expect(isMilestoneLevel(33)).toBe(false);
   });
@@ -134,9 +167,9 @@ describe('purchases', () => {
 
 describe('unlimited levels', () => {
   it('chapters and milestones work for any level number', () => {
-    expect(chapterOf(1_000_000)).toBe(25_000);
-    expect(chapterLevels(25_000)).toHaveLength(40);
-    expect(chapterLevels(25_000)[39]).toBe(1_000_000);
+    expect(chapterOf(1_000_000)).toBe(50_000);
+    expect(chapterLevels(50_000)).toHaveLength(20);
+    expect(chapterLevels(50_000)[19]).toBe(1_000_000);
     expect(isMilestoneLevel(1_000_000)).toBe(true);
   });
 

@@ -19,6 +19,8 @@ export function newStats() {
     playSeconds: 0,
     boostersUsed: 0,
     hintsUsed: 0,
+    cleanLevels: 0, // levels finished the first time with no hint or booster (Brain Power)
+    comebacks: 0, // wins with exactly 1 heart left (Comeback)
   };
 }
 
@@ -26,13 +28,16 @@ export function newStats() {
  * Count a level win.
  * @param {ReturnType<typeof newStats>} s
  * @param {boolean} perfect no heart lost
+ * @param {{firstClear?: boolean, assisted?: boolean, heartsLeft?: number}} [win]
  * @returns {ReturnType<typeof newStats>}
  */
-export function recordWin(s, perfect) {
+export function recordWin(s, perfect, win = {}) {
   const streak = s.streak + 1;
   const perfectStreak = perfect ? s.perfectStreak + 1 : 0;
   return {
     ...s,
+    cleanLevels: (s.cleanLevels || 0) + (win.firstClear && !win.assisted ? 1 : 0),
+    comebacks: (s.comebacks || 0) + (win.heartsLeft === 1 ? 1 : 0),
     wins: s.wins + 1,
     streak,
     bestStreak: Math.max(s.bestStreak, streak),

@@ -80,3 +80,22 @@ export function shapeIds(v) {
   if (!Array.isArray(v)) return [];
   return [...new Set(v.filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,40}$/.test(x)))];
 }
+
+/**
+ * Daily reward record (see src/game/daily.js). Day numbers must be plausible; the streak can't exceed the best.
+ * @param {unknown} raw
+ * @returns {import('../game/daily.js').DailyRecord}
+ */
+export function sanitizeDaily(raw) {
+  const d = obj(raw);
+  const day = (v) => (Number.isInteger(v) && v > 0 && v < 1e6 ? v : null);
+  const streak = count(d.streak);
+  const lastClaim = day(d.lastClaim);
+  return {
+    lastClaim,
+    streak: lastClaim === null ? 0 : streak,
+    best: Math.max(count(d.best), lastClaim === null ? 0 : streak),
+    lastSeen: timestamp(d.lastSeen),
+    blockedDay: day(d.blockedDay),
+  };
+}

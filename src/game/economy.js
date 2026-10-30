@@ -89,8 +89,11 @@ export function levelReward(win) {
   let coins = earned;
   let diamonds = 0;
   if (perfect && !win.wasPerfect) {
+    // no heart lost and no hint or booster, first time on this level
     coins += REWARDS.perfectBonus;
+    diamonds += REWARDS.perfectDiamonds;
     lines.push({ label: 'Perfect bonus', coins: REWARDS.perfectBonus });
+    lines.push({ label: 'Perfect', diamonds: REWARDS.perfectDiamonds });
   }
   if (isMilestoneLevel(win.level) && !win.wasCompleted) {
     diamonds += REWARDS.milestoneDiamonds;
@@ -147,7 +150,7 @@ export function spend(wallet, price) {
 }
 
 /** Allowed sources for currency entering the wallet. 'ad' and 'purchase' are reserved for later. */
-export const CURRENCY_SOURCES = Object.freeze(['level', 'achievement', 'ad', 'purchase', 'gift']);
+export const CURRENCY_SOURCES = Object.freeze(['level', 'achievement', 'ad', 'purchase', 'gift', 'daily']);
 
 /**
  * Add currency. This is the single entry point for currency from outside the game loop

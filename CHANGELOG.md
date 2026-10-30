@@ -2,6 +2,34 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.9.0] - 2026-10-30
+
+### Changed
+
+- Chapters have 20 levels again (were 40). Chapter complete pays +100 coins and +2 diamonds (was +200 and +4). Chapter Master means finishing chapter 1 (levels 1-20).
+- Saves made with 40-level chapters convert once: both halves of a rewarded chapter count as rewarded, so no chapter reward is paid twice; all progress, coins and diamonds are kept.
+
+## [3.8.0] - 2026-10-30
+
+### Added
+
+- Daily reward: a 7-day cycle (20 / 30 / 40 / 50 coins, 1 diamond, 70 coins, 2 diamonds + 1 hint) in a popup on Home, claimable later the same day from a Home button with a dot. A missed day resets the streak; after day 7 the cards restart and the streak keeps counting. Clock checks pay nothing when the device clock goes back or jumps far ahead.
+- Daily streak on Home (flame and number) and current/best daily streak in Profile stats.
+- Perfect level diamond: +1 diamond the first time a level is finished with no heart lost and no hint or booster (on top of the every-10th-level diamond).
+- Tiered achievements: Level Climber (25/50/100/250), Brain Power (10/30), Comeback (1/10), Daily Player (3/7/30), Hard Worker (10/50). Only the next unclaimed step shows; steps pay once and in order.
+- `SHOW_SHAPE_COLLECTION` flag (off): hides the Shape Collection and its toast while shapes keep being saved.
+
+### Removed
+
+- Skip level (Game Over button, price, logic and icon). Finishing a level is the only way to unlock the next one; levels skipped in old saves stay completed.
+- Achievements Collector, Alphabet and Zoo Keeper (diamonds already claimed are kept).
+- Shapes Soda (its icon was a cocktail glass) and the Viking and Knight helmets: 621 shapes now, every category still above its target.
+
+### Changed
+
+- Save format v5 (`arrowEscape:v5`) with the daily record and two new stats; v4 and older saves migrate with nothing lost.
+- Achievement goals and rewards moved to `ACHIEVEMENT_DEFS` in `src/config.js`.
+
 ## [3.7.0] - 2026-10-30
 
 ### Added
