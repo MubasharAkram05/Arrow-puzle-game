@@ -32,13 +32,13 @@ function blockers(occ, rows, cols, a) {
   return out;
 }
 
-/** Every arrow that must leave before arrow id (iterative DFS over the current board). */
-function closure(occ, rows, cols, byId, id) {
+/** Every arrow that must leave before arrow id (iterative DFS over the blocker map). */
+function closure(deps, id) {
   const seen = new Set();
   const stack = [id];
   while (stack.length) {
     const x = stack.pop();
-    for (const b of blockers(occ, rows, cols, byId.get(x))) {
+    for (const b of deps.get(x)) {
       if (!seen.has(b)) {
         seen.add(b);
         stack.push(b);
@@ -52,13 +52,13 @@ function closure(occ, rows, cols, byId, id) {
  * Solve round of every arrow: 1 = free at the start, else 1 + the latest round among its blockers.
  * @returns {Map<number, number>}
  */
-function solveRounds(occ, rows, cols, arrows, byId) {
+function solveRounds(deps, arrows) {
   const round = new Map();
   const visit = (id) => {
     if (round.has(id)) return round.get(id);
     round.set(id, 0); // guards against a cycle (never happens on a generated board)
     let r = 1;
-    for (const b of blockers(occ, rows, cols, byId.get(id))) r = Math.max(r, visit(b) + 1);
+    for (const b of deps.get(id)) r = Math.max(r, visit(b) + 1);
     round.set(id, r);
     return r;
   };
@@ -70,8 +70,8 @@ function solveRounds(occ, rows, cols, arrows, byId) {
  * Try to grow arrow a past `target` cells by joining neighbours at its tail.
  * @returns {object[]|null} joined arrows (in order), or null when it can't reach the target
  */
-function growLong(occ, rows, cols, byId, a, target, maxLen) {
-  const banned = closure(occ, rows, cols, byId, a.id);
+function growLong(occ, rows, cols, byId, deps, a, target, maxLen) {
+  const banned = closure(deps, a.id);
   const joined = [];
   const used = new Set([a.id]);
   let path = a.path;
@@ -115,27 +115,94 @@ export function joinLongArrows(level, cfg, rng) {
   const long = cfg.lengths.long;
   const { rows, cols } = level;
   let arrows = level.arrows;
-  if (!long.share || arrows.length < 8) return arrows;
+  if ((!long.share && cfg.freeLimit === undefined) || arrows.length < 8) return arrows;
   const byId = new Map(arrows.map((a) => [a.id, a]));
   const occ = ownerGrid(rows, cols, arrows);
+  // blockers of every arrow, computed once and kept up to date as arrows are joined
+  const deps = new Map(arrows.map((a) => [a.id, blockers(occ, rows, cols, a)]));
   // latest to leave first (highest solve round), with a little shuffle
-  const round = solveRounds(occ, rows, cols, arrows, byId);
+  const round = solveRounds(deps, arrows);
   const order = [...arrows].sort((x, y) => round.get(y.id) - round.get(x.id) + (rng() - 0.5) * 2);
   const want = Math.round(arrows.length * long.share);
   let made = 0;
   for (const a of order) {
     if (made >= want) break;
     if (!byId.has(a.id) || a.path.length >= long.min) continue;
-    const res = growLong(occ, rows, cols, byId, a, randInt(rng, long.min, long.max), long.max);
+    const res = growLong(occ, rows, cols, byId, deps, a, randInt(rng, long.min, long.max), long.max);
     if (!res) continue;
     a.path = res.path;
+    const gone = new Set(res.joined.map((b) => b.id));
     for (const b of res.joined) {
       byId.delete(b.id);
+      deps.delete(b.id);
       for (const p of b.path) occ[p.r * cols + p.c] = a.id;
+    }
+    // arrows that were blocked by a joined piece are now blocked by a (a's own blockers don't change)
+    for (const set of deps.values()) {
+      let hit = false;
+      for (const id of gone) hit = set.delete(id) || hit;
+      if (hit) set.add(a.id);
     }
     made++;
   }
+  if (cfg.freeLimit !== undefined)
+    absorbFree(occ, rows, cols, byId, deps, cfg.freeLimit, long.share ? long.max : cfg.lenMax);
   arrows = arrows.filter((a) => byId.has(a.id));
   arrows.forEach((a, i) => (a.id = i));
   return arrows;
+}
+
+/**
+ * Turn a free arrow around (its tail becomes the head) when the new way out crosses other arrows and
+ * none of them waits for this arrow (directly or through a chain), so no cycle can appear.
+ * @returns {boolean} true when the arrow was turned and is no longer free
+ */
+function reverseIfBlocked(occ, rows, cols, deps, F) {
+  const n = F.path.length;
+  const head = F.path[n - 1];
+  const neck = F.path[n - 2];
+  const dir = DIRS.findIndex((d) => d.dr === head.r - neck.r && d.dc === head.c - neck.c);
+  const turned = { id: F.id, dir, path: [...F.path].reverse() };
+  const ahead = blockers(occ, rows, cols, turned);
+  if (!ahead.size || ahead.has(F.id)) return false;
+  for (const b of ahead) if (b === F.id || closure(deps, b).has(F.id)) return false;
+  F.dir = dir;
+  F.path = turned.path;
+  deps.set(F.id, ahead);
+  return true;
+}
+
+/**
+ * Join extra free arrows (nothing in front of them) onto a neighbour's tail until at most `limit`
+ * are free on the first move. Same rule as long arrows: the free arrow F may join A only when F is not
+ * one of A's blockers (directly or through a chain), so the board stays solvable.
+ */
+function absorbFree(occ, rows, cols, byId, deps, limit, maxLen) {
+  const freeIds = () => [...deps.keys()].filter((id) => deps.get(id).size === 0);
+  let free = freeIds();
+  for (const f of free.slice(limit)) {
+    if (free.length <= limit) break;
+    const F = byId.get(f);
+    if (!F) continue;
+    if (reverseIfBlocked(occ, rows, cols, deps, F)) {
+      free = freeIds();
+      continue;
+    }
+    const ends = [F.path[0], F.path[F.path.length - 1]];
+    let done = false;
+    for (const a of byId.values()) {
+      if (a.id === f || a.path.length + F.path.length > maxLen) continue;
+      const tail = a.path[a.path.length - 1];
+      const end = ends.findIndex((p) => Math.abs(p.r - tail.r) + Math.abs(p.c - tail.c) === 1);
+      if (end === -1 || closure(deps, a.id).has(f)) continue;
+      a.path = a.path.concat(end === 0 ? F.path : [...F.path].reverse());
+      for (const p of F.path) occ[p.r * cols + p.c] = a.id;
+      byId.delete(f);
+      deps.delete(f);
+      for (const set of deps.values()) if (set.delete(f)) set.add(a.id);
+      done = true;
+      break;
+    }
+    if (done) free = freeIds();
+  }
 }

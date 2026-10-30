@@ -41,7 +41,7 @@ export const REWARDS = Object.freeze({
   baseCoins: 10, // every level win
   coinsPerHeart: 5, // per heart left at the end
   arrowsPerSizeCoin: 10, // board size bonus: +1 coin per 10 arrows
-  multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2 }),
+  multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2, Expert: 2.5 }), // capped: Expert is the top
   perfectBonus: 20, // no heart lost, first time per level
   replayRate: 0.25, // share of coins for a level already completed
   chapterSize: 40,
@@ -157,93 +157,65 @@ export const OFFERS = Object.freeze({
 });
 
 /**
- * Level generation. Every number that shapes a board lives here (src/engine/levels.js reads it).
+ * Level generation (src/engine/difficulty.js difficultyFor reads this). Difficulty rises a little on
+ * every level: fast early (square-root curve), then slower. The board grows until fullSizeLevel; after
+ * that, deeper blocking, more solve rounds and more long arrows keep it rising (log curve up to lateLevel).
+ * Every value moves one way only, so no level is easier than an earlier one.
  *
- * Tier goals (checked by the generator on every board, see analyzeLevel):
- *   maxStartFree / minStartFree  arrows that can leave on the very first move
- *   minAvgDepth                  mean number of arrows that must leave before each arrow
- *   minRounds                    solve rounds: removal waves needed when every free arrow leaves at once
- * size: board width = from + floor((n - firstLevel) / every), capped at max; rows = width + tall (+0-1).
- * arrows: allowed arrow count (shape boards too).
+ * Goals checked on every generated board (see analyzeLevel):
+ *   maxStartFree     arrows that can leave on the very first move
+ *   minAvgDepth      mean number of arrows that must leave before each arrow (depthPerArrow x arrows)
+ *   minSolveRounds   removal waves needed when every free arrow leaves at once (roundsPerArrow x arrows)
+ * Pairs [a, b] go from a at the first curve level to b at fullSizeLevel; triples add c at lateLevel.
  */
-const SHORT_ONLY = Object.freeze({
-  short: { min: 2, max: 6 },
-  medium: { min: 7, max: 12, share: 0 },
-  long: { min: 13, max: 30, share: 0 },
-});
-/**
- * About 70% short, 20% medium and 10-15% long arrows.
- * medium.share: chance a normal arrow aims for 7-12 cells.
- * long.share: share of arrows turned into long ones (13-30 cells) by joining neighbours onto deep
- * arrows (src/engine/longArrows.js), so long arrows are blocked deep and leave late.
- */
-const MIXED = Object.freeze({
-  short: { min: 2, max: 6 },
-  medium: { min: 7, max: 12, share: 0.4 },
-  long: { min: 13, max: 30, share: 0.13 },
-});
-const BASE_STYLES = Object.freeze({ straight: 2, L: 3, U: 2, zigzag: 2, spiral: 1, snake: 2 });
-/** Long arrows: straights across a row/column, U-turns, square spirals, combs and snakes. */
-const LONG_STYLES = Object.freeze({ straight: 3, U: 2, spiral: 2, snake: 3, zigzag: 1 });
-
 export const LEVELS = Object.freeze({
   minLen: 2,
   maxLen: 30,
   minFill: 0.9, // share of usable cells covered by arrows
-  maxCols: 34,
+  curve: Object.freeze({
+    firstLevel: 4, // levels 1-3 are the tutorial (below)
+    fullSizeLevel: 200, // the board reaches its largest size here
+    lateLevel: 20000, // the deep-chain ratios keep rising (log scale) until here
+    growth: 0.5, // square-root ramp: fast early, slower later
+    gridW: [16, 42],
+    gridH: [21, 54], // portrait, like a phone
+    arrowsPerCell: 0.12, // target arrows = cells x this
+    minArrowsShare: 0.85, // a board must have at least this share of the target
+    depthPerArrow: [0.2, 0.21, 0.225],
+    roundsPerArrow: [0.16, 0.17, 0.18],
+    longArrowShare: [0.1, 0.17, 0.2], // share of arrows that are long (13-30 cells)
+    mediumShare: 0.4, // chance a normal arrow aims for 7-12 cells
+    depthBias: [0.6, 1],
+    shapeScale: [1, 1.25], // shape boards hold this x the plain board's cells (their edges cut rays short)
+    // fewest arrows free on the first move, by level
+    maxStartFree: Object.freeze([
+      { from: 4, max: 3 },
+      { from: 31, max: 2 },
+      { from: 20000, max: 1 },
+    ]),
+    // display names only (the curve itself is smooth)
+    tiers: Object.freeze([
+      { from: 1, label: 'Normal' },
+      { from: 31, label: 'Hard' },
+      { from: 101, label: 'Super Hard' },
+      { from: 1000, label: 'Expert' },
+    ]),
+  }),
+  // levels 1-3 teach the game; level 1 is drawn by hand (src/engine/levels.js)
+  tutorial: Object.freeze({
+    2: { cols: 5, rows: 6, arrows: [6, 8], rounds: [2, 4] },
+    3: { cols: 6, rows: 8, arrows: [12, 16], rounds: [2, 3] },
+  }),
   shapeEvery: 3, // every 3rd level is a shape board...
   shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
-  // shape boards are square and grow until the shape holds as many cells as the tier's plain board,
-  // so small shapes (arrow, letters) still reach the tier's arrow count and difficulty floors
-  maskAreaScale: 0.9,
-  maskMaxCols: 52,
+  maskMaxCols: 90,
   // a shape's jagged edge (diagonal sides are staircases) lets more arrows out at the start, so shape
-  // boards may start with the tier's cap + maskExtraFree free arrows, or maskFreeShare of all arrows if higher
+  // boards may start with the level's cap + maskExtraFree free arrows, or maskFreeShare of all arrows if higher
   maskExtraFree: 12,
   maskFreeShare: 0.14,
-  tiers: Object.freeze({
-    tutorial: {
-      difficulty: 'Normal',
-      levels: [1, 3],
-      size: { from: 5, every: 1, max: 7, tall: 1 },
-      hearts: 3,
-      depthBias: 0,
-      arrows: [6, 15],
-      goals: { minStartFree: 2, maxStartFree: 3, minAvgDepth: 0, minRounds: 2 },
-      lengths: SHORT_ONLY,
-      styles: { straight: 3, L: 3, U: 1 },
-    },
-    normal: {
-      difficulty: 'Normal',
-      levels: [4, 20],
-      size: { from: 16, every: 3, max: 21, tall: 4 },
-      arrows: [40, 80],
-      hearts: 3,
-      depthBias: 0.6,
-      goals: { maxStartFree: 3, minAvgDepth: 9, minRounds: 12 },
-      lengths: MIXED,
-    },
-    hard: {
-      difficulty: 'Hard',
-      levels: [21, 60],
-      size: { from: 22, every: 8, max: 27, tall: 5 },
-      arrows: [80, 140],
-      hearts: 3,
-      depthBias: 0.8,
-      goals: { maxStartFree: 3, minAvgDepth: 20, minRounds: 20 },
-      lengths: MIXED,
-    },
-    superHard: {
-      difficulty: 'Super Hard',
-      levels: [61, Infinity],
-      size: { from: 30, every: 20, max: 34, tall: 8 },
-      arrows: [140, Infinity],
-      hearts: 3,
-      depthBias: 1,
-      goals: { maxStartFree: 2, minAvgDepth: 26, minRounds: 28 },
-      lengths: MIXED,
-    },
-  }),
-  styles: BASE_STYLES,
-  longStyles: LONG_STYLES,
+  hearts: 3,
+  styles: Object.freeze({ straight: 2, L: 3, U: 2, zigzag: 2, spiral: 1, snake: 2 }),
+  tutorialStyles: Object.freeze({ straight: 3, L: 3, U: 1 }),
+  /** Long arrows: straights across a row/column, U-turns, square spirals, combs and snakes. */
+  longStyles: Object.freeze({ straight: 3, U: 2, spiral: 2, snake: 3, zigzag: 1 }),
 });

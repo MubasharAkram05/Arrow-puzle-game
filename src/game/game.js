@@ -58,7 +58,7 @@ export function loadLevel(level) {
 function setDifficultyBadge(difficulty) {
   const badge = $('diff-badge');
   badge.dataset.level = difficulty.replace(' ', '-').toLowerCase();
-  $('stats').classList.toggle('super', difficulty === 'Super Hard');
+  $('stats').classList.toggle('super', difficulty === 'Super Hard' || difficulty === 'Expert');
   $('diff-label').textContent = difficulty;
 }
 

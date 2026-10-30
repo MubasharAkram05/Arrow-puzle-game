@@ -112,3 +112,15 @@
     transform: scale(1);
   }
 }
+
+/* Expert: the top label for very high levels, laid out like Super Hard in red */
+.diff[data-level='expert'] {
+  gap: 6px;
+  padding: 6px 12px;
+  color: #e8453c;
+  font-weight: 700;
+}
+.diff[data-level='expert'] .crown {
+  display: block;
+  color: #e8453c;
+}
