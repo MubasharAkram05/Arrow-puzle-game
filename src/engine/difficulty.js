@@ -1,3 +1,4 @@
+import { LEVELS } from '../config.js';
 import { buildOccupancy, rayArrows } from './board.js';
 import { solveLevel } from './solver.js';
 
@@ -56,5 +57,62 @@ export function analyzeLevel(level) {
     avgDepth: depths.reduce((s, d) => s + d, 0) / n,
     rounds,
     solvable: solvable && !cyclic,
+  };
+}
+
+const C = LEVELS.curve;
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/** 0 at the first curve level, 1 at fullSizeLevel: a square-root ramp (fast early, slower later). */
+function early(n) {
+  const t = (n - C.firstLevel) / (C.fullSizeLevel - C.firstLevel);
+  return Math.min(1, Math.max(0, t)) ** C.growth;
+}
+
+/** 0 at fullSizeLevel, 1 at lateLevel, on a log scale (keeps rising for very high levels). */
+function late(n) {
+  if (n <= C.fullSizeLevel) return 0;
+  return Math.min(1, Math.log(n / C.fullSizeLevel) / Math.log(C.lateLevel / C.fullSizeLevel));
+}
+
+/** Value of a [start, full size] or [start, full size, late] curve at level n. */
+function ramp(v, n) {
+  return v.length === 3 && n > C.fullSizeLevel ? lerp(v[1], v[2], late(n)) : lerp(v[0], v[1], early(n));
+}
+
+/**
+ * Display name of a level's difficulty (Normal, Hard, Super Hard, Expert).
+ * @param {number} n
+ * @returns {string}
+ */
+export function tierLabel(n) {
+  return C.tiers.reduce((label, t) => (n >= t.from ? t.label : label), C.tiers[0].label);
+}
+
+/**
+ * The difficulty curve: everything a level number needs to build its board. Every value grows
+ * (or, for maxStartFree, shrinks) with the level and never goes back, for any level number.
+ * @param {number} level 1-based, any size
+ * @returns {{gridW: number, gridH: number, targetArrows: number, maxStartFree: number,
+ *   minAvgDepth: number, minSolveRounds: number, longArrowShare: number, shapeScale: number,
+ *   depthBias: number, tier: string}}
+ */
+export function difficultyFor(level) {
+  const n = Math.max(1, Math.floor(Number(level) || 1));
+  const e = early(n);
+  const gridW = Math.round(lerp(C.gridW[0], C.gridW[1], e));
+  const gridH = Math.round(lerp(C.gridH[0], C.gridH[1], e));
+  const targetArrows = Math.round(gridW * gridH * C.arrowsPerCell);
+  return {
+    gridW,
+    gridH,
+    targetArrows,
+    maxStartFree: C.maxStartFree.reduce((m, s) => (n >= s.from ? s.max : m), C.maxStartFree[0].max),
+    minAvgDepth: Math.floor(ramp(C.depthPerArrow, n) * targetArrows * 10) / 10,
+    minSolveRounds: Math.floor(ramp(C.roundsPerArrow, n) * targetArrows),
+    longArrowShare: Math.round(ramp(C.longArrowShare, n) * 1000) / 1000,
+    shapeScale: Math.round(lerp(C.shapeScale[0], C.shapeScale[1], e) * 1000) / 1000,
+    depthBias: Math.round(lerp(C.depthBias[0], C.depthBias[1], e) * 100) / 100,
+    tier: tierLabel(n),
   };
 }

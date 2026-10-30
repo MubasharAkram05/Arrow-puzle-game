@@ -70,3 +70,28 @@ describe('claiming', () => {
     expect(claimableCount(done, new Set(['first-escape']))).toBe(0);
   });
 });
+
+describe('very large numbers', () => {
+  it('progress stays capped at the goal and nothing breaks with huge stats', async () => {
+    const { achievementStatus } = await import('../src/game/achievements.js');
+    const big = new Set(Array.from({ length: 50_000 }, (_, i) => i + 1));
+    const ctx = {
+      completed: big,
+      perfect: big,
+      masks: big,
+      stats: {
+        arrowsCleared: 1e9,
+        wins: 50_000,
+        streak: 50_000,
+        bestStreak: 50_000,
+        coinsSpent: 1e9,
+        perfectStreak: 5e4,
+        bestPerfectStreak: 5e4,
+      },
+    };
+    for (const s of achievementStatus(ctx, new Set())) {
+      expect(s.value).toBe(s.def.goal);
+      expect(s.claimable).toBe(true);
+    }
+  });
+});

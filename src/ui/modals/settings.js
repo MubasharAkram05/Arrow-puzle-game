@@ -5,6 +5,8 @@ import { resetProgress, saveProgress } from '../../storage/save.js';
 import { PREVIEW_SVG } from '../components/stylePreview.js';
 import { bindCosmeticChips, renderCosmeticChips } from './cosmeticChips.js';
 import { $ } from '../dom.js';
+import { toast } from '../components/toast.js';
+import { resetZoomGuide } from '../zoomGuide.js';
 import { openShop } from '../screens/shop/index.js';
 import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
@@ -75,6 +77,10 @@ export function bindSettings() {
     if (!b) return;
     state.style = b.dataset.styleOpt;
     changed();
+  });
+  $('btn-zoom-tips').addEventListener('click', () => {
+    resetZoomGuide();
+    toast('Zoom tips will show again');
   });
   $('btn-more-styles').addEventListener('click', () => {
     closeModals();

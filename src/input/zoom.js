@@ -3,7 +3,10 @@
  * (translate + scale), so taps, the hint hand and effects keep working through getBoundingClientRect.
  */
 import { ZOOM } from '../config.js';
+import { placePointer } from '../render/pointer.js';
 import { $ } from '../ui/dom.js';
+import { hideZoomGuide, notePinch } from '../ui/zoomGuide.js';
+import { maxScaleFor, startScale, translateFor } from './zoomMath.js';
 
 const pointers = new Map(); // pointerId -> {x, y}
 let view = { s: 1, x: 0, y: 0 };
@@ -11,11 +14,47 @@ let maxScale = 1;
 let gesture = null; // {kind: 'pinch'|'pan', ...start values}
 let lastEmptyTap = 0;
 
-/** Apply the current view to the board card. */
+/** Apply the current view to the board card, then follow it with the hand. */
 function apply() {
   $('board-card').style.transform = view.s === 1 ? '' : `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
   $('board-wrap').classList.toggle('zoomed', view.s > 1);
-  $('btn-fit').hidden = view.s <= 1;
+  placePointer();
+}
+
+/** Centre of the visible board area (the board area minus the button row). */
+function viewCentre() {
+  const w = $('board-wrap').getBoundingClientRect();
+  return { x: w.left + w.width / 2, y: w.top + w.height / 2 };
+}
+
+/**
+ * Pan so a board point (fractions 0-1) is in the middle of the view.
+ * @param {number} fx
+ * @param {number} fy
+ */
+function centreOn(fx, fy) {
+  const card = $('board-card');
+  const q = { x: (fx - 0.5) * card.offsetWidth, y: (fy - 0.5) * card.offsetHeight };
+  const o = origin();
+  const t = translateFor(q, viewCentre(), { x: o.cx, y: o.cy }, view.s);
+  view.x = t.x;
+  view.y = t.y;
+  clampView();
+  apply();
+}
+
+/**
+ * Pan (keeping the zoom) so a screen point is well inside the view, e.g. a hinted arrow.
+ * @param {number} x client x
+ * @param {number} y client y
+ */
+export function ensureVisible(x, y) {
+  if (view.s <= 1) return;
+  const w = $('board-wrap').getBoundingClientRect();
+  const m = Math.min(w.width, w.height) * 0.2;
+  if (x > w.left + m && x < w.right - m && y > w.top + m && y < w.bottom - m) return;
+  const r = $('board-card').getBoundingClientRect();
+  centreOn((x - r.left) / r.width, (y - r.top) / r.height);
 }
 
 /** Keep the zoomed board covering the middle of the view: it can't be dragged away. */
@@ -32,15 +71,18 @@ function clampView() {
 }
 
 /**
- * Reset to the fitted board and set how far this board may zoom.
- * @param {number} cellPx on-screen cell size at scale 1
+ * Start view for a new level: dense boards open zoomed in on the centre (see ZOOM.zoomBelowPx and
+ * ZOOM.startCellPx), other boards open fully fitted.
+ * @param {number} cellPx on-screen cell size when the whole board fits
+ * @returns {boolean} true when the level starts zoomed
  */
 export function resetZoom(cellPx) {
-  if (cellPx) maxScale = Math.max(1, Math.min(ZOOM.maxScale, ZOOM.targetCellPx / cellPx));
-  view = { s: 1, x: 0, y: 0 };
+  maxScale = maxScaleFor(cellPx);
+  view = { s: startScale(cellPx), x: 0, y: 0 };
   pointers.clear();
   gesture = null;
   apply();
+  return view.s > 1;
 }
 
 /** @returns {boolean} true when this board can zoom (big board, small cells) */
@@ -80,11 +122,12 @@ function zoomAt(s, px, py, from) {
  * @param {PointerEvent} e
  */
 function onDown(e) {
+  hideZoomGuide(); // the guide fades on the first touch
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
   if (pointers.size === 2 && canZoom()) {
     const p = pinchInfo();
     gesture = { kind: 'pinch', ...p, from: { ...view } };
-    hideZoomHint();
+    notePinch();
   }
 }
 
@@ -138,8 +181,8 @@ export function releaseIsTap(e) {
   return Math.hypot(e.clientX - p.x0, e.clientY - p.y0) <= ZOOM.dragPx;
 }
 
-/** Back to the whole board (also used before a hint so the highlight is on screen). */
-export function fit() {
+/** Back to the whole board (double-tap on empty space). */
+function fit() {
   view = { s: 1, x: 0, y: 0 };
   apply();
 }
@@ -162,31 +205,6 @@ function onWheel(e) {
   zoomAt(view.s * Math.exp(-e.deltaY * 0.0025), e.clientX, e.clientY, { ...view });
 }
 
-/**
- * Show "Pinch to zoom" on the first few dense boards (remembered per device).
- * @param {number} cols board width in cells
- */
-export function maybeShowZoomHint(cols) {
-  if (!canZoom() || cols < ZOOM.hintMinCols) return;
-  let seen = 0;
-  try {
-    seen = Number(localStorage.getItem(ZOOM.hintKey)) || 0;
-    localStorage.setItem(ZOOM.hintKey, String(seen + 1));
-  } catch {
-    // storage blocked: show it anyway
-  }
-  if (seen >= ZOOM.hintTimes) return;
-  const el = $('zoom-hint');
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(hideZoomHint, ZOOM.hintMs);
-}
-
-/** Hide the zoom hint. */
-export function hideZoomHint() {
-  $('zoom-hint').classList.remove('show');
-}
-
 /** Wire zoom gestures on the board area once. */
 export function bindZoom() {
   const wrap = $('board-wrap');
@@ -198,6 +216,4 @@ export function bindZoom() {
   wrap.addEventListener('pointercancel', end);
   wrap.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && end(e));
   wrap.addEventListener('wheel', onWheel, { passive: false });
-  $('btn-fit').addEventListener('pointerdown', (e) => e.stopPropagation());
-  $('btn-fit').addEventListener('click', fit);
 }

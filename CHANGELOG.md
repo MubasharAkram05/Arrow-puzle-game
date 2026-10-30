@@ -2,6 +2,28 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.0] - 2026-10-30
+
+### Added
+
+- Dense levels start zoomed in only when fitted cells would be under 18px, opening at about 22px per cell (other boards start fitted). Hints pan to the highlighted arrow. Double-tap on empty space shows the full board.
+- Zoom guide like the reference: two hands for "Pinch to zoom" and one finger for "Double-tap to see full board", on the first 3 zoomed levels and until the first pinch; "Show zoom tips again" in Settings.
+- `difficultyFor(level)`: one smooth curve for grid size, arrows, free arrows at start, depth, solve rounds, long-arrow share and shape size. Constants in `LEVELS.curve` in `src/config.js`.
+- Expert label (level 1000+, max 1 free arrow from level 20,000) with a x2.5 coin multiplier as the cap.
+- Unlimited levels: any level number works (tested up to 1,000,000); the Levels page renders only nearby chapters and keeps loading while scrolling, with no end.
+
+### Changed
+
+- Level 1 is drawn by hand with exactly 3 arrows; level 2 has 6-8 arrows; level 3 has 12-16 arrows and needs 2-3 rounds.
+- Difficulty rises every level instead of in steps. Super Hard (101+) is much harder: max 2 free arrows, mean depth over 64 (was 45.8), 15-20% long arrows. Boards grow to 42x54 by level 200.
+- Shape boards grow with the level and meet the same floors as plain levels of that number.
+- Small boards use 30px cells (were 24px).
+- Generator is faster: cached first free cell per line, skipped shape margins, a blocker map kept up to date while joining long arrows, and extra free arrows turned around or joined. Average build about 25 ms; every tested level under 150 ms.
+
+### Fixed
+
+- Panning to a point used the wrong card-centre shape and silently did nothing (hint pan).
+
 ## [3.5.0] - 2026-10-30
 
 ### Removed

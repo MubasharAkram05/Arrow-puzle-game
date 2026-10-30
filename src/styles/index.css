@@ -1,6 +1,7 @@
 @import './tokens.css';
 @import './base.css';
 @import './game.css';
+@import './zoom.css';
 @import './stats.css';
 @import './controls.css';
 @import './home.css';

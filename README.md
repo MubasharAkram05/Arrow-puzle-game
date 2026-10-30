@@ -54,7 +54,7 @@ src/
     longArrows.js       joins neighbours into long arrows without breaking solvability
     board.js            occupancy, ray checks, free arrows
     solver.js           greedy solver and structural validation
-    difficulty.js       blocking depth, free arrows at start, rounds
+    difficulty.js       blocking depth, free arrows at start, rounds; difficultyFor(level) curve
   game/                 state, game loop (tap, win, lose), hints and tutorial
     economy.js          pure reward and wallet rules (+ grant() hook for ads/IAP later)
     rewards.js          applies rewards and purchases to the game state
@@ -66,14 +66,14 @@ src/
     offerActions.js     applies offers to the game state
   render/               SVG board, HUD, pointing hand, animations, confetti, booster effects
     effects/            escape effects (one file each) on a small particle canvas
-  input/                board taps, pinch zoom and pan, Android/browser back button
+  input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
     schema.js           v3 save format, validation, loading and backup (pure)
     validators.js       number, list, cosmetics and avatar validators (pure)
     migrate.js          v1 and v2 to v3 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
-  ui/                   navigation, theme, DOM helpers
+  ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
     screens/            home, levels, game, booster bar, profile
       shop/             shop shell and one file per tab, cards, previews, actions
@@ -96,16 +96,18 @@ Difficulty is measured, not guessed:
 | Free at start  | Arrows you can safely tap on the first move             |
 | Rounds         | Longest chain of "this must go before that"             |
 
-Boards follow the reference game: dense, portrait-shaped grids with a mix of arrow lengths. Every number below lives in `LEVELS` in `src/config.js`.
+**First levels.** Level 1 is drawn by hand like the reference: three straight arrows (two up, one down) with the tutorial hand. Level 2 has 6-8 arrows, level 3 has 12-16 arrows and needs 2-3 removal rounds.
 
-| Tier       | Levels | Board width (cells)      | Arrows | Free at start | Min avg depth | Min solve rounds |
-| ---------- | ------ | ------------------------ | ------ | ------------- | ------------- | ---------------- |
-| Tutorial   | 1-3    | 5-7                      | 6-15   | 2-3           | -             | 2                |
-| Normal     | 4-20   | 16, +1 every 3 (max 21)  | 40-80  | max 3         | 9             | 12               |
-| Hard       | 21-60  | 22, +1 every 8 (max 27)  | 80-140 | max 3         | 20            | 20               |
-| Super Hard | 61+    | 30, +1 every 20 (max 34) | 140+   | max 2         | 26            | 28               |
+**The curve (level 4 onward).** `difficultyFor(level)` in `src/engine/difficulty.js` gives every number a level needs: grid size, target arrows, max free arrows at start, min average depth, min solve rounds, long-arrow share and shape scale. Each value rises a little on every level and never goes back: a square-root ramp (fast early, slower later) grows the board from 16x21 at level 4 to 42x54 at level 200. After that the board stays the same size and difficulty keeps rising on a log scale up to level 20,000: deeper blocking (0.21 to 0.225 x arrows), more solve rounds (0.17 to 0.18 x arrows), more long arrows (17% to 20%) and, from level 20,000, only one free arrow at the start. All constants live in `LEVELS.curve` in `src/config.js`.
 
-Solve rounds: how many removal waves are needed if every free arrow leaves at once.
+| Label (display only) | Levels  | Max free at start           | Notes                                                         |
+| -------------------- | ------- | --------------------------- | ------------------------------------------------------------- |
+| Normal               | 1-30    | 3                           | levels 1-3 are the tutorial                                   |
+| Hard                 | 31-100  | 2                           | board reaches 34x44 at level 100                              |
+| Super Hard           | 101-999 | 2                           | 15-20% long arrows; mean depth over 64 (old Super Hard: 45.8) |
+| Expert               | 1000+   | 2, then 1 from level 20,000 | deepest chains; Expert pays x2.5 coins (the cap)              |
+
+There is no last level: any level number works (tested up to 1,000,000) with the same deterministic seeds.
 
 **Arrow lengths.** About 70% short (2-6 cells), 15-20% medium (7-12) and 10-15% long (13-30). Long arrows are made after the board is built by joining neighbouring arrows onto the tail of a deep arrow (`src/engine/longArrows.js`). The deep arrow keeps its head, so it still leaves late, and the long body becomes a wall that blocks many others. A neighbour is only joined when it is not one of the arrow's blockers (directly or through a chain), which keeps every board solvable.
 
@@ -113,13 +115,18 @@ Two arrows pointing straight at each other on the same line can never appear: ea
 
 **Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board, cycling through 20 shapes: heart, arrow, mushroom, circle, plane, whale, diamond, cat, letter A, donut, star, dog, house, fish, hourglass, bird, apple, plus, tree and letter Z. The geometric ones are formulas in `src/engine/masks.js`; the others are 16x16 pixel art in `src/engine/shapeArt.js`, scaled to the board with their proportions kept. The Levels page shows each shape's silhouette under the level number.
 
-Shape boards are square and grow until the shape holds about 90% of the cells of the tier's plain board (`shapeSize` in `src/engine/levels.js`, up to 52 wide), so a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels must reach the same arrow count, depth and solve-round floors as their tier. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the tier's cap + 12 free arrows, or 14% of its arrows if that is more.
+Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same arrow count, depth and solve-round floors as plain levels of that number. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
-If a board misses its goals, the generator retries with the next derived seed. Levels 1-300 are tested for solvability, goals, determinism, and build time (under 150 ms each; most take under 20 ms on a laptop).
+After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms each; the average is about 25 ms on a laptop).
 
 ### Zoom
 
-Big boards can be zoomed with two fingers (pinch) up to the point where a cell is about a fingertip wide, and dragged with one finger while zoomed. Taps fire on release, so a drag or pinch never removes an arrow. A button in the top-right corner (or a double tap on empty space) shows the whole board again. "Pinch to zoom" appears on the first 3 dense boards. Using a hint zooms back out so the highlight is visible. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
+- **Default zoom:** when a level starts, if the cells would be smaller than 18px when fitted, the board opens zoomed in on its centre so a cell is about 22px. Boards whose cells are 18px or more open fully fitted. Both values are `ZOOM.zoomBelowPx` and `ZOOM.startCellPx` in `src/config.js`.
+- **Gestures:** pinch to zoom out to the whole board or in further (until a cell is about a fingertip wide), drag with one finger to move. Taps fire on release, so a drag or pinch never removes an arrow. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
+- **Full board:** a double tap on empty space zooms out to the whole board.
+- **Zoom guide:** when a level starts zoomed, two hands show "Pinch to zoom" and one finger shows "Double-tap to see full board". It appears on the first 3 zoomed levels, then only while the player has never pinched. It fades on the first touch or after 3 seconds and never takes taps. Settings has "Show zoom tips again".
+- **Hints:** a hint pans (keeping the zoom) so the highlighted arrow is on screen.
+- **Levels page:** only a few chapters around the current level are rendered; more load while scrolling up or down, with no end.
 
 ## Economy
 
@@ -127,19 +134,19 @@ All numbers live in `src/config.js`.
 
 ### Earning
 
-| Event                                        | Coins                               | Diamonds |
-| -------------------------------------------- | ----------------------------------- | -------- |
-| Level complete                               | 10                                  |          |
-| Each heart left at the end                   | +5                                  |          |
-| Board size                                   | +1 per 10 arrows                    |          |
-| Difficulty multiplier (base + hearts + size) | Normal x1, Hard x1.5, Super Hard x2 |          |
-| Perfect level (no heart lost), first time    | +20                                 |          |
-| Replay of a completed level                  | 25% of base + hearts                |          |
-| Every 10th level, first clear                |                                     | +1       |
-| Chapter complete (40 levels), once           | +200                                | +4       |
-| Achievements                                 |                                     | 1-5 each |
-| Free hint every 3 levels completed           | (+1 hint)                           |          |
-| XP per win                                   | 10 XP + 5 XP per heart left         |          |
+| Event                                        | Coins                                                  | Diamonds |
+| -------------------------------------------- | ------------------------------------------------------ | -------- |
+| Level complete                               | 10                                                     |          |
+| Each heart left at the end                   | +5                                                     |          |
+| Board size                                   | +1 per 10 arrows                                       |          |
+| Difficulty multiplier (base + hearts + size) | Normal x1, Hard x1.5, Super Hard x2, Expert x2.5 (cap) |          |
+| Perfect level (no heart lost), first time    | +20                                                    |          |
+| Replay of a completed level                  | 25% of base + hearts                                   |          |
+| Every 10th level, first clear                |                                                        | +1       |
+| Chapter complete (40 levels), once           | +200                                                   | +4       |
+| Achievements                                 |                                                        | 1-5 each |
+| Free hint every 3 levels completed           | (+1 hint)                                              |          |
+| XP per win                                   | 10 XP + 5 XP per heart left                            |          |
 
 ### Spending
 
