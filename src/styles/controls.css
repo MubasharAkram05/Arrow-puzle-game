@@ -208,9 +208,6 @@
     opacity: 0;
   }
 }
-.arrow .reveal-glow {
-  animation: glow 0.5s ease-in-out infinite alternate;
-}
 .fab-row {
   gap: 10px;
 }

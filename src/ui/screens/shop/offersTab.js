@@ -61,7 +61,7 @@ function starterCard() {
   if (state.offers.starterBought) return '';
   const c = OFFERS.starterPack.contents;
   const locked = starterPackAvailable() ? '' : `Unlocks at level ${OFFERS.starterPack.minLevel}`;
-  const note = `${c.hints} hints, ${c.boosters.shield} Shields, ${c.boosters.reveal} Reveals + Dark Slate style`;
+  const note = `${c.hints} hints, ${c.boosters.shield} Shields + Dark Slate style`;
   return card({
     kind: 'starter',
     id: 'starter',

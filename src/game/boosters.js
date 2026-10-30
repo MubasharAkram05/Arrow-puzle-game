@@ -1,12 +1,11 @@
 /**
  * Boosters: inventory counts and per-level rules. Pure functions, no DOM.
- * Inventory: { shield, reveal, autoClear, extraHeart } counts.
- * Level state: { shield: active?, autoClears: used this level, moved: any tap made, assisted: booster or hint used }.
+ * Inventory: { shield, extraHeart } counts.
+ * Level state: { shield: active?, moved: any tap made, assisted: booster or hint used }.
  */
-import { BOOSTERS } from '../config.js';
 
 /** Booster ids in display order. */
-export const BOOSTER_IDS = Object.freeze(['shield', 'reveal', 'autoClear', 'extraHeart']);
+export const BOOSTER_IDS = Object.freeze(['shield', 'extraHeart']);
 
 /**
  * Empty inventory.
@@ -18,10 +17,10 @@ export function newInventory() {
 
 /**
  * Fresh per-level booster state.
- * @returns {{shield: boolean, autoClears: number, moved: boolean, assisted: boolean}}
+ * @returns {{shield: boolean, moved: boolean, assisted: boolean}}
  */
 export function newLevelBoosts() {
-  return { shield: false, autoClears: 0, moved: false, assisted: false };
+  return { shield: false, moved: false, assisted: false };
 }
 
 /**
@@ -47,9 +46,6 @@ export function addBoosters(inv, add) {
  */
 export function blockedReason(id, lvl) {
   if (id === 'shield' && lvl.shield) return 'A shield is already active';
-  if (id === 'autoClear' && lvl.autoClears >= BOOSTERS.autoClear.maxPerLevel) {
-    return `Only ${BOOSTERS.autoClear.maxPerLevel} Auto-Clear per level`;
-  }
   if (id === 'extraHeart' && lvl.moved) return 'Use it before your first move';
   return '';
 }
@@ -68,7 +64,6 @@ export function useBooster(id, inv, lvl) {
   if (!(inv[id] > 0)) return { ok: false, reason: 'none', inv, lvl };
   const next = { ...lvl, assisted: true };
   if (id === 'shield') next.shield = true;
-  if (id === 'autoClear') next.autoClears = lvl.autoClears + 1;
   return { ok: true, inv: { ...inv, [id]: inv[id] - 1 }, lvl: next };
 }
 

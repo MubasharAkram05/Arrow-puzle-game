@@ -71,28 +71,16 @@ export const SHOP_THEMES = Object.freeze([
   { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
 ]);
 
-/** In-level boosters: price for one, and their limits. */
+/** In-level boosters: price for one. */
 export const BOOSTERS = Object.freeze({
   shield: Object.freeze({ name: 'Shield', price: { coins: 60 }, desc: 'Your next wrong tap costs no heart' }),
-  reveal: Object.freeze({
-    name: 'Reveal',
-    price: { coins: 40 },
-    desc: 'Shows every arrow that can escape',
-    durationMs: 3000,
-  }),
-  autoClear: Object.freeze({
-    name: 'Auto-Clear',
-    price: { coins: 70 },
-    desc: 'Removes one free arrow for you',
-    maxPerLevel: 1,
-  }),
   extraHeart: Object.freeze({ name: 'Extra Heart', price: { diamonds: 1 }, desc: 'Start the level with +1 heart' }),
 });
 /** Booster pack contents and price. */
 export const BOOSTER_PACK = Object.freeze({
   name: 'Booster Pack',
-  price: Object.freeze({ coins: 350 }),
-  contents: Object.freeze({ shield: 3, reveal: 3, autoClear: 2 }),
+  price: Object.freeze({ coins: 200 }),
+  contents: Object.freeze({ shield: 4 }),
 });
 
 /**
@@ -153,7 +141,7 @@ export const OFFERS = Object.freeze({
     name: 'Starter Pack',
     minLevel: 5, // shown once this level is unlocked
     price: Object.freeze({ diamonds: 3 }),
-    contents: Object.freeze({ hints: 5, boosters: { shield: 3, reveal: 3 }, style: 'slate' }),
+    contents: Object.freeze({ hints: 5, boosters: { shield: 3 }, style: 'slate' }),
   }),
   freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
   exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),

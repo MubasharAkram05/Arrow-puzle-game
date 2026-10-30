@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   absorbWrongTap,
+  BOOSTER_IDS,
   addBoosters,
   blockedReason,
   isPerfect,
@@ -35,18 +36,15 @@ describe('booster effects (pure)', () => {
     expect(twice.inv.shield).toBe(1);
   });
 
-  it('auto-clear: max 1 per level', () => {
-    const a = useBooster('autoClear', inv({ autoClear: 3 }), newLevelBoosts());
-    expect(a.ok).toBe(true);
-    const b = useBooster('autoClear', a.inv, a.lvl);
-    expect(b.ok).toBe(false);
-    expect(b.inv.autoClear).toBe(2);
-    expect(useBooster('autoClear', b.inv, newLevelBoosts()).ok).toBe(true);
+  it('only Shield and Extra Heart exist (Reveal and Auto-Clear were removed)', () => {
+    expect(BOOSTER_IDS).toEqual(['shield', 'extraHeart']);
+    expect(useBooster('reveal', inv(), newLevelBoosts()).reason).toBe('Unknown booster');
+    expect(useBooster('autoClear', inv(), newLevelBoosts()).reason).toBe('Unknown booster');
   });
 
-  it('reveal: uses one and marks the level assisted', () => {
-    const r = useBooster('reveal', inv({ reveal: 1 }), newLevelBoosts());
-    expect(r).toMatchObject({ ok: true, inv: { reveal: 0 }, lvl: { assisted: true } });
+  it('shield: uses one and marks the level assisted', () => {
+    const r = useBooster('shield', inv({ shield: 1 }), newLevelBoosts());
+    expect(r).toMatchObject({ ok: true, inv: { shield: 0 }, lvl: { assisted: true, shield: true } });
   });
 
   it('extra heart: only before the first move', () => {
@@ -55,15 +53,13 @@ describe('booster effects (pure)', () => {
   });
 
   it('refuses with none left or an unknown id', () => {
-    expect(useBooster('reveal', inv(), newLevelBoosts()).reason).toBe('none');
+    expect(useBooster('shield', inv(), newLevelBoosts()).reason).toBe('none');
     expect(useBooster('nuke', inv({ nuke: 1 }), newLevelBoosts()).ok).toBe(false);
   });
 
   it('adds packs and ignores bad counts', () => {
     expect(addBoosters(inv({ shield: 1 }), { shield: 3, reveal: 3, autoClear: 2, bomb: 9, extraHeart: -1 })).toEqual({
       shield: 4,
-      reveal: 3,
-      autoClear: 2,
       extraHeart: 0,
     });
   });
@@ -100,22 +96,23 @@ describe('boosters in the game state', () => {
     expect(buyBooster('shield').ok).toBe(true);
     expect(state.coins).toBe(40);
     expect(state.boosters.shield).toBe(1);
-    const res = buyBooster('autoClear');
+    const res = buyBooster('shield');
     expect(res.ok).toBe(false);
-    expect(res.missing).toEqual({ coins: 30, diamonds: 0 });
-    expect(state.boosters.autoClear).toBe(0);
+    expect(res.missing).toEqual({ coins: 20, diamonds: 0 });
+    expect(state.boosters.shield).toBe(1);
   });
 
-  it('buys the pack: 3 shields, 3 reveals, 2 auto-clears', () => {
-    state.coins = 400;
+  it('buys the pack: 4 shields for 200 coins', () => {
+    state.coins = 250;
     expect(buyBoosterPack().ok).toBe(true);
     expect(state.coins).toBe(50);
-    expect(state.boosters).toMatchObject({ shield: 3, reveal: 3, autoClear: 2 });
+    expect(state.boosters).toEqual({ shield: 4, extraHeart: 0 });
+    expect(buyBoosterPack().ok).toBe(false);
   });
 
   it('using a booster or a hint counts in stats and blocks the perfect win', () => {
-    state.boosters = inv({ reveal: 1 });
-    expect(spendBooster('reveal').ok).toBe(true);
+    state.boosters = inv({ shield: 1 });
+    expect(spendBooster('shield').ok).toBe(true);
     noteHintUsed();
     expect(state.stats).toMatchObject({ boostersUsed: 1, hintsUsed: 1 });
     const { reward } = applyWin(4, 'Normal', 3, 3);

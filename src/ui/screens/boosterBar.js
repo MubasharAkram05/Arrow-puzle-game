@@ -4,11 +4,8 @@
  */
 import { BOOSTERS } from '../../config.js';
 import { BOOSTER_IDS, blockedReason } from '../../game/boosters.js';
-import { tapArrow } from '../../game/game.js';
-import { currentFreeArrows } from '../../game/hints.js';
 import { buyBooster, spendBooster } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
-import { revealArrows } from '../../render/boostFx.js';
 import { renderHearts } from '../../render/hud.js';
 import { saveProgress } from '../../storage/save.js';
 import { playSound } from '../../audio/sound.js';
@@ -18,7 +15,7 @@ import { toast } from '../components/toast.js';
 import { $ } from '../dom.js';
 import { ask } from '../modals/ask.js';
 
-const ICONS = { shield: 'shield', reveal: 'eye', autoClear: 'bolt', extraHeart: 'heart-plus' };
+const ICONS = { shield: 'shield', extraHeart: 'heart-plus' };
 
 /** Draw the bar from the inventory and the level state. */
 export function renderBoosterBar() {
@@ -33,17 +30,6 @@ export function renderBoosterBar() {
 
 /** Run a booster's effect. Returns false when it could not run (nothing changes). */
 function applyEffect(id) {
-  if (id === 'reveal' || id === 'autoClear') {
-    const free = currentFreeArrows();
-    if (!free.length) {
-      toast('No arrow can escape right now');
-      return false;
-    }
-    if (!spendBooster(id).ok) return false;
-    if (id === 'reveal') revealArrows(free, BOOSTERS.reveal.durationMs);
-    else tapArrow(state.arrows[free[0]]);
-    return true;
-  }
   if (!spendBooster(id).ok) return false;
   if (id === 'extraHeart') {
     state.maxHearts++;
