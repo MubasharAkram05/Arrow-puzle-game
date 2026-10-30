@@ -8,7 +8,8 @@
  * The first source that passes the quality filter wins; the others are logged as rejected.
  *
  * Not included on purpose: brand logos, copyrighted characters, country flags, religious or political
- * symbols, weapons and anything offensive.
+ * symbols, weapons, armour and violence, skulls and bones, blood, alcohol, cigarettes, drugs and anything
+ * offensive.
  */
 
 export const CATEGORIES = [
@@ -320,7 +321,7 @@ const ROWS = {
     ['Street Lamp', 'g:street-light', 'm:emoji-objects'],
     ['Bench', 'g:park-bench', 'm:chair'],
     ['Mug', 'f:mug-saucer', 'm:coffee', 'g:coffee-mug'],
-    ['Glass', 'f:glass-water', 'm:local-drink', 'g:glass-celebration'],
+    ['Glass', 'f:glass-water', 'm:local-drink'],
     ['Weight', 'f:weight-hanging', 'm:fitness-center', 'g:weight'],
     ['Dumbbell', 'f:dumbbell', 'g:weight-lifting-up'],
     ['Abacus', 'g:abacus', 'f:abacus'],
@@ -378,7 +379,7 @@ const ROWS = {
     ['Juice Box', 'g:juice', 'm:local-drink'],
     ['Coffee', 'm:local-cafe', 'g:coffee-cup', 't:coffee-filled'],
     ['Tea', 'm:emoji-food-beverage', 'g:tea', 't:tea-filled'],
-    ['Soda', 'g:soda-can', 'm:local-bar', 'g:soda-bottle'],
+    ['Soda', 'g:soda-can', 'g:soda-bottle'],
     ['Milkshake', 'g:milkshake', 'm:blender'],
     ['Ice Pop', 'g:ice-pop', 'g:popsicle', 'm:icecream'],
     ['Carrot', 'f:carrot', 'g:carrot', 'm:carrot'],
@@ -400,7 +401,7 @@ const ROWS = {
     ['Muffin', 'g:muffin', 'g:cupcake'],
     ['Jelly', 'g:jelly', 'g:jelly-beans'],
     ['Meatball', 'g:meat', 'g:ham-shank'],
-    ['Ham', 'g:ham-shank', 'g:meat-cleaver'],
+    ['Ham', 'g:ham-shank'],
     ['Kebab', 'g:kebab-spit', 'm:kebab-dining'],
     ['Chicken', 'g:roast-chicken', 'g:chicken-oven'],
     ['Fish Dish', 'f:fish-fins', 'g:fish-cooked', 'm:set-meal'],
@@ -785,8 +786,6 @@ const ROWS = {
     ['Superhero Mask', 'g:domino-mask'],
     ['Clown Nose', 'g:clown', 'g:jester-hat'],
     ['Jester Hat', 'g:jester-hat'],
-    ['Viking Helmet', 'g:viking-helmet', 'g:horned-helmet'],
-    ['Knight Helmet', 'g:visored-helm', 'g:closed-barbute'],
     ['Pot Of Gold', 'g:pot-of-gold', 'g:coins-pile'],
     ['Magnet Toy', 'g:magnet', 'f:magnet'],
     ['Rubik Cube', 'g:rubik-cube', 'g:cube'],

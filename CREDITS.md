@@ -7,9 +7,9 @@ credits in Settings > Credits.
 | Source                                                                   | Author                            | License    | Shapes |
 | ------------------------------------------------------------------------ | --------------------------------- | ---------- | -----: |
 | [Tabler Icons (filled)](https://tabler.io/icons)                         | Paweł Kuna                        | MIT        |      9 |
-| [Material Symbols (filled)](https://fonts.google.com/icons)              | Google                            | Apache-2.0 |     95 |
+| [Material Symbols (filled)](https://fonts.google.com/icons)              | Google                            | Apache-2.0 |     94 |
 | [Font Awesome Free 6 (solid)](https://fontawesome.com)                   | Fonticons, Inc.                   | CC-BY-4.0  |    210 |
-| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    198 |
+| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    196 |
 | [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     58 |
 | [Inter (Black 900)](https://rsms.me/inter/)                              | Rasmus Andersson                  | OFL-1.1    |     35 |
 | [Roboto Slab (Black 900)](https://fonts.google.com/specimen/Roboto+Slab) | Christian Robertson               | Apache-2.0 |      1 |
