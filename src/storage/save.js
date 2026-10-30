@@ -5,7 +5,6 @@ import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
 import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
-import { newInventory } from '../game/boosters.js';
 import { newCosmetics } from '../game/cosmetics.js';
 import { achievementContext } from '../game/rewards.js';
 import { defaultSave, readSave, sanitize, VERSION, writeSave } from './schema.js';
@@ -38,7 +37,7 @@ export function applySave(raw) {
   state.coins = d.wallet.coins;
   state.diamonds = d.wallet.diamonds;
   state.hints = d.wallet.hints;
-  state.boosters = { ...d.boosters };
+  state.pendingRefund = d.pendingRefund;
   state.cosmetics = d.cosmetics;
   state.offers = { ...d.offers };
   state.seenNew = new Set(d.seenNew);
@@ -77,7 +76,7 @@ export function snapshot() {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: state.coins, diamonds: state.diamonds, hints: state.hints },
-    boosters: { ...state.boosters },
+    pendingRefund: state.pendingRefund,
     cosmetics: state.cosmetics,
     offers: { ...state.offers },
     seenNew: [...state.seenNew],
@@ -93,7 +92,7 @@ export function snapshot() {
 
 /**
  * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
- * @returns {'v5'|'backup'|'v4'|'v3'|'v2'|'v1'|'new'} where the data came from
+ * @returns {'v6'|'backup'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'} where the data came from
  */
 export function loadSave() {
   const s = storage();
@@ -121,7 +120,6 @@ export function resetProgress() {
   state.diamonds = 0;
   state.xp = 0;
   state.stats = newStats();
-  state.boosters = newInventory();
   state.cosmetics = newCosmetics();
   state.offers = { starterBought: false, giftLast: 0 };
   state.seenNew = new Set();

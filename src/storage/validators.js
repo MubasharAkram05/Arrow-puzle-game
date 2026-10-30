@@ -1,6 +1,7 @@
 /**
  * Small validators shared by the save schema: numbers, lists, cosmetics and avatars. Pure.
  */
+import { BOOSTER_REFUND } from '../config.js';
 import { CATEGORIES, findItem, newCosmetics } from '../game/cosmetics.js';
 
 export const LIMIT = 1e9; // keeps absurd numbers out of the UI
@@ -98,4 +99,33 @@ export function sanitizeDaily(raw) {
     lastSeen: timestamp(d.lastSeen),
     blockedDay: day(d.blockedDay),
   };
+}
+
+/**
+ * Coins and diamonds owed for boosters a save still holds (they were removed; see BOOSTER_REFUND).
+ * @param {unknown} raw the save's old `boosters` record
+ * @returns {{coins: number, diamonds: number}}
+ */
+export function boosterRefund(raw) {
+  const b = obj(raw);
+  let coins = 0;
+  let diamonds = 0;
+  for (const [id, pay] of Object.entries(BOOSTER_REFUND)) {
+    const n = count(b[id]);
+    coins += n * (pay.coins || 0);
+    diamonds += n * (pay.diamonds || 0);
+  }
+  return { coins: Math.min(coins, LIMIT), diamonds: Math.min(diamonds, LIMIT) };
+}
+
+/**
+ * Refund waiting to be announced (a toast once), or null.
+ * @param {unknown} raw
+ * @returns {{coins: number, diamonds: number}|null}
+ */
+export function pendingRefund(raw) {
+  const r = obj(raw);
+  const coins = count(r.coins);
+  const diamonds = count(r.diamonds);
+  return coins || diamonds ? { coins, diamonds } : null;
 }

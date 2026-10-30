@@ -2,6 +2,20 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.11.0] - 2026-10-30
+
+### Removed
+
+- Shield and Extra Heart Start boosters, the Booster Pack and the booster bar. The game bar keeps only Hint and Grid, centered.
+- Booster stats tracking (boosters used).
+
+### Changed
+
+- Starter Pack: 5 hints + Dark Slate style (still 3 diamonds, one time).
+- The Shop Boosters tab is now Hints.
+- Perfect levels and Brain Power only check that no hint was used.
+- Save format v6: owned Shields are refunded at 60 coins each and Extra Hearts at 1 diamond each, once, with a toast. No other data is lost.
+
 ## [3.10.0] - 2026-10-30
 
 ### Added

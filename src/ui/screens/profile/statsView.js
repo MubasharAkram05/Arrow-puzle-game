@@ -1,7 +1,7 @@
 /**
  * Profile stats: three big highlight tiles (daily streak, levels completed, perfect levels) and a compact
  * two-column list (arrows cleared, win streak, best streak, play time). Numbers count up when the page opens.
- * Coins, diamonds, best daily streak, boosters used and hints used are still saved, just not shown here.
+ * Coins, diamonds, best daily streak and hints used are still saved, just not shown here.
  */
 import { currentStreak } from '../../../game/daily.js';
 import { formatPlayTime } from '../../../game/stats.js';

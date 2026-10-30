@@ -1,8 +1,7 @@
 /**
  * Applies economy results to the shared game state. No DOM: screens read the returned summaries.
  */
-import { BOOSTERS, BOOSTER_PACK, MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
-import { addBoosters, useBooster } from './boosters.js';
+import { MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
 import { isShapeLevel, shapeOf } from '../engine/index.js';
@@ -72,7 +71,7 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
     wasPerfect,
     chapterDone: chapterLevels(chapter).every((l) => p.completed.has(l)),
     chapterRewarded: p.chaptersRewarded.has(chapter),
-    assisted: state.levelBoost.assisted,
+    assisted: state.levelAssist.assisted,
     arrows,
   });
   if (reward.perfect) p.perfect.add(n);
@@ -90,7 +89,7 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   state.xp += xp;
   state.stats = recordWin(state.stats, reward.perfect, {
     firstClear: !wasCompleted,
-    assisted: state.levelBoost.assisted,
+    assisted: state.levelAssist.assisted,
     heartsLeft,
   });
   return { reward, xp, before, newShape };
@@ -175,44 +174,9 @@ export function buyItem(kind, item) {
   return { ok: true };
 }
 
-/**
- * Buy one booster.
- * @param {string} id booster id
- * @returns {{ok: boolean, missing?: object}}
- */
-export function buyBooster(id) {
-  const res = pay(BOOSTERS[id].price);
-  if (res.ok) state.boosters = addBoosters(state.boosters, { [id]: 1 });
-  return res;
-}
-
-/**
- * Buy the booster pack.
- * @returns {{ok: boolean, missing?: object}}
- */
-export function buyBoosterPack() {
-  const res = pay(BOOSTER_PACK.price);
-  if (res.ok) state.boosters = addBoosters(state.boosters, BOOSTER_PACK.contents);
-  return res;
-}
-
-/**
- * Spend one booster in the current level and count it in stats.
- * @param {string} id
- * @returns {{ok: boolean, reason?: string}}
- */
-export function spendBooster(id) {
-  const res = useBooster(id, state.boosters, state.levelBoost);
-  if (!res.ok) return res;
-  state.boosters = res.inv;
-  state.levelBoost = res.lvl;
-  state.stats = { ...state.stats, boostersUsed: state.stats.boostersUsed + 1 };
-  return { ok: true };
-}
-
 /** A hint was shown: the level is assisted and the hint is counted. */
 export function noteHintUsed() {
-  state.levelBoost = { ...state.levelBoost, assisted: true };
+  state.levelAssist = { ...state.levelAssist, assisted: true };
   state.stats = { ...state.stats, hintsUsed: state.stats.hintsUsed + 1 };
 }
 

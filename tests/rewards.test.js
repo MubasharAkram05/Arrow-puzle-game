@@ -77,8 +77,8 @@ describe('perfect level diamond (through a real win)', () => {
     expect(state.diamonds).toBe(1);
   });
 
-  it('a hint or booster on the level means no perfect diamond', () => {
-    state.levelBoost = { ...state.levelBoost, assisted: true };
+  it('a hint used on the level means no perfect diamond', () => {
+    state.levelAssist = { ...state.levelAssist, assisted: true };
     const r = applyWin(7, 'Normal', 3, 3).reward;
     expect(r.perfect).toBe(false);
     expect(r.diamonds).toBe(0);
@@ -86,7 +86,7 @@ describe('perfect level diamond (through a real win)', () => {
   });
 
   it('counts Brain Power (clean first clears) and Comeback (1 heart left)', () => {
-    state.levelBoost = { ...state.levelBoost, assisted: false };
+    state.levelAssist = { ...state.levelAssist, assisted: false };
     applyWin(2, 'Normal', 3, 3);
     applyWin(3, 'Normal', 1, 3);
     applyWin(3, 'Normal', 1, 3);

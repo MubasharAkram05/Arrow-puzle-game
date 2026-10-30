@@ -101,7 +101,8 @@ describe('offers in the game state', () => {
     expect(buyStarterPack().ok).toBe(true);
     expect(state.diamonds).toBe(7);
     expect(state.hints).toBe(3 + 5);
-    expect(state.boosters).toEqual({ shield: 3, extraHeart: 0 });
+    // 5 hints + Dark Slate style only (Shields were removed in 3.11.0)
+    expect(state).not.toHaveProperty('boosters');
     expect(state.owned.styles).toContain('slate');
     expect(starterPackAvailable()).toBe(false);
     expect(buyStarterPack()).toMatchObject({ ok: false, reason: 'unavailable' });

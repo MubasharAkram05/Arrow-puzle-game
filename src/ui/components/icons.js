@@ -63,8 +63,6 @@ const OUTLINED = {
   'i-shape-star': '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
   'i-shield': '<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/>',
   'i-bolt': '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
-  'i-heart-plus':
-    '<path d="M12 20s-8-4.8-8-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 8 2.8c0 1-.3 2-.8 3"/><path d="M18 15v6M15 18h6"/>',
   'i-gift':
     '<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8C10 4 6 4 6 6.5S10 8 12 8zM12 8c2-4 6-4 6-1.5S14 8 12 8z"/>',
   'i-swap': '<path d="M4 8h14l-4-4M20 16H6l4 4"/>',

@@ -7,9 +7,9 @@ const stub = (id) => ({
   onCard: vi.fn(),
 });
 const mods = {};
-for (const id of ['offers', 'boosters', 'styles', 'effects', 'profile']) mods[id] = stub(id);
+for (const id of ['offers', 'hints', 'styles', 'effects', 'profile']) mods[id] = stub(id);
 vi.mock('../src/ui/screens/shop/offersTab.js', () => mods.offers);
-vi.mock('../src/ui/screens/shop/boostersTab.js', () => mods.boosters);
+vi.mock('../src/ui/screens/shop/hintsTab.js', () => mods.hints);
 vi.mock('../src/ui/screens/shop/stylesTab.js', () => mods.styles);
 vi.mock('../src/ui/screens/shop/effectsTab.js', () => mods.effects);
 vi.mock('../src/ui/screens/shop/profileTab.js', () => mods.profile);
@@ -20,9 +20,9 @@ describe('shop "All" tab', () => {
   it('shows every section in order, each under its heading with its own content', () => {
     const html = all.render();
     const heads = [...html.matchAll(/<h2 class="shop-part-head">.*?<\/svg>([^<]+)<\/h2>/g)].map((m) => m[1]);
-    expect(heads).toEqual(['Offers', 'Boosters', 'Styles', 'Effects', 'Profile items']);
+    expect(heads).toEqual(['Offers', 'Hints', 'Styles', 'Effects', 'Profile items']);
     const order = [...html.matchAll(/class="body-(\w+)"/g)].map((m) => m[1]);
-    expect(order).toEqual(['offers', 'boosters', 'styles', 'effects', 'profile']);
+    expect(order).toEqual(['offers', 'hints', 'styles', 'effects', 'profile']);
     expect(html.match(/data-part="(\w+)"/g)).toHaveLength(5);
   });
 
@@ -42,7 +42,7 @@ describe('shop tab order', () => {
   it('"All" is the first tab and the default', async () => {
     const src = await import('node:fs').then((fs) => fs.readFileSync('src/ui/screens/shop/index.js', 'utf8'));
     const ids = [...src.slice(src.indexOf('export const TABS')).matchAll(/\{ id: '(\w+)'/g)].map((m) => m[1]);
-    expect(ids.slice(0, 6)).toEqual(['all', 'offers', 'boosters', 'styles', 'effects', 'profile']);
+    expect(ids.slice(0, 6)).toEqual(['all', 'offers', 'hints', 'styles', 'effects', 'profile']);
     expect(src).toMatch(/\? t : 'all';/);
   });
 });

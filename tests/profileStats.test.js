@@ -14,7 +14,6 @@ const save = () => ({
     streak: 6,
     bestStreak: 11,
     playSeconds: 3725,
-    boostersUsed: 9,
     hintsUsed: 17,
   },
   daily: { lastClaim: 20000, streak: 3, best: 8, lastSeen: 0, blockedDay: null },
@@ -45,6 +44,6 @@ describe('profile stats', () => {
     const back = sanitize(JSON.parse(JSON.stringify(snapshot())));
     expect(back.wallet).toEqual({ coins: 777, diamonds: 13, hints: 4 });
     expect(back.daily.best).toBe(8);
-    expect(back.stats).toMatchObject({ boostersUsed: 9, hintsUsed: 17 });
+    expect(back.stats).toMatchObject({ hintsUsed: 17 });
   });
 });

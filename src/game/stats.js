@@ -17,9 +17,8 @@ export function newStats() {
     bestPerfectStreak: 0,
     coinsSpent: 0,
     playSeconds: 0,
-    boostersUsed: 0,
     hintsUsed: 0,
-    cleanLevels: 0, // levels finished the first time with no hint or booster (Brain Power)
+    cleanLevels: 0, // levels finished the first time with no hint (Brain Power)
     comebacks: 0, // wins with exactly 1 heart left (Comeback)
   };
 }

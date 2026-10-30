@@ -1,15 +1,13 @@
 /**
  * Shared shop card markup and the "New" badge bookkeeping.
  */
-import { BOOSTERS, COSMETICS } from '../../../config.js';
+import { COSMETICS } from '../../../config.js';
 import { state } from '../../../game/state.js';
 import { icon } from '../../components/icons.js';
 import { priceHTML } from '../../modals/ask.js';
 
 /** Items added in the shop expansion; they carry a "New" badge until first seen. */
 export const NEW_KEYS = Object.freeze([
-  ...Object.keys(BOOSTERS).map((id) => `booster:${id}`),
-  'booster:pack',
   'offer:starter',
   'offer:gift',
   'offer:exchange',

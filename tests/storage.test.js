@@ -4,7 +4,7 @@ import {
   convertChapters,
   V1_KEY,
   V3_KEY,
-  V5_KEY,
+  V6_KEY,
   defaultSave,
   migrateV1,
   readSave,
@@ -40,7 +40,7 @@ const V1 = {
 describe('v1 migration', () => {
   it('keeps level progress, hints, settings and the equipped style', () => {
     const d = migrateV1(V1);
-    expect(d.version).toBe(5);
+    expect(d.version).toBe(6);
     expect(d.progress).toMatchObject({ current: 14, unlocked: 15 });
     expect(d.progress.completed).toEqual(V1.completed);
     expect(d.wallet.hints).toBe(6);
@@ -64,8 +64,8 @@ describe('v1 migration', () => {
     expect(res.source).toBe('v1');
     expect(res.data.progress.current).toBe(14);
     expect(s.has(V1_KEY)).toBe(false);
-    expect(JSON.parse(s.getItem(V5_KEY)).progress.completed).toHaveLength(14);
-    expect(readSave(s).source).toBe('v5');
+    expect(JSON.parse(s.getItem(V6_KEY)).progress.completed).toHaveLength(14);
+    expect(readSave(s).source).toBe('v6');
   });
 
   it('keeps the v1 key when the v3 write fails, so nothing is lost', () => {
@@ -127,7 +127,7 @@ describe('corrupted data', () => {
 
   it('uses the backup when the main save is unreadable', () => {
     const good = sanitize({ wallet: { coins: 120 } });
-    const s = memoryStorage({ [V5_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
+    const s = memoryStorage({ [V6_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
     const res = readSave(s);
     expect(res.source).toBe('backup');
     expect(res.data.wallet.coins).toBe(120);
@@ -146,7 +146,7 @@ describe('corrupted data', () => {
   it('writes the save and a backup copy', () => {
     const s = memoryStorage();
     expect(writeSave(s, defaultSave())).toBe(true);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V5_KEY));
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V6_KEY));
   });
 });
 
@@ -212,7 +212,7 @@ describe('20-level chapters (back from 40)', () => {
 });
 
 describe('removed boosters', () => {
-  it('drops Reveal and Auto-Clear counts from a saved v3 game and keeps everything else', () => {
+  it('a saved v3 game: Reveal and Auto-Clear counts are dropped, Shields and Extra Hearts paid back', () => {
     const old = {
       ...defaultSave(),
       wallet: { coins: 640, diamonds: 7, hints: 4 },
@@ -222,8 +222,9 @@ describe('removed boosters', () => {
     const s = memoryStorage({ [V3_KEY]: JSON.stringify(old) });
     const { data, source } = readSave(s);
     expect(source).toBe('v3');
-    expect(data.boosters).toEqual({ shield: 2, extraHeart: 1 });
-    expect(data.wallet).toEqual({ coins: 640, diamonds: 7, hints: 4 });
+    expect(data).not.toHaveProperty('boosters');
+    expect(data.wallet).toEqual({ coins: 640 + 120, diamonds: 7 + 1, hints: 4 });
+    expect(data.pendingRefund).toEqual({ coins: 120, diamonds: 1 });
     expect(data.progress).toMatchObject({ current: 12, unlocked: 12 });
     expect(data.progress.completed).toHaveLength(11);
   });
