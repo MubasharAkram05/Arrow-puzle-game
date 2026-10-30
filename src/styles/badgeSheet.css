@@ -1,0 +1,161 @@
+/* Badge sheet (src/ui/components/badgeSheet.js) and the claim burst */
+/* Bottom sheet */
+.modal.sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+.modal.sheet .card {
+  width: 100%;
+  max-width: 520px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+.badge-sheet .card-head {
+  margin-bottom: 0;
+}
+.bs-art {
+  position: relative;
+  width: 132px;
+  margin: 0 auto 6px;
+  overflow: visible;
+}
+.bs-art .burst {
+  top: 50%;
+  right: auto;
+  left: 50%;
+}
+.bs-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
+  opacity: 0;
+  pointer-events: none;
+}
+.bs-art.unlocking .bdg {
+  animation: badge-unlock 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+.bs-art.unlocking::after {
+  animation: badge-shine 0.9s ease-out both;
+}
+@keyframes badge-unlock {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+@keyframes badge-shine {
+  0% {
+    opacity: 1;
+    transform: translateX(-80%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(80%);
+  }
+}
+.badge-sheet h3 {
+  margin: 4px 0 2px;
+}
+.bs-step {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.bs-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+.bs-progress .xp-bar {
+  flex: 1;
+}
+.bs-reward,
+.bs-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 12px;
+  font-weight: 700;
+}
+.bs-reward b {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.bs-done {
+  color: #16a34a;
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal.sheet .card,
+  .bs-art.unlocking .bdg,
+  .bs-art.unlocking::after {
+    animation: none;
+  }
+}
+.burst {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  pointer-events: none;
+}
+.burst i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #f7b500;
+  animation: burst 0.7s ease-out forwards;
+}
+.burst i:nth-child(2n) {
+  background: #35c8f4;
+}
+.burst i:nth-child(3n) {
+  background: #ff7a8a;
+}
+@keyframes burst {
+  to {
+    transform: rotate(var(--a)) translateX(46px) scale(0.4);
+    opacity: 0;
+  }
+}
+.burst i:nth-child(1) {
+  --a: 0deg;
+}
+.burst i:nth-child(2) {
+  --a: 36deg;
+}
+.burst i:nth-child(3) {
+  --a: 72deg;
+}
+.burst i:nth-child(4) {
+  --a: 108deg;
+}
+.burst i:nth-child(5) {
+  --a: 144deg;
+}
+.burst i:nth-child(6) {
+  --a: 180deg;
+}
+.burst i:nth-child(7) {
+  --a: 216deg;
+}
+.burst i:nth-child(8) {
+  --a: 252deg;
+}
+.burst i:nth-child(9) {
+  --a: 288deg;
+}
+.burst i:nth-child(10) {
+  --a: 324deg;
+}

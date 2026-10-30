@@ -1,8 +1,7 @@
 /**
- * Profile: avatar, editable name, player level/XP, stats, shape collection and achievements.
+ * Profile: avatar, editable name, player level/XP, newest award badges, stats, (hidden) shape collection and
+ * the award badges.
  */
-import { visibleAchievements } from '../../game/achievements.js';
-import { achievementContext, claim } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
 import { playerLevel, validateName } from '../../game/stats.js';
 import { saveProgress } from '../../storage/save.js';
@@ -12,10 +11,10 @@ import { buyCosmeticItem } from '../../game/rewards.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { ask } from '../modals/ask.js';
 import { updateBottomNav } from '../components/bottomNav.js';
-import { flyCurrency } from '../components/currencyBar.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
+import { awardsSkeleton, bindAwards, recentSkeleton, renderAwards } from './profile/awardsView.js';
 import { renderStatsView, statsSkeleton } from './profile/statsView.js';
 import { bindCollection, collectionSkeleton, renderCollection } from './shapeCollection.js';
 import { onReturn, openTab } from '../navigation.js';
@@ -38,10 +37,10 @@ function buildSkeleton() {
       </div>
     </div>
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
+    ${recentSkeleton()}
     ${statsSkeleton()}
     ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
-    <h3 class="section-title">Achievements</h3>
-    <ul class="ach-list" id="ach-list"></ul>`;
+    ${awardsSkeleton()}`;
 }
 
 /** Avatar, name and XP bar. */
@@ -60,28 +59,6 @@ function renderHeader() {
   $('xp-text').textContent = `${lv.into} / ${lv.need} XP to level ${lv.level + 1}`;
 }
 
-/** Achievement rows with progress bars and claim buttons. */
-function renderAchievements() {
-  $('ach-list').innerHTML = visibleAchievements(achievementContext(), state.claimed)
-    .map(({ def, value, done, claimed, claimable }) => {
-      const action = claimable
-        ? `<button class="btn primary claim-btn" data-claim="${def.id}">Claim</button>`
-        : claimed
-          ? `<span class="claimed">${icon('check')}Claimed</span>`
-          : '';
-      return `<li class="ach${done ? ' done' : ''}">
-        <span class="ach-badge">${icon(def.icon)}</span>
-        <div class="ach-body">
-          <div class="ach-top"><b>${def.title}</b>${def.steps > 1 ? `<small class="ach-step">Step ${def.step}/${def.steps}</small>` : ''}<span class="ach-reward"><svg class="cur-icon"><use href="#i-gem" /></svg>${def.reward}</span></div>
-          <small class="muted">${def.desc}</small>
-          <div class="ach-progress"><div class="xp-bar"><i style="transform:scaleX(${value / def.goal})"></i></div><small>${value.toLocaleString('en-US')}/${def.goal.toLocaleString('en-US')}</small></div>
-        </div>
-        ${action}
-      </li>`;
-    })
-    .join('');
-}
-
 /**
  * Refresh everything on the page.
  * @param {boolean} [animate] count the stat numbers up (when the page opens)
@@ -90,31 +67,13 @@ function renderProfile(animate = false) {
   renderHeader();
   renderStatsView(state, animate);
   if (SHOW_SHAPE_COLLECTION) renderCollection();
-  renderAchievements();
+  renderAwards();
 }
 
 /** Open the profile tab. */
 export function openProfile() {
   renderProfile(true);
   openTab('screen-profile');
-}
-
-/** Claim: confetti burst around the button, diamonds fly to the counter. */
-function onClaim(btn) {
-  const before = state.diamonds;
-  const res = claim(btn.dataset.claim);
-  if (!res.ok) return;
-  saveProgress();
-  const burst = document.createElement('span');
-  burst.className = 'burst';
-  burst.innerHTML = '<i></i>'.repeat(10);
-  btn.parentElement.appendChild(burst);
-  flyCurrency(btn, 'diamonds', before, res.diamonds);
-  setTimeout(() => {
-    renderAchievements();
-    renderStatsView(state);
-    updateBottomNav('screen-profile');
-  }, 700);
 }
 
 /** Name field: validate while typing, save when valid. */
@@ -175,9 +134,9 @@ export function bindProfile() {
   $('name-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') e.currentTarget.blur();
   });
-  $('ach-list').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-claim]');
-    if (b) onClaim(b);
+  bindAwards(() => {
+    renderStatsView(state);
+    updateBottomNav('screen-profile');
   });
   if (SHOW_SHAPE_COLLECTION) bindCollection();
   onReturn('screen-profile', () => renderProfile());
