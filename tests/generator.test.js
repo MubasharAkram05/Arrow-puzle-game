@@ -5,6 +5,7 @@ import {
   TIERS,
   makeMask,
   shapeOf,
+  shapeSize,
   analyzeLevel,
   tierOf,
   getLevelConfig,
@@ -16,6 +17,7 @@ import {
   solveLevel,
   validateLevel,
 } from '../src/engine/index.js';
+import { LEVELS as LEVEL_CFG } from '../src/config.js';
 
 /** Expected tier rules for a level number (mirrors LEVELS in src/config.js). */
 function rulesFor(n) {
@@ -23,11 +25,10 @@ function rulesFor(n) {
   const tier = tierOf(n);
   const t = TIERS[tier];
   const base = Math.min(t.size.max, t.size.from + Math.floor((n - t.levels[0]) / t.size.every));
-  const cols = shape ? Math.min(34, base + 3) : base;
-  // shape boards hold fewer arrows (less room)
+  // shape boards grow until the shape holds about as many cells as the plain board (see shapeSize)
+  const cols = shape ? getLevelConfig(n).cols : base;
   const arrows = { tutorial: [6, 15], normal: [40, 80], hard: [80, 140], superHard: [140, 300] }[tier];
-  const min = shape ? Math.floor(arrows[0] * 0.4) : arrows[0];
-  return { cols, arrows: [min, arrows[1] * (shape ? 1 : 1.25)], difficulty: t.difficulty, shape, tier };
+  return { cols, arrows, difficulty: t.difficulty, shape, tier };
 }
 
 /** Replay the solver's order with the same ray rule the game uses. */
@@ -45,9 +46,17 @@ function replay(level) {
 function checkLevel(level, rules) {
   expect(validateLevel(level)).toEqual([]);
   expect(level.cols).toBe(rules.cols);
-  // portrait boards: a few rows taller than wide (shape boards are square)
-  expect(level.rows).toBeGreaterThanOrEqual(level.cols);
-  expect(level.rows).toBeLessThanOrEqual(level.cols + 9);
+  if (rules.shape) {
+    // shape boards are square and at least as wide as the tier's plain board
+    expect(level.rows).toBe(level.cols);
+    const t = TIERS[rules.tier];
+    expect(level.cols).toBeGreaterThanOrEqual(t.size.from);
+    expect(level.cols).toBeLessThanOrEqual(LEVEL_CFG.maskMaxCols);
+  } else {
+    // portrait boards: a few rows taller than wide
+    expect(level.rows).toBeGreaterThanOrEqual(level.cols);
+    expect(level.rows).toBeLessThanOrEqual(level.cols + 9);
+  }
   expect(level.difficulty).toBe(rules.difficulty);
   if (rules.arrows) {
     expect(level.arrows.length).toBeGreaterThanOrEqual(rules.arrows[0]);
@@ -144,7 +153,7 @@ describe('difficulty curve', { timeout: 30000 }, () => {
     }
   });
 
-  it('start-free, depth and solve-round minimums hold on every non-shape level', () => {
+  it('start-free, depth and solve-round minimums hold on every plain level', () => {
     for (let n = 4; n <= 300; n++) {
       if (shapeOf(n)) continue;
       const { goals } = getLevelConfig(n);
@@ -153,6 +162,33 @@ describe('difficulty curve', { timeout: 30000 }, () => {
       expect(r.avgDepth).toBeGreaterThanOrEqual(goals.minAvgDepth);
       expect(r.rounds).toBeGreaterThanOrEqual(goals.minRounds);
     }
+  });
+
+  it('shape levels reach the same arrow count, depth and solve-round floors as their tier', () => {
+    for (let n = 4; n <= 300; n++) {
+      const shape = shapeOf(n);
+      if (!shape) continue;
+      const tier = TIERS[tierOf(n)];
+      const level = generateLevel(n);
+      const r = analyzeLevel(level);
+      const msg = `level ${n} (${shape})`;
+      expect(level.arrows.length, msg).toBeGreaterThanOrEqual(tier.arrows[0]);
+      expect(level.arrows.length, msg).toBeLessThanOrEqual(tier.arrows[1]);
+      expect(r.avgDepth, msg).toBeGreaterThanOrEqual(tier.goals.minAvgDepth);
+      expect(r.rounds, msg).toBeGreaterThanOrEqual(tier.goals.minRounds);
+      // a jagged edge lets a few more arrows out at the start, but never more than 14% of the board
+      const cap = Math.max(
+        tier.goals.maxStartFree + LEVEL_CFG.maskExtraFree,
+        Math.ceil(LEVEL_CFG.maskFreeShare * level.arrows.length),
+      );
+      expect(r.startFree, msg).toBeLessThanOrEqual(cap);
+    }
+  });
+
+  it('small shapes get a bigger board than large ones on the same level', () => {
+    const area = (name, n) => getLevelConfig(n).cols ** 2 * (makeMask(name, 20, 20).reduce((a, b) => a + b, 0) / 400);
+    expect(shapeSize('arrow', 16, 400)).toBeGreaterThan(shapeSize('plus', 16, 400));
+    expect(area('arrow', 9)).toBeGreaterThan(16 * 20 * 0.8);
   });
 
   it('Super Hard is at least 30% deeper than the old Super Hard goal (20)', () => {

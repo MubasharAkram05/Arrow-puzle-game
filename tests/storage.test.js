@@ -168,3 +168,21 @@ describe('40-level chapters', () => {
     expect(sanitize(old).progress.chaptersRewarded).toEqual([1, 2]);
   });
 });
+
+describe('removed boosters', () => {
+  it('drops Reveal and Auto-Clear counts from a saved v3 game and keeps everything else', () => {
+    const old = {
+      ...defaultSave(),
+      wallet: { coins: 640, diamonds: 7, hints: 4 },
+      boosters: { shield: 2, reveal: 5, autoClear: 3, extraHeart: 1 },
+      progress: { current: 12, unlocked: 12, completed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+    };
+    const s = memoryStorage({ [V3_KEY]: JSON.stringify(old) });
+    const { data, source } = readSave(s);
+    expect(source).toBe('v3');
+    expect(data.boosters).toEqual({ shield: 2, extraHeart: 1 });
+    expect(data.wallet).toEqual({ coins: 640, diamonds: 7, hints: 4 });
+    expect(data.progress).toMatchObject({ current: 12, unlocked: 12 });
+    expect(data.progress.completed).toHaveLength(11);
+  });
+});

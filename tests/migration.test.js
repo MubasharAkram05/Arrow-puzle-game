@@ -59,7 +59,7 @@ describe('v2 to v3 migration', () => {
 
   it('adds the new fields with safe defaults', () => {
     const d = migrateV2(V2);
-    expect(d.boosters).toEqual({ shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 });
+    expect(d.boosters).toEqual({ shield: 0, extraHeart: 0 });
     expect(d.cosmetics).toEqual(defaultSave().cosmetics);
     expect(d.offers).toEqual({ starterBought: false, giftLast: 0 });
     expect(d.seenNew).toEqual([]);
@@ -70,12 +70,13 @@ describe('v2 to v3 migration', () => {
     const d = migrateV2({
       ...V2,
       bogus: 9,
-      boosters: { shield: 2, reveal: -4, autoClear: 'x', bogus: 9 },
+      boosters: { shield: 2, reveal: 5, autoClear: 2, bogus: 9 },
       cosmetics: { owned: { effect: ['spark', 'fake'] }, equipped: { effect: 'spark', board: 'stars' } },
       offers: { starterBought: true, giftLast: 1_700_000_000_000 },
       seenNew: ['effect:spark', 42, 'bad key!'],
     });
-    expect(d.boosters).toEqual({ shield: 2, reveal: 0, autoClear: 0, extraHeart: 0 });
+    // Reveal and Auto-Clear were removed: their counts are dropped, everything else is kept
+    expect(d.boosters).toEqual({ shield: 2, extraHeart: 0 });
     expect(d.cosmetics.owned.effect).toEqual(['default', 'spark']);
     expect(d.cosmetics.equipped).toMatchObject({ effect: 'spark', board: 'plain' });
     expect(d.offers).toEqual({ starterBought: true, giftLast: 1_700_000_000_000 });

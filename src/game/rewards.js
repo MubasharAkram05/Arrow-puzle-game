@@ -6,6 +6,7 @@ import { addBoosters, useBooster } from './boosters.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
 import { shapeOf } from '../engine/index.js';
+import { isTestPlay } from './unlock.js';
 import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.js';
 import { recordWin, xpForWin } from './stats.js';
 import { state } from './state.js';
@@ -110,10 +111,12 @@ export function buyContinue() {
 
 /**
  * Skip a level: mark it complete (not perfect, no coins, no XP) and unlock the next one.
+ * Not allowed on a test-mode play (it would change the real progress).
  * @param {number} n
- * @returns {{ok: boolean, missing?: object}}
+ * @returns {{ok: boolean, missing?: object, reason?: 'test'}}
  */
 export function skipLevel(n) {
+  if (isTestPlay(n, state.progress)) return { ok: false, reason: 'test' };
   const res = pay(PRICES.skipLevel);
   if (!res.ok) return res;
   const p = state.progress;

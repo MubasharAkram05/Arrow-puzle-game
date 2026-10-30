@@ -101,7 +101,7 @@ describe('offers in the game state', () => {
     expect(buyStarterPack().ok).toBe(true);
     expect(state.diamonds).toBe(7);
     expect(state.hints).toBe(3 + 5);
-    expect(state.boosters).toMatchObject({ shield: 3, reveal: 3 });
+    expect(state.boosters).toEqual({ shield: 3, extraHeart: 0 });
     expect(state.owned.styles).toContain('slate');
     expect(starterPackAvailable()).toBe(false);
     expect(buyStarterPack()).toMatchObject({ ok: false, reason: 'unavailable' });

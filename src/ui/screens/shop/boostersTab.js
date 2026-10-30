@@ -13,8 +13,6 @@ const ICONS = {
   hint: 'bulb',
   pack: 'bulb',
   shield: 'shield',
-  reveal: 'eye',
-  autoClear: 'bolt',
   extraHeart: 'heart-plus',
 };
 
@@ -67,8 +65,8 @@ export function render() {
       kind: 'booster',
       id: 'pack',
       name: BOOSTER_PACK.name,
-      note: `${c.shield} Shields, ${c.reveal} Reveals, ${c.autoClear} Auto-Clears`,
-      preview: `${icon('shield')}${icon('eye')}${icon('bolt')}`,
+      note: `${c.shield} Shields`,
+      preview: `${icon('shield')}<em>x${c.shield}</em>`,
       price: BOOSTER_PACK.price,
       newKey: 'booster:pack',
     }),

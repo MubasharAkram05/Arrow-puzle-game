@@ -5,6 +5,7 @@
  */
 import { REWARDS } from '../../config.js';
 import { shapeOf } from '../../engine/index.js';
+import { isPlayable } from '../../game/unlock.js';
 import { shapeIcon } from '../components/shapeIcon.js';
 import { chapterLevels, chapterOf } from '../../game/economy.js';
 import { startLevel } from '../../game/game.js';
@@ -29,7 +30,7 @@ function chapterTitle(c) {
 /** Markup for one level tile. */
 function tileHTML(n) {
   const p = state.progress;
-  if (n > p.unlocked) {
+  if (!isPlayable(n, p)) {
     return `<button class="level-btn locked" data-level="${n}" aria-label="Level ${n}, locked">${icon('lock')}</button>`;
   }
   const done = p.completed.has(n);
@@ -50,7 +51,7 @@ function chapterHTML(c) {
   const reward = state.progress.chaptersRewarded.has(c)
     ? `<span class="ch-reward got">${icon('check')}Reward</span>`
     : `<span class="ch-reward"><svg class="cur-icon"><use href="#i-coin" /></svg>${REWARDS.chapterCoins}<svg class="cur-icon"><use href="#i-gem" /></svg>${REWARDS.chapterDiamonds}</span>`;
-  return `<section class="chapter${isOpen ? ' open' : ''}${levels[0] > state.progress.unlocked ? ' locked' : ''}" data-ch="${c}">
+  return `<section class="chapter${isOpen ? ' open' : ''}${isPlayable(levels[0], state.progress) ? '' : ' locked'}" data-ch="${c}">
     <button class="chapter-head" aria-expanded="${isOpen}">
       <span class="ch-title"><b>${chapterTitle(c)}</b><small>${done}/${levels.length} completed</small></span>
       ${reward}${icon('back', 'chev')}

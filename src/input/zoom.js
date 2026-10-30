@@ -138,7 +138,7 @@ export function releaseIsTap(e) {
   return Math.hypot(e.clientX - p.x0, e.clientY - p.y0) <= ZOOM.dragPx;
 }
 
-/** Back to the whole board (also used before a hint or Reveal so the highlight is on screen). */
+/** Back to the whole board (also used before a hint so the highlight is on screen). */
 export function fit() {
   view = { s: 1, x: 0, y: 0 };
   apply();

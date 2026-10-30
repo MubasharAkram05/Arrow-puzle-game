@@ -21,6 +21,13 @@ export const ZOOM = Object.freeze({
 export const STROKE_PX = 4.2;
 export const HEAD_W_PX = 15;
 export const HEAD_L_PX = 14;
+/**
+ * Testing only: every level on the Levels page is playable. Progress is never changed by it
+ * (wins on levels that aren't really unlocked pay nothing). Home shows a TEST MODE badge.
+ * Set to false before release.
+ */
+export const TEST_UNLOCK_ALL = true;
+
 /** Hints given to a new player. */
 export const START_HINTS = 3;
 /** Earn one hint every N completed levels. */
@@ -71,28 +78,16 @@ export const SHOP_THEMES = Object.freeze([
   { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
 ]);
 
-/** In-level boosters: price for one, and their limits. */
+/** In-level boosters: price for one. */
 export const BOOSTERS = Object.freeze({
   shield: Object.freeze({ name: 'Shield', price: { coins: 60 }, desc: 'Your next wrong tap costs no heart' }),
-  reveal: Object.freeze({
-    name: 'Reveal',
-    price: { coins: 40 },
-    desc: 'Shows every arrow that can escape',
-    durationMs: 3000,
-  }),
-  autoClear: Object.freeze({
-    name: 'Auto-Clear',
-    price: { coins: 70 },
-    desc: 'Removes one free arrow for you',
-    maxPerLevel: 1,
-  }),
   extraHeart: Object.freeze({ name: 'Extra Heart', price: { diamonds: 1 }, desc: 'Start the level with +1 heart' }),
 });
 /** Booster pack contents and price. */
 export const BOOSTER_PACK = Object.freeze({
   name: 'Booster Pack',
-  price: Object.freeze({ coins: 350 }),
-  contents: Object.freeze({ shield: 3, reveal: 3, autoClear: 2 }),
+  price: Object.freeze({ coins: 200 }),
+  contents: Object.freeze({ shield: 4 }),
 });
 
 /**
@@ -153,7 +148,7 @@ export const OFFERS = Object.freeze({
     name: 'Starter Pack',
     minLevel: 5, // shown once this level is unlocked
     price: Object.freeze({ diamonds: 3 }),
-    contents: Object.freeze({ hints: 5, boosters: { shield: 3, reveal: 3 }, style: 'slate' }),
+    contents: Object.freeze({ hints: 5, boosters: { shield: 3 }, style: 'slate' }),
   }),
   freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
   exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),
@@ -168,7 +163,7 @@ export const OFFERS = Object.freeze({
  *   minAvgDepth                  mean number of arrows that must leave before each arrow
  *   minRounds                    solve rounds: removal waves needed when every free arrow leaves at once
  * size: board width = from + floor((n - firstLevel) / every), capped at max; rows = width + tall (+0-1).
- * arrows: allowed arrow count (shape boards are exempt: they have less room).
+ * arrows: allowed arrow count (shape boards too).
  */
 const SHORT_ONLY = Object.freeze({
   short: { min: 2, max: 6 },
@@ -197,9 +192,14 @@ export const LEVELS = Object.freeze({
   maxCols: 34,
   shapeEvery: 3, // every 3rd level is a shape board...
   shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
-  maskExtraCols: 3, // shape boards are square and a bit wider
-  maskGoalScale: 0.6, // shapes have shorter rays and less room: depth and rounds goals x0.6
-  maskExtraFree: 12, // and their jagged edge lets a few more arrows out at the start
+  // shape boards are square and grow until the shape holds as many cells as the tier's plain board,
+  // so small shapes (arrow, letters) still reach the tier's arrow count and difficulty floors
+  maskAreaScale: 0.9,
+  maskMaxCols: 52,
+  // a shape's jagged edge (diagonal sides are staircases) lets more arrows out at the start, so shape
+  // boards may start with the tier's cap + maskExtraFree free arrows, or maskFreeShare of all arrows if higher
+  maskExtraFree: 12,
+  maskFreeShare: 0.14,
   tiers: Object.freeze({
     tutorial: {
       difficulty: 'Normal',

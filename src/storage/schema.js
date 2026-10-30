@@ -55,7 +55,7 @@ export function defaultSave() {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
-    boosters: { shield: 0, reveal: 0, autoClear: 0, extraHeart: 0 },
+    boosters: { shield: 0, extraHeart: 0 },
     cosmetics: newCosmetics(),
     offers: { starterBought: false, giftLast: 0 },
     seenNew: [],

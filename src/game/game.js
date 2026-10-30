@@ -14,7 +14,8 @@ import { closeModals } from '../ui/modals/modal.js';
 import { showGameOver } from '../ui/modals/gameover.js';
 import { showVictory } from '../ui/modals/victory.js';
 import { clearHint, updateTutorial } from './hints.js';
-import { applyWin } from './rewards.js';
+import { applyWin, wallet } from './rewards.js';
+import { isTestPlay, testPlaySummary } from './unlock.js';
 import { absorbWrongTap, newLevelBoosts } from './boosters.js';
 import { breakShield } from '../render/boostFx.js';
 import { renderBoosterBar } from '../ui/screens/boosterBar.js';
@@ -66,8 +67,11 @@ function setDifficultyBadge(difficulty) {
  */
 export function startLevel(n) {
   state.levelNum = n;
-  state.progress.current = n;
-  saveProgress();
+  // a test-mode play of a locked level must not move the saved "current" level
+  if (!isTestPlay(n, state.progress)) {
+    state.progress.current = n;
+    saveProgress();
+  }
   $('game-title').textContent = `Level ${n}`;
   navigate('screen-game');
   loadLevel(generateLevel(n));
@@ -145,21 +149,29 @@ export function onLevelWon() {
   playSound('win');
   const p = state.progress;
   const n = state.levelNum;
+  // test mode: a level that isn't really unlocked records nothing and pays nothing
+  if (isTestPlay(n, p)) {
+    const summary = { ...testPlaySummary(wallet()), next: n + 1 };
+    setTimeout(() => showVictory(summary), 200);
+    return;
+  }
   const firstClear = !p.completed.has(n);
   const summary = applyWin(n, state.level.difficulty, state.hearts, state.maxHearts, state.level.arrows.length);
   if (firstClear && p.completed.size % HINT_EVERY === 0) state.hints++;
   p.unlocked = Math.max(p.unlocked, n + 1);
   p.current = n + 1;
   saveProgress();
-  setTimeout(() => showVictory(summary), 200);
+  setTimeout(() => showVictory({ ...summary, next: p.current }), 200);
 }
 
-/** All hearts gone: the win streaks end. */
+/** All hearts gone: the win streaks end (not on a test play, which records nothing). */
 function onOutOfHearts() {
   clearHint();
   hidePointer();
-  state.stats = recordLoss(state.stats);
-  saveProgress();
+  if (!isTestPlay(state.levelNum, state.progress)) {
+    state.stats = recordLoss(state.stats);
+    saveProgress();
+  }
   showGameOver();
 }
 
