@@ -1,6 +1,6 @@
 import { LEVELS } from '../config.js';
 import { hashSeed, mulberry32 } from './rng.js';
-import { MASK_SHAPES } from './masks.js';
+import { MASK_SHAPES, makeMask } from './masks.js';
 
 /** Global arrow length limits. */
 export const MIN_LEN = LEVELS.minLen;
@@ -28,7 +28,7 @@ export function tierOf(n) {
   return Object.keys(TIERS).find((k) => n >= TIERS[k].levels[0] && n <= TIERS[k].levels[1]);
 }
 
-/** Copy tier settings for a board, easing goals on masked boards. */
+/** Copy tier settings for a board. Shape boards keep the tier's depth and rounds floors. */
 function tierConfig(tier, mask) {
   const t = TIERS[tier];
   const goals =
@@ -36,8 +36,7 @@ function tierConfig(tier, mask) {
       ? {
           ...t.goals,
           maxStartFree: t.goals.maxStartFree + LEVELS.maskExtraFree,
-          minAvgDepth: t.goals.minAvgDepth * LEVELS.maskGoalScale,
-          minRounds: Math.round(t.goals.minRounds * LEVELS.maskGoalScale),
+          maxStartFreeShare: LEVELS.maskFreeShare,
         }
       : t.goals;
   const styles = t.styles || LEVELS.styles;
@@ -49,6 +48,25 @@ function tierConfig(tier, mask) {
     lenMin: LEVELS.minLen,
     lenMax: t.lengths.medium.share ? t.lengths.medium.max : t.lengths.short.max,
   };
+}
+
+const sizeCache = new Map();
+
+/**
+ * Smallest square board on which a shape has at least `cells` usable cells (capped at maskMaxCols).
+ * @param {string} mask
+ * @param {number} from smallest width to try
+ * @param {number} cells
+ * @returns {number}
+ */
+export function shapeSize(mask, from, cells) {
+  const key = `${mask}:${from}:${cells}`;
+  if (!sizeCache.has(key)) {
+    let n = from;
+    while (n < LEVELS.maskMaxCols && makeMask(mask, n, n).reduce((s, x) => s + x, 0) < cells) n++;
+    sizeCache.set(key, n);
+  }
+  return sizeCache.get(key);
 }
 
 /**
@@ -73,10 +91,9 @@ export function getLevelConfig(n) {
   let cols = Math.min(z.max, z.from + Math.floor((n - t.levels[0]) / z.every));
   const mask = shapeOf(n);
   // portrait boards like a phone screen; shape boards are square so the shape isn't stretched
-  let rows;
-  if (mask) cols = rows = Math.min(MAX_COLS, cols + LEVELS.maskExtraCols);
-  else rows = cols + z.tall + (tier === 'tutorial' ? 0 : Math.floor(rng() * 2));
+  let rows = cols + z.tall + (tier === 'tutorial' ? 0 : Math.floor(rng() * 2));
+  if (mask) cols = rows = shapeSize(mask, cols, cols * rows * LEVELS.maskAreaScale);
   const cfg = { ...tierConfig(tier, mask), tier, rows, cols, mask, seed: n };
-  if (t.arrows && (!mask || tier === 'tutorial')) [cfg.arrowsMin, cfg.arrowsMax] = t.arrows;
+  if (t.arrows) [cfg.arrowsMin, cfg.arrowsMax] = t.arrows;
   return cfg;
 }

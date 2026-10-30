@@ -59,8 +59,6 @@ export function insideShape(shape, x, y) {
   switch (shape) {
     case 'circle':
       return x * x + y * y <= 1.02;
-    case 'diamond':
-      return Math.abs(x) + Math.abs(y) <= 1.1;
     case 'hourglass':
       return Math.abs(x) <= Math.abs(y) + 0.22;
     case 'heart': {

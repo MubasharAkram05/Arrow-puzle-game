@@ -88,7 +88,10 @@ export function buildLevel(cfg, rng) {
   const arrows = [];
   const total = usable.reduce((n, u) => n + u, 0);
   let startFree = 0;
-  const freeLimit = cfg.goals ? cfg.goals.maxStartFree : Infinity;
+  const g = cfg.goals;
+  const freeLimit = g
+    ? Math.max(g.maxStartFree, Math.ceil((g.maxStartFreeShare || 0) * (cfg.arrowsMin || 0)))
+    : Infinity;
   for (;;) {
     const all = headCandidates(grid, cfg, rng);
     // a head with nothing in front stays free at the start: once the tier's limit is used up,
@@ -150,8 +153,9 @@ export function meetsConstraints(level, cfg) {
 export function meetsGoals(report, goals) {
   if (!report.solvable) return false;
   if (!goals) return true;
+  const freeCap = Math.max(goals.maxStartFree, Math.ceil((goals.maxStartFreeShare || 0) * report.depths.length));
   return (
-    report.startFree <= goals.maxStartFree &&
+    report.startFree <= freeCap &&
     report.startFree >= (goals.minStartFree || 0) &&
     report.avgDepth >= goals.minAvgDepth &&
     report.rounds >= goals.minRounds

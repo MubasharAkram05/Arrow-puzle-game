@@ -111,7 +111,9 @@ Solve rounds: how many removal waves are needed if every free arrow leaves at on
 
 Two arrows pointing straight at each other on the same line can never appear: each would block the other forever.
 
-**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board, cycling through 20 shapes: heart, arrow, mushroom, circle, plane, whale, diamond, cat, letter A, donut, star, dog, house, fish, hourglass, bird, apple, plus, tree and letter Z. The geometric ones are formulas in `src/engine/masks.js`; the others are 16x16 pixel art in `src/engine/shapeArt.js`, scaled to the board with their proportions kept. The Levels page shows each shape's silhouette under the level number. Shape boards are square and 3 cells wider. They are exempt from the arrow-count range (less room), and their goals are eased: depth and rounds x0.6, and up to 12 more arrows free at the start (a jagged edge lets more arrows out).
+**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board, cycling through 20 shapes: heart, arrow, mushroom, circle, plane, whale, diamond, cat, letter A, donut, star, dog, house, fish, hourglass, bird, apple, plus, tree and letter Z. The geometric ones are formulas in `src/engine/masks.js`; the others are 16x16 pixel art in `src/engine/shapeArt.js`, scaled to the board with their proportions kept. The Levels page shows each shape's silhouette under the level number.
+
+Shape boards are square and grow until the shape holds about 90% of the cells of the tier's plain board (`shapeSize` in `src/engine/levels.js`, up to 52 wide), so a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels must reach the same arrow count, depth and solve-round floors as their tier. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the tier's cap + 12 free arrows, or 14% of its arrows if that is more.
 
 If a board misses its goals, the generator retries with the next derived seed. Levels 1-300 are tested for solvability, goals, determinism, and build time (under 150 ms each; most take under 20 ms on a laptop).
 

@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.4.1] - 2026-10-30
+
+### Fixed
+
+- Small shapes (like the arrow on level 9) had fewer arrows than their tier allows. Shape boards now grow until the shape holds about as many cells as the tier's plain board, so every shape level reaches the tier's arrow count, depth and solve-round floors (tested on levels 1-300).
+- The diamond is now pixel art with wider steps, so its diagonal edges don't let as many arrows out at the start.
+
+### Changed
+
+- Shape boards keep the tier's depth and rounds goals (no more x0.6 easing). The start-free cap on shapes is the tier's cap + 12, or 14% of the arrows if higher.
+
 ## [3.4.0] - 2026-10-29
 
 ### Added

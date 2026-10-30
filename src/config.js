@@ -168,7 +168,7 @@ export const OFFERS = Object.freeze({
  *   minAvgDepth                  mean number of arrows that must leave before each arrow
  *   minRounds                    solve rounds: removal waves needed when every free arrow leaves at once
  * size: board width = from + floor((n - firstLevel) / every), capped at max; rows = width + tall (+0-1).
- * arrows: allowed arrow count (shape boards are exempt: they have less room).
+ * arrows: allowed arrow count (shape boards too).
  */
 const SHORT_ONLY = Object.freeze({
   short: { min: 2, max: 6 },
@@ -197,9 +197,14 @@ export const LEVELS = Object.freeze({
   maxCols: 34,
   shapeEvery: 3, // every 3rd level is a shape board...
   shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
-  maskExtraCols: 3, // shape boards are square and a bit wider
-  maskGoalScale: 0.6, // shapes have shorter rays and less room: depth and rounds goals x0.6
-  maskExtraFree: 12, // and their jagged edge lets a few more arrows out at the start
+  // shape boards are square and grow until the shape holds as many cells as the tier's plain board,
+  // so small shapes (arrow, letters) still reach the tier's arrow count and difficulty floors
+  maskAreaScale: 0.9,
+  maskMaxCols: 52,
+  // a shape's jagged edge (diagonal sides are staircases) lets more arrows out at the start, so shape
+  // boards may start with the tier's cap + maskExtraFree free arrows, or maskFreeShare of all arrows if higher
+  maskExtraFree: 12,
+  maskFreeShare: 0.14,
   tiers: Object.freeze({
     tutorial: {
       difficulty: 'Normal',
