@@ -7,7 +7,7 @@ import { REWARDS } from '../../config.js';
 import { shapeOf } from '../../engine/index.js';
 import { isPlayable } from '../../game/unlock.js';
 import { shapeIcon } from '../components/shapeIcon.js';
-import { chapterLevels, chapterOf } from '../../game/economy.js';
+import { chapterLevels, chapterOf, chapterWindow } from '../../game/economy.js';
 import { startLevel } from '../../game/game.js';
 import { clearHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
@@ -19,7 +19,8 @@ import { navigate, onReturn, openTab } from '../navigation.js';
 
 const NAMES = ['Beginner', 'Explorer', 'Pathfinder', 'Tactician', 'Strategist', 'Expert', 'Master', 'Grandmaster'];
 const BATCH = 3; // chapter headers added per scroll step
-let shown = 0;
+let firstShown = 1; // chapters currently in the list: firstShown..lastShown
+let lastShown = 0;
 const open = new Set();
 
 /** Chapter title, e.g. "Chapter 1: Beginner". */
@@ -61,21 +62,36 @@ function chapterHTML(c) {
   </section>`;
 }
 
-/** Add more chapter headers at the end of the list. */
+/** Add more chapter headers at the end of the list (levels never end). */
 function appendChapters(count) {
   const html = [];
-  for (let c = shown + 1; c <= shown + count; c++) html.push(chapterHTML(c));
-  shown += count;
+  for (let c = lastShown + 1; c <= lastShown + count; c++) html.push(chapterHTML(c));
+  lastShown += count;
   $('level-grid').insertAdjacentHTML('beforeend', html.join(''));
 }
 
-/** Rebuild the list: only the current level's chapter open, plus a couple of locked chapters after it. */
+/** Add earlier chapters at the top, keeping what is on screen in place. */
+function prependChapters(count) {
+  if (firstShown <= 1) return;
+  const from = Math.max(1, firstShown - count);
+  const html = [];
+  for (let c = from; c < firstShown; c++) html.push(chapterHTML(c));
+  firstShown = from;
+  const scroller = $('levels-scroll');
+  const before = scroller.scrollHeight;
+  $('level-grid').insertAdjacentHTML('afterbegin', html.join(''));
+  scroller.scrollTop += scroller.scrollHeight - before;
+}
+
+/** Rebuild the list: only a few chapters around the current level, its chapter open. */
 function renderLevels() {
+  const current = chapterOf(state.progress.current);
   open.clear();
-  open.add(chapterOf(state.progress.current));
+  open.add(current);
   $('level-grid').textContent = '';
-  shown = 0;
-  appendChapters(Math.max(chapterOf(state.progress.unlocked) + 2, 3));
+  [firstShown, lastShown] = chapterWindow(current);
+  lastShown = firstShown - 1;
+  appendChapters(chapterWindow(current)[1] - firstShown + 1);
 }
 
 /** Scroll the current level into the middle of the view. */
@@ -128,6 +144,7 @@ export function bindLevels() {
   $('levels-scroll').addEventListener('scroll', (e) => {
     const el = e.currentTarget;
     if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) appendChapters(BATCH);
+    else if (el.scrollTop < 300) prependChapters(BATCH);
   });
   onReturn('screen-levels', () => {
     renderLevels();

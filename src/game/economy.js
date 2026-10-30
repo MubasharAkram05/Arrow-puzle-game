@@ -28,6 +28,18 @@ export function chapterLevels(chapter) {
 }
 
 /**
+ * Chapters to render first on the Levels page: a few around the current one (more load while scrolling,
+ * up and down, with no end), so the page stays light with any number of unlocked levels.
+ * @param {number} current chapter of the current level
+ * @param {number} [radius] chapters before and after
+ * @returns {[number, number]} first and last chapter, inclusive
+ */
+export function chapterWindow(current, radius = 2) {
+  const c = Math.max(1, Math.floor(current) || 1);
+  return [Math.max(1, c - radius), c + radius];
+}
+
+/**
  * Is level n a milestone (every 10th, worth a diamond on its first clear)?
  * @param {number} n
  * @returns {boolean}

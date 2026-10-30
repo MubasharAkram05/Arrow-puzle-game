@@ -3,6 +3,7 @@ import {
   canAfford,
   chapterLevels,
   chapterOf,
+  chapterWindow,
   grant,
   isMilestoneLevel,
   levelReward,
@@ -128,5 +129,28 @@ describe('purchases', () => {
     expect(priceLabel({ coins: 50 })).toBe('50 coins');
     expect(priceLabel({ diamonds: 1 })).toBe('1 diamond');
     expect(priceLabel({ diamonds: 2 })).toBe('2 diamonds');
+  });
+});
+
+describe('unlimited levels', () => {
+  it('chapters and milestones work for any level number', () => {
+    expect(chapterOf(1_000_000)).toBe(25_000);
+    expect(chapterLevels(25_000)).toHaveLength(40);
+    expect(chapterLevels(25_000)[39]).toBe(1_000_000);
+    expect(isMilestoneLevel(1_000_000)).toBe(true);
+  });
+
+  it('the Levels page starts with only a few chapters around the current one', () => {
+    expect(chapterWindow(1)).toEqual([1, 3]);
+    expect(chapterWindow(1250)).toEqual([1248, 1252]);
+    expect(chapterWindow(0)).toEqual([1, 3]);
+  });
+
+  it('rewards stay sane at huge levels: the multiplier is capped and nothing overflows', () => {
+    const r = levelReward(win({ level: 999_999, difficulty: 'Expert', heartsLeft: 3, arrows: 300 }));
+    expect(Number.isFinite(r.coins)).toBe(true);
+    expect(r.coins).toBeLessThanOrEqual(200);
+    const unknown = levelReward(win({ level: 5_000_000, difficulty: 'Mythic', heartsLeft: 3, arrows: 300 }));
+    expect(unknown.coins).toBeLessThanOrEqual(r.coins);
   });
 });
