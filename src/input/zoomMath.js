@@ -4,14 +4,14 @@
 import { ZOOM } from '../config.js';
 
 /**
- * Scale a level starts at: dense boards (cells under minTapPx) open zoomed in so a cell is
+ * Scale a level starts at: dense boards (cells under zoomBelowPx) open zoomed in so a cell is
  * about startCellPx wide; boards with big enough cells open fully fitted (1).
  * @param {number} cellPx on-screen cell size when the whole board fits
  * @param {typeof ZOOM} [z]
  * @returns {number}
  */
 export function startScale(cellPx, z = ZOOM) {
-  if (!(cellPx > 0) || cellPx >= z.minTapPx) return 1;
+  if (!(cellPx > 0) || cellPx >= z.zoomBelowPx) return 1;
   return Math.min(z.maxScale, z.startCellPx / cellPx);
 }
 

@@ -1,6 +1,6 @@
 /**
  * Zoom guide shown when a level starts zoomed: two hands pinching ("Pinch to zoom") and one finger
- * dragging ("Drag to move"). Shown on the first few zoomed levels, then only while the player has
+ * double-tapping ("Double-tap to see full board"). Shown on the first few zoomed levels, then only while the player has
  * never pinched. It fades on the first touch or after a few seconds and never takes taps.
  * The record lives in localStorage (a per-device convenience); blocked storage just shows it.
  */

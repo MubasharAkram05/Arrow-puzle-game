@@ -3,21 +3,25 @@ import { ZOOM } from '../src/config.js';
 import { maxScaleFor, startScale, translateFor } from '../src/input/zoomMath.js';
 
 describe('default zoom', () => {
-  it('small boards (cells already 28px+) start fully fitted', () => {
-    for (const cell of [28, 32, 48, 90]) expect(startScale(cell)).toBe(1);
+  it('uses the config values: zoom below 18px, open at about 22px', () => {
+    expect(ZOOM.zoomBelowPx).toBe(18);
+    expect(ZOOM.startCellPx).toBe(22);
   });
 
-  it('dense boards start zoomed so a cell is about 28-32px', () => {
-    for (const cell of [8, 10, 12.5, 17, 21, 27.9]) {
+  it('boards with fitted cells of 18px or more start fully fitted', () => {
+    for (const cell of [18, 20, 24, 28, 32, 48, 90]) expect(startScale(cell)).toBe(1);
+  });
+
+  it('dense boards (cells under 18px) start zoomed so a cell is about 22px', () => {
+    for (const cell of [8, 10, 12.5, 15, 17, 17.9]) {
       const onScreen = cell * startScale(cell);
-      expect(onScreen).toBeGreaterThanOrEqual(28);
-      expect(onScreen).toBeLessThanOrEqual(32);
+      expect(onScreen).toBeCloseTo(22, 5);
     }
   });
 
   it('never starts past the max zoom, and the max is never below the start', () => {
     expect(startScale(2)).toBe(ZOOM.maxScale);
-    for (const cell of [2, 8, 15, 27, 40]) expect(maxScaleFor(cell)).toBeGreaterThanOrEqual(startScale(cell));
+    for (const cell of [2, 8, 15, 17, 27, 40]) expect(maxScaleFor(cell)).toBeGreaterThanOrEqual(startScale(cell));
     expect(maxScaleFor(60)).toBe(1);
   });
 

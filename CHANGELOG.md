@@ -6,8 +6,8 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ### Added
 
-- Dense levels start zoomed in so cells are about 30px (small boards still start fitted), with a mini-map while zoomed (tap to jump) and hints that pan to the highlighted arrow.
-- Zoom guide like the reference: two hands for "Pinch to zoom" and one finger for "Drag to move", on the first 3 zoomed levels and until the first pinch; "Show zoom tips again" in Settings.
+- Dense levels start zoomed in only when fitted cells would be under 18px, opening at about 22px per cell (other boards start fitted). Hints pan to the highlighted arrow. Double-tap on empty space shows the full board.
+- Zoom guide like the reference: two hands for "Pinch to zoom" and one finger for "Double-tap to see full board", on the first 3 zoomed levels and until the first pinch; "Show zoom tips again" in Settings.
 - `difficultyFor(level)`: one smooth curve for grid size, arrows, free arrows at start, depth, solve rounds, long-arrow share and shape size. Constants in `LEVELS.curve` in `src/config.js`.
 - Expert label (level 1000+, max 1 free arrow from level 20,000) with a x2.5 coin multiplier as the cap.
 - Unlimited levels: any level number works (tested up to 1,000,000); the Levels page renders only nearby chapters and keeps loading while scrolling, with no end.
@@ -22,7 +22,7 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ### Fixed
 
-- Panning to a point used the wrong card-centre shape and silently did nothing (hint pan, mini-map).
+- Panning to a point used the wrong card-centre shape and silently did nothing (hint pan).
 
 ## [3.5.0] - 2026-10-30
 

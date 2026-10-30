@@ -64,7 +64,7 @@ src/
     cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
     offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
     offerActions.js     applies offers to the game state
-  render/               SVG board, HUD, pointing hand, mini-map, animations, confetti, booster effects
+  render/               SVG board, HUD, pointing hand, animations, confetti, booster effects
     effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
@@ -121,11 +121,10 @@ After building, extra free arrows are turned around or joined onto a neighbour (
 
 ### Zoom
 
-- **Default zoom:** when a level starts, if the cells would be smaller than 28px (hard to tap), the board opens zoomed in on its centre so a cell is about 30px. Boards whose cells are already 28px or more open fully fitted.
+- **Default zoom:** when a level starts, if the cells would be smaller than 18px when fitted, the board opens zoomed in on its centre so a cell is about 22px. Boards whose cells are 18px or more open fully fitted. Both values are `ZOOM.zoomBelowPx` and `ZOOM.startCellPx` in `src/config.js`.
 - **Gestures:** pinch to zoom out to the whole board or in further (until a cell is about a fingertip wide), drag with one finger to move. Taps fire on release, so a drag or pinch never removes an arrow. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
-- **Mini-map:** while zoomed, a small outline of the board (or shape) sits in the top-left corner with a rectangle for the visible part. Tap it to jump there.
-- **Fit:** the button in the top-right corner, or a double tap on empty space, shows the whole board again.
-- **Zoom guide:** when a level starts zoomed, two hands show "Pinch to zoom" and one finger shows "Drag to move". It appears on the first 3 zoomed levels, then only while the player has never pinched. It fades on the first touch or after 3 seconds and never takes taps. Settings has "Show zoom tips again".
+- **Full board:** a double tap on empty space zooms out to the whole board.
+- **Zoom guide:** when a level starts zoomed, two hands show "Pinch to zoom" and one finger shows "Double-tap to see full board". It appears on the first 3 zoomed levels, then only while the player has never pinched. It fades on the first touch or after 3 seconds and never takes taps. Settings has "Show zoom tips again".
 - **Hints:** a hint pans (keeping the zoom) so the highlighted arrow is on screen.
 - **Levels page:** only a few chapters around the current level are rendered; more load while scrolling up or down, with no end.
 

@@ -127,10 +127,6 @@
         </div>
         <div class="tip-bubble" id="tip-bubble">Tap to remove</div>
         <canvas class="fx-canvas" id="fx-canvas" aria-hidden="true"></canvas>
-        <div class="minimap" id="minimap" role="button" aria-label="Mini-map: tap to move there" hidden></div>
-        <button class="fab fit-btn" id="btn-fit" aria-label="Show the whole board" hidden>
-          <svg class="icon"><use href="#i-fit" /></svg>
-        </button>
         <!-- Zoom guide (src/ui/zoomGuide.js): never takes taps -->
         <div class="zoom-guide" id="zoom-guide" aria-live="polite">
           <div class="zg-pinch">
@@ -142,11 +138,11 @@
             ></span>
           </div>
           <div class="zg-label">Pinch to zoom</div>
-          <div class="zg-drag">
+          <div class="zg-tap">
             <span class="zg-hand zg-one"
               ><svg viewBox="0 0 64 64"><use href="#glove-art" /></svg
             ></span>
-            <span class="zg-label small">Drag to move</span>
+            <span class="zg-label small">Double-tap to see full board</span>
           </div>
         </div>
       </div>

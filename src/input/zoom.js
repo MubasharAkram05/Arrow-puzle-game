@@ -3,7 +3,6 @@
  * (translate + scale), so taps, the hint hand and effects keep working through getBoundingClientRect.
  */
 import { ZOOM } from '../config.js';
-import { onMinimapTap, setMinimapLevel, updateMinimap } from '../render/minimap.js';
 import { placePointer } from '../render/pointer.js';
 import { $ } from '../ui/dom.js';
 import { hideZoomGuide, notePinch } from '../ui/zoomGuide.js';
@@ -15,30 +14,11 @@ let maxScale = 1;
 let gesture = null; // {kind: 'pinch'|'pan', ...start values}
 let lastEmptyTap = 0;
 
-/** Apply the current view to the board card, then follow it with the hand and the mini-map. */
+/** Apply the current view to the board card, then follow it with the hand. */
 function apply() {
   $('board-card').style.transform = view.s === 1 ? '' : `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
   $('board-wrap').classList.toggle('zoomed', view.s > 1);
-  $('btn-fit').hidden = view.s <= 1;
-  updateMinimap(view.s > 1.01 ? visibleArea() : null);
   placePointer();
-}
-
-/** Part of the board on screen, as fractions of the board (for the mini-map). */
-function visibleArea() {
-  const r = $('board-card').getBoundingClientRect();
-  const w = $('board-wrap').getBoundingClientRect();
-  if (!r.width || !r.height) return null;
-  const left = Math.max(r.left, w.left);
-  const top = Math.max(r.top, w.top);
-  const right = Math.min(r.right, w.right);
-  const bottom = Math.min(r.bottom, w.bottom);
-  return {
-    x: (left - r.left) / r.width,
-    y: (top - r.top) / r.height,
-    w: Math.max(0, right - left) / r.width,
-    h: Math.max(0, bottom - top) / r.height,
-  };
 }
 
 /** Centre of the visible board area (the board area minus the button row). */
@@ -91,18 +71,16 @@ function clampView() {
 }
 
 /**
- * Start view for a new level: dense boards open zoomed in on the centre (cells about 30px),
- * small boards open fully fitted.
+ * Start view for a new level: dense boards open zoomed in on the centre (see ZOOM.zoomBelowPx and
+ * ZOOM.startCellPx), other boards open fully fitted.
  * @param {number} cellPx on-screen cell size when the whole board fits
- * @param {object} [level] level, for the mini-map outline
  * @returns {boolean} true when the level starts zoomed
  */
-export function resetZoom(cellPx, level) {
+export function resetZoom(cellPx) {
   maxScale = maxScaleFor(cellPx);
   view = { s: startScale(cellPx), x: 0, y: 0 };
   pointers.clear();
   gesture = null;
-  if (level) setMinimapLevel(level);
   apply();
   return view.s > 1;
 }
@@ -203,8 +181,8 @@ export function releaseIsTap(e) {
   return Math.hypot(e.clientX - p.x0, e.clientY - p.y0) <= ZOOM.dragPx;
 }
 
-/** Back to the whole board (also used before a hint so the highlight is on screen). */
-export function fit() {
+/** Back to the whole board (double-tap on empty space). */
+function fit() {
   view = { s: 1, x: 0, y: 0 };
   apply();
 }
@@ -238,7 +216,4 @@ export function bindZoom() {
   wrap.addEventListener('pointercancel', end);
   wrap.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && end(e));
   wrap.addEventListener('wheel', onWheel, { passive: false });
-  $('btn-fit').addEventListener('pointerdown', (e) => e.stopPropagation());
-  $('btn-fit').addEventListener('click', fit);
-  onMinimapTap(centreOn);
 }

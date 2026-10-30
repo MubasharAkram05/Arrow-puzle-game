@@ -50,7 +50,7 @@ export function loadLevel(level) {
   renderBoosterBar();
   renderGrid();
   layoutBoard();
-  if (resetZoom(boardCellPx(), level)) maybeShowZoomGuide();
+  if (resetZoom(boardCellPx())) maybeShowZoomGuide();
   else hideZoomGuide();
 }
 
