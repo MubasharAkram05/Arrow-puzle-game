@@ -1,9 +1,8 @@
 /**
- * Save format v5, validation and loading (v4, v3, v2 and v1 saves are migrated, see migrate.js).
+ * Save format v6, validation and loading (v5, v4, v3, v2 and v1 saves are migrated, see migrate.js).
  * Pure: storage is passed in, so tests can use a fake.
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
-import { BOOSTER_IDS } from '../game/boosters.js';
 import { newCosmetics } from '../game/cosmetics.js';
 import { newDaily } from '../game/daily.js';
 import {
@@ -13,17 +12,20 @@ import {
   migrateV2,
   migrateV3,
   migrateV4,
+  migrateV5,
   OLD_CHAPTER_SIZE,
 } from './migrate.js';
 import {
   avatarIndex,
   bool,
+  boosterRefund,
   count,
   level,
   levels,
   obj,
   oneOf,
   ownedList,
+  pendingRefund,
   sanitizeCosmetics,
   sanitizeDaily,
   seenKeys,
@@ -39,8 +41,10 @@ export const V3_BACKUP_KEY = 'arrowEscape:v3:backup';
 export const V4_KEY = 'arrowEscape:v4';
 export const V4_BACKUP_KEY = 'arrowEscape:v4:backup';
 export const V5_KEY = 'arrowEscape:v5';
-export const BACKUP_KEY = 'arrowEscape:v5:backup';
-export const VERSION = 5;
+export const V5_BACKUP_KEY = 'arrowEscape:v5:backup';
+export const V6_KEY = 'arrowEscape:v6';
+export const BACKUP_KEY = 'arrowEscape:v6:backup';
+export const VERSION = 6;
 const STAT_KEYS = [
   'arrowsCleared',
   'wins',
@@ -50,7 +54,6 @@ const STAT_KEYS = [
   'bestPerfectStreak',
   'coinsSpent',
   'playSeconds',
-  'boostersUsed',
   'hintsUsed',
   'cleanLevels',
   'comebacks',
@@ -73,7 +76,7 @@ export function defaultSave() {
       chapterSize: REWARDS.chapterSize,
     },
     wallet: { coins: 0, diamonds: 0, hints: START_HINTS },
-    boosters: { shield: 0, extraHeart: 0 },
+    pendingRefund: null,
     cosmetics: newCosmetics(),
     offers: { starterBought: false, giftLast: 0 },
     seenNew: [],
@@ -87,10 +90,10 @@ export function defaultSave() {
   };
 }
 
-export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, OLD_CHAPTER_SIZE, sanitizeCosmetics };
+export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, migrateV5, OLD_CHAPTER_SIZE, sanitizeCosmetics };
 
 /**
- * Validate any parsed value into a complete v5 save. Unknown keys are dropped,
+ * Validate any parsed value into a complete v6 save. Unknown keys are dropped,
  * bad numbers become 0, and an equipped item must be owned. Saves from before the shape collection
  * (no `shapes` list) get the shapes of their finished shape levels.
  * @param {unknown} raw
@@ -116,6 +119,10 @@ export function sanitize(raw) {
   const se = obj(d.settings);
   const ach = obj(d.achievements);
   const cosmetics = sanitizeCosmetics(d.cosmetics);
+  // Shield and Extra Heart boosters are gone: whatever a save still holds is paid back once
+  // (v6 saves never store boosters, so this can't pay twice)
+  const refund = boosterRefund(d.boosters);
+  const owed = pendingRefund(d.pendingRefund) || { coins: 0, diamonds: 0 };
   return {
     version: VERSION,
     progress: {
@@ -129,8 +136,12 @@ export function sanitize(raw) {
       chaptersRewarded: convertChapters(levels(p.chaptersRewarded), count(p.chapterSize) || OLD_CHAPTER_SIZE),
       chapterSize: REWARDS.chapterSize,
     },
-    wallet: { coins: count(w.coins), diamonds: count(w.diamonds), hints: count(w.hints, START_HINTS) },
-    boosters: Object.fromEntries(BOOSTER_IDS.map((id) => [id, count(obj(d.boosters)[id])])),
+    wallet: {
+      coins: count(count(w.coins) + refund.coins),
+      diamonds: count(count(w.diamonds) + refund.diamonds),
+      hints: count(w.hints, START_HINTS),
+    },
+    pendingRefund: pendingRefund({ coins: owed.coins + refund.coins, diamonds: owed.diamonds + refund.diamonds }),
     cosmetics,
     offers: { starterBought: bool(obj(d.offers).starterBought, false), giftLast: timestamp(obj(d.offers).giftLast) },
     seenNew: seenKeys(d.seenNew),
@@ -182,18 +193,20 @@ function upgrade(storage, data, oldKeys) {
 }
 
 /**
- * Read the save: v5, then its backup, then v4, v3, v2 (each or its backup) and v1, migrated to v5.
- * Old keys are removed only after v5 is written. Otherwise defaults. Never throws, even if storage is unavailable.
+ * Read the save: v6, then its backup, then v5, v4, v3, v2 (each or its backup) and v1, migrated to v6.
+ * Old keys are removed only after v6 is written. Otherwise defaults. Never throws, even if storage is unavailable.
  * @param {{getItem: Function, setItem: Function, removeItem: Function}|null} storage
- * @returns {{data: object, source: 'v5'|'backup'|'v4'|'v3'|'v2'|'v1'|'new'}}
+ * @returns {{data: object, source: 'v6'|'backup'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'}}
  */
 export function readSave(storage) {
   try {
-    const main = readKey(storage, V5_KEY);
-    if (main) return { data: sanitize(main), source: 'v5' };
+    const main = readKey(storage, V6_KEY);
+    if (main) return { data: sanitize(main), source: 'v6' };
     const backup = readKey(storage, BACKUP_KEY);
     if (backup) return { data: sanitize(backup), source: 'backup' };
-    const old = [V4_KEY, V4_BACKUP_KEY, V3_KEY, V3_BACKUP_KEY, V2_KEY, V2_BACKUP_KEY, V1_KEY];
+    const old = [V5_KEY, V5_BACKUP_KEY, V4_KEY, V4_BACKUP_KEY, V3_KEY, V3_BACKUP_KEY, V2_KEY, V2_BACKUP_KEY, V1_KEY];
+    const v5 = readKey(storage, V5_KEY) || readKey(storage, V5_BACKUP_KEY);
+    if (v5) return { data: upgrade(storage, migrateV5(v5), old), source: 'v5' };
     const v4 = readKey(storage, V4_KEY) || readKey(storage, V4_BACKUP_KEY);
     if (v4) return { data: upgrade(storage, migrateV4(v4), old), source: 'v4' };
     const v3 = readKey(storage, V3_KEY) || readKey(storage, V3_BACKUP_KEY);
@@ -217,9 +230,9 @@ export function readSave(storage) {
 export function writeSave(storage, data) {
   try {
     const text = JSON.stringify(data);
-    storage.setItem(V5_KEY, text);
+    storage.setItem(V6_KEY, text);
     storage.setItem(BACKUP_KEY, text);
-    return storage.getItem(V5_KEY) === text;
+    return storage.getItem(V6_KEY) === text;
   } catch {
     return false;
   }

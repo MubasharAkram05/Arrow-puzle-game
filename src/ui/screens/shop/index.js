@@ -1,5 +1,5 @@
 /**
- * Shop shell: sticky tabs (All, Offers, Boosters, Styles, Effects, Profile), tap or swipe to switch,
+ * Shop shell: sticky tabs (All, Offers, Hints, Styles, Effects, Profile), tap or swipe to switch,
  * opens on All the first time, then remembers the last tab, and shows "New" dots on tabs with unseen items.
  */
 import { formatCountdown, giftStatus } from '../../../game/offers.js';
@@ -11,7 +11,7 @@ import { $ } from '../../dom.js';
 import { currentScreen, onReturn, openTab } from '../../navigation.js';
 import { onShopChange } from './actions.js';
 import * as all from './allTab.js';
-import * as boosters from './boostersTab.js';
+import * as hints from './hintsTab.js';
 import { hasNew, markShownSeen } from './cards.js';
 import * as effects from './effectsTab.js';
 import * as offers from './offersTab.js';
@@ -21,7 +21,7 @@ import * as styles from './stylesTab.js';
 export const TABS = [
   { id: 'all', label: 'All', icon: 'levels', mod: all },
   { id: 'offers', label: 'Offers', icon: 'gift', mod: offers },
-  { id: 'boosters', label: 'Boosters', icon: 'bolt', mod: boosters },
+  { id: 'hints', label: 'Hints', icon: 'bulb', mod: hints },
   { id: 'styles', label: 'Styles', icon: 'palette', mod: styles },
   { id: 'effects', label: 'Effects', icon: 'sparkle', mod: effects },
   { id: 'profile', label: 'Profile', icon: 'user', mod: profile },
@@ -31,7 +31,8 @@ const STORE_KEY = 'arrowEscape:shopTab';
 /** Last opened tab (per-viewer convenience; storage may be unavailable). */
 function loadTab() {
   try {
-    const t = localStorage.getItem(STORE_KEY);
+    let t = localStorage.getItem(STORE_KEY);
+    if (t === 'boosters') t = 'hints'; // the Boosters tab became Hints in 3.11.0
     return TABS.some((x) => x.id === t) ? t : 'all';
   } catch {
     return 'all';

@@ -9,10 +9,9 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (621 shapes in 10 categories)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
-- Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, boosters, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
-- Boosters: Shield and Extra Heart Start, with a booster bar on the game screen
+- Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
 - Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
-- Shop with tabs (Offers, Boosters, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
+- Shop with tabs (All, Offers, Hints, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
@@ -69,22 +68,22 @@ src/
     badges.js           award badge tier and state per achievement group (pure)
     stats.js            stats, streaks, XP levels, name validation (pure)
     daily.js            daily reward and streak, with clock checks (pure)
-    boosters.js         booster inventory, per-level limits, shield and "perfect" rules (pure)
+    assist.js           per-level "hint used" flag and the "perfect" rule (pure)
     cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
     offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
     offerActions.js     applies offers to the game state
-  render/               SVG board, HUD, pointing hand, animations, confetti, booster effects
+  render/               SVG board, HUD, pointing hand, animations, confetti
     effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
-    schema.js           v5 save format, validation, loading and backup (pure)
+    schema.js           v6 save format, validation, loading and backup (pure)
     validators.js       number, list, cosmetics, avatar and shape-id validators (pure)
-    migrate.js          v1, v2, v3 and v4 to v5 migrations, chapter-size conversion (pure)
+    migrate.js          v1 to v5 to v6 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
-    screens/            home, levels (path), game, booster bar, profile (stats, awards), shape collection
+    screens/            home, levels (path), game, profile (stats, awards), shape collection
       shop/             shop shell and one file per tab, cards, previews, actions
     modals/             settings, credits, daily reward, game over, victory, purchase dialog, shared modal logic
   styles/               tokens, base and per-screen CSS
@@ -185,20 +184,20 @@ All numbers live in `src/config.js`.
 
 ### Earning
 
-| Event                                                         | Coins                                                  | Diamonds                       |
-| ------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------ |
-| Level complete                                                | 10                                                     |                                |
-| Each heart left at the end                                    | +5                                                     |                                |
-| Board size                                                    | +1 per 10 arrows                                       |                                |
-| Difficulty multiplier (base + hearts + size)                  | Normal x1, Hard x1.5, Super Hard x2, Expert x2.5 (cap) |                                |
-| Perfect level (no heart lost, no hint or booster), first time | +20                                                    | +1                             |
-| Replay of a completed level                                   | 25% of base + hearts                                   |                                |
-| Every 10th level, first clear (adds to the perfect diamond)   |                                                        | +1                             |
-| Chapter complete (20 levels), once                            | +100                                                   | +2                             |
-| Daily reward (7-day cycle)                                    | 20 / 30 / 40 / 50 / - / 70 / -                         | day 5: +1, day 7: +2 (+1 hint) |
-| Achievements                                                  |                                                        | 1-15 per step                  |
-| Free hint every 3 levels completed                            | (+1 hint)                                              |                                |
-| XP per win                                                    | 10 XP + 5 XP per heart left                            |                                |
+| Event                                                       | Coins                                                  | Diamonds                       |
+| ----------------------------------------------------------- | ------------------------------------------------------ | ------------------------------ |
+| Level complete                                              | 10                                                     |                                |
+| Each heart left at the end                                  | +5                                                     |                                |
+| Board size                                                  | +1 per 10 arrows                                       |                                |
+| Difficulty multiplier (base + hearts + size)                | Normal x1, Hard x1.5, Super Hard x2, Expert x2.5 (cap) |                                |
+| Perfect level (no heart lost, no hint used), first time     | +20                                                    | +1                             |
+| Replay of a completed level                                 | 25% of base + hearts                                   |                                |
+| Every 10th level, first clear (adds to the perfect diamond) |                                                        | +1                             |
+| Chapter complete (20 levels), once                          | +100                                                   | +2                             |
+| Daily reward (7-day cycle)                                  | 20 / 30 / 40 / 50 / - / 70 / -                         | day 5: +1, day 7: +2 (+1 hint) |
+| Achievements                                                |                                                        | 1-15 per step                  |
+| Free hint every 3 levels completed                          | (+1 hint)                                              |                                |
+| XP per win                                                  | 10 XP + 5 XP per heart left                            |                                |
 
 ### Spending
 
@@ -213,17 +212,11 @@ All numbers live in `src/config.js`.
 | Themes: Royal Purple, Lagoon Teal     | 400 coins  |
 | Theme: Sunset Coral                   | 8 diamonds |
 
-### Boosters
+### Hints
 
-Bought in the Shop (Boosters tab) or from the booster bar next to the hint button. Tapping a booster with 0 left asks to buy one.
+Bought in the Shop (Hints tab) or from the hint button. Using a hint means the level does not count as perfect. Hints used are still tracked in the save (not shown on the Profile).
 
-| Booster           | What it does                                              | Price     |
-| ----------------- | --------------------------------------------------------- | --------- |
-| Shield            | Your next wrong tap costs no heart (does not stack)       | 60 coins  |
-| Extra Heart Start | Use before your first move: start the level with +1 heart | 1 diamond |
-| Booster Pack      | 4 Shields                                                 | 200 coins |
-
-Using any booster or a hint means the level does not count as perfect. Boosters and hints used are still tracked in the save (not shown on the Profile).
+The Shield and Extra Heart Start boosters and the Booster Pack were removed in 3.11.0 (see Saves for the refund).
 
 ### Cosmetics
 
@@ -263,16 +256,16 @@ Escape effects use transform, opacity and a small particle canvas, and are skipp
 
 | Offer        | Details                                                                                      | Price                 |
 | ------------ | -------------------------------------------------------------------------------------------- | --------------------- |
-| Starter Pack | One time, from level 5: 5 hints + 3 Shields + Dark Slate style. Hidden once bought           | 3 diamonds            |
+| Starter Pack | One time, from level 5: 5 hints + Dark Slate style. Hidden once bought                       | 3 diamonds            |
 | Free Gift    | 30 coins every 4 hours. If the device clock moves backward, no reward and the timer restarts | Free                  |
 | Exchange     | 1 diamond, or 5 diamonds at once (confirm first)                                             | 500 coins per diamond |
 | Weekly Sale  | One cosmetic, style or theme at 30% off, picked from the ISO week number (same for everyone) | 30% off               |
 
-The Shop has six tabs: All, Offers, Boosters, Styles, Effects and Profile. All (the default the first time) shows every section in order under its own heading (Offers, Boosters, Styles, Effects, Profile items). After that the last opened tab is remembered on this device. The tab row scrolls sideways on small screens and keeps the active tab in view. Items from this update show a "New" badge until you first see them.
+The Shop has six tabs: All, Offers, Hints, Styles, Effects and Profile. All (the default the first time) shows every section in order under its own heading (Offers, Hints, Styles, Effects, Profile items). After that the last opened tab is remembered on this device. The tab row scrolls sideways on small screens and keeps the active tab in view. Items from this update show a "New" badge until you first see them.
 
 ### Profile stats
 
-Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two-column list (Arrows cleared, Win streak, Best streak, Play time). The numbers count up when the page opens. Coins, diamonds, best daily streak, boosters used and hints used are still saved but not shown.
+Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two-column list (Arrows cleared, Win streak, Best streak, Play time). The numbers count up when the page opens. Coins, diamonds, best daily streak and hints used are still saved but not shown.
 
 ### Achievements and award badges
 
@@ -280,20 +273,20 @@ Each achievement group is an award badge on the Profile (`src/game/badges.js`, `
 
 Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. Steps are claimed in order and each pays once. If saved progress already meets a step, it is claimable right away. Achievements removed in 3.8.0 (Collector, Alphabet, Zoo Keeper) keep the diamonds already claimed.
 
-| Achievement    | Goal                                                         | Reward (diamonds) |
-| -------------- | ------------------------------------------------------------ | ----------------- |
-| First Escape   | Finish level 1                                               | 1                 |
-| Perfectionist  | 10 levels without losing a heart                             | 3                 |
-| Chapter Master | Finish chapter 1 (20 levels)                                 | 2                 |
-| Arrow Hunter   | Clear 1,000 arrows                                           | 5                 |
-| No Mistakes    | 5 levels in a row without losing a heart                     | 3                 |
-| Shape Solver   | Finish 5 shape levels                                        | 3                 |
-| Big Spender    | Spend 1,000 coins                                            | 2                 |
-| Level Climber  | Reach level 25 / 50 / 100 / 250                              | 2 / 4 / 8 / 15    |
-| Brain Power    | 10 / 30 levels finished (first time) with no hint or booster | 3 / 8             |
-| Comeback       | Win with exactly 1 heart left, 1 / 10 times                  | 1 / 4             |
-| Daily Player   | Daily streak of 3 / 7 / 30 days                              | 1 / 3 / 10        |
-| Hard Worker    | Finish 10 / 50 Hard, Super Hard or Expert levels             | 3 / 8             |
+| Achievement    | Goal                                              | Reward (diamonds) |
+| -------------- | ------------------------------------------------- | ----------------- |
+| First Escape   | Finish level 1                                    | 1                 |
+| Perfectionist  | 10 levels without losing a heart                  | 3                 |
+| Chapter Master | Finish chapter 1 (20 levels)                      | 2                 |
+| Arrow Hunter   | Clear 1,000 arrows                                | 5                 |
+| No Mistakes    | 5 levels in a row without losing a heart          | 3                 |
+| Shape Solver   | Finish 5 shape levels                             | 3                 |
+| Big Spender    | Spend 1,000 coins                                 | 2                 |
+| Level Climber  | Reach level 25 / 50 / 100 / 250                   | 2 / 4 / 8 / 15    |
+| Brain Power    | 10 / 30 levels finished (first time) with no hint | 3 / 8             |
+| Comeback       | Win with exactly 1 heart left, 1 / 10 times       | 1 / 4             |
+| Daily Player   | Daily streak of 3 / 7 / 30 days                   | 1 / 3 / 10        |
+| Hard Worker    | Finish 10 / 50 Hard, Super Hard or Expert levels  | 3 / 8             |
 
 ### Daily reward
 
@@ -316,12 +309,13 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Saves
 
-- Key `arrowEscape:v5`, plus a backup copy in `arrowEscape:v5:backup` written on every save.
-- v5 adds the daily reward record and two stats (clean first clears, comebacks). A v4 save (or its backup) is migrated automatically and nothing is lost: progress, coins, diamonds, hints, boosters, items, shapes and claimed achievements are kept. The v4 keys are removed only after v5 is written and read back.
+- Key `arrowEscape:v6`, plus a backup copy in `arrowEscape:v6:backup` written on every save.
+- v6 removes the Shield and Extra Heart boosters. Any owned ones are refunded once on load (60 coins per Shield, 1 diamond per Extra Heart), a toast says "Boosters removed, refunded X coins / Y diamonds" once, and the inventory is dropped. Everything else is kept. The v5 keys are removed only after v6 is written and read back.
+- v5 adds the daily reward record and two stats (clean first clears, comebacks). A v4 save (or its backup) is migrated automatically and nothing is lost: progress, coins, diamonds, hints, items, shapes and claimed achievements are kept. The v4 keys are removed only after v5 is written and read back.
 - Skip level was removed in 3.8.0; levels skipped in older saves stay completed.
 - There is no maximum level: level numbers up to 1,000,000,000 are accepted (anything larger is treated as corrupt data).
 - v4 added the Shape Collection (`progress.shapes`, shape ids). A v3 save (or its backup) is migrated automatically and nothing is lost: each finished shape level gives the shape it showed under the old 20-shape order.
-- A v2 save (or its backup) is migrated automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (booster inventory, owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after the current save is written and read back.
+- A v2 save (or its backup) is migrated automatically on first launch: progress, coins, diamonds, items, achievements, profile and settings are all kept. New fields (owned/equipped cosmetics, starter pack bought, free gift last claim, seen "New" badges) start empty. The v2 keys are removed only after the current save is written and read back.
 - The Reveal and Auto-Clear boosters were removed in 3.5.0: their saved counts are dropped on load, everything else is kept.
 - A v1 save is migrated automatically: current level, completed levels, hints, settings and the equipped arrow style are kept, and daily data is dropped. The v1 key is removed only after the current save is written and read back.
 - Chapters have 20 levels again since 3.9.0. The save stores its chapter size, so a save made with 40-level chapters is converted once: both 20-level halves of a rewarded 40-level chapter count as rewarded (no chapter pays twice), and a half of an unrewarded chapter can still pay its first reward. Progress, coins and diamonds are untouched.

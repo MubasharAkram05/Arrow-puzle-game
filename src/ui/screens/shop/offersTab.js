@@ -1,7 +1,7 @@
 /**
  * Offers tab: starter pack, free gift, weekly sale, coin exchange, "get more coins" placeholder.
  */
-import { BOOSTERS, OFFERS } from '../../../config.js';
+import { OFFERS } from '../../../config.js';
 import {
   buySaleItem,
   buyStarterPack,
@@ -61,7 +61,7 @@ function starterCard() {
   if (state.offers.starterBought) return '';
   const c = OFFERS.starterPack.contents;
   const locked = starterPackAvailable() ? '' : `Unlocks at level ${OFFERS.starterPack.minLevel}`;
-  const note = `${c.hints} hints, ${c.boosters.shield} Shields + Dark Slate style`;
+  const note = `${c.hints} hints + Dark Slate style`;
   return card({
     kind: 'starter',
     id: 'starter',
@@ -136,7 +136,7 @@ export function onCard(el) {
       kind,
       id,
       title: 'Buy the Starter Pack?',
-      message: 'One-time offer: hints, boosters and the Dark Slate style.',
+      message: 'One-time offer: hints and the Dark Slate style.',
       icon: 'gift',
       price: OFFERS.starterPack.price,
       buy: buyStarterPack,
@@ -172,6 +172,3 @@ export function onCard(el) {
     });
   }
 }
-
-/** Booster names for the shared booster bar text (re-exported for the boosters tab). */
-export { BOOSTERS };

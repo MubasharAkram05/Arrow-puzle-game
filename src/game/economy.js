@@ -3,7 +3,7 @@
  * Wallets are plain objects { coins, diamonds } and are never mutated; functions return new ones.
  */
 import { REWARDS } from '../config.js';
-import { isPerfect } from './boosters.js';
+import { isPerfect } from './assist.js';
 
 /** @typedef {{coins: number, diamonds: number}} Wallet */
 /** @typedef {{coins?: number, diamonds?: number}} Price */
@@ -58,7 +58,7 @@ export function isMilestoneLevel(n) {
  * @property {boolean} wasPerfect level was already finished perfectly before
  * @property {boolean} chapterDone after this win every level of the chapter is completed
  * @property {boolean} chapterRewarded the chapter bonus was already paid
- * @property {boolean} [assisted] a booster or hint was used (the level can't be perfect)
+ * @property {boolean} [assisted] a hint was used (the level can't be perfect)
  * @property {number} [arrows] arrows on the board (bigger boards pay more)
  */
 
@@ -89,7 +89,7 @@ export function levelReward(win) {
   let coins = earned;
   let diamonds = 0;
   if (perfect && !win.wasPerfect) {
-    // no heart lost and no hint or booster, first time on this level
+    // no heart lost and no hint used, first time on this level
     coins += REWARDS.perfectBonus;
     diamonds += REWARDS.perfectDiamonds;
     lines.push({ label: 'Perfect bonus', coins: REWARDS.perfectBonus });

@@ -7,11 +7,14 @@ import {
   V3_KEY,
   V4_BACKUP_KEY,
   V4_KEY,
+  V5_BACKUP_KEY,
   V5_KEY,
+  V6_KEY,
   defaultSave,
   migrateV2,
   migrateV3,
   migrateV4,
+  migrateV5,
   readSave,
   sanitize,
 } from '../src/storage/schema.js';
@@ -51,7 +54,7 @@ const V2 = {
 describe('v2 migration', () => {
   it('keeps all progress, coins, diamonds, items, achievements, profile and settings', () => {
     const d = migrateV2(V2);
-    expect(d.version).toBe(5);
+    expect(d.version).toBe(6);
     expect(d.progress).toMatchObject({ current: 23, unlocked: 24, perfect: [2, 5], chaptersRewarded: [1, 2] });
     expect(d.progress.completed).toHaveLength(22);
     expect(d.wallet).toEqual({ coins: 1234, diamonds: 17, hints: 4 });
@@ -65,11 +68,13 @@ describe('v2 migration', () => {
 
   it('adds the new fields with safe defaults', () => {
     const d = migrateV2(V2);
-    expect(d.boosters).toEqual({ shield: 0, extraHeart: 0 });
+    expect(d).not.toHaveProperty('boosters');
+    expect(d.pendingRefund).toBeNull();
     expect(d.cosmetics).toEqual(defaultSave().cosmetics);
     expect(d.offers).toEqual({ starterBought: false, giftLast: 0 });
     expect(d.seenNew).toEqual([]);
-    expect(d.stats).toMatchObject({ boostersUsed: 0, hintsUsed: 0 });
+    expect(d.stats).toMatchObject({ hintsUsed: 0 });
+    expect(d.stats).not.toHaveProperty('boostersUsed');
   });
 
   it('keeps new fields a v2 save already had, after validation', () => {
@@ -81,8 +86,10 @@ describe('v2 migration', () => {
       offers: { starterBought: true, giftLast: 1_700_000_000_000 },
       seenNew: ['effect:spark', 42, 'bad key!'],
     });
-    // Reveal and Auto-Clear were removed: their counts are dropped, everything else is kept
-    expect(d.boosters).toEqual({ shield: 2, extraHeart: 0 });
+    // boosters were removed: 2 Shields are paid back (60 coins each), Reveal and Auto-Clear counts are dropped
+    expect(d).not.toHaveProperty('boosters');
+    expect(d.wallet.coins).toBe(1234 + 120);
+    expect(d.pendingRefund).toEqual({ coins: 120, diamonds: 0 });
     expect(d.cosmetics.owned.effect).toEqual(['default', 'spark']);
     expect(d.cosmetics.equipped).toMatchObject({ effect: 'spark', board: 'plain' });
     expect(d.offers).toEqual({ starterBought: true, giftLast: 1_700_000_000_000 });
@@ -90,15 +97,15 @@ describe('v2 migration', () => {
     expect(d).not.toHaveProperty('bogus');
   });
 
-  it('migrates on load, writes v5 and its backup, then removes the v2 keys', () => {
+  it('migrates on load, writes v6 and its backup, then removes the v2 keys', () => {
     const s = memoryStorage({ [V2_KEY]: JSON.stringify(V2), [V2_BACKUP_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v2');
     expect(res.data.wallet.coins).toBe(1234);
     expect(s.has(V2_KEY)).toBe(false);
     expect(s.has(V2_BACKUP_KEY)).toBe(false);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V5_KEY));
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v5' });
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V6_KEY));
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
   });
 
   it('falls back to the v2 backup when the v2 main key is corrupted', () => {
@@ -106,7 +113,7 @@ describe('v2 migration', () => {
     expect(readSave(s).data.wallet.diamonds).toBe(17);
   });
 
-  it('keeps the v2 keys when the v5 write fails, so nothing is lost', () => {
+  it('keeps the v2 keys when the v6 write fails, so nothing is lost', () => {
     const s = memoryStorage({ [V2_KEY]: JSON.stringify(V2) });
     s.setItem = () => {
       throw new Error('quota');
@@ -147,11 +154,12 @@ const V3 = {
 describe('v3 migration (shape collection)', () => {
   it('keeps everything and collects the shapes of finished shape levels (old order)', () => {
     const d = migrateV3(V3);
-    expect(d.version).toBe(5);
+    expect(d.version).toBe(6);
     expect(d.progress).toMatchObject({ current: 70, unlocked: 70, perfect: [6, 9], masks: [6, 9, 66] });
     expect(d.progress.completed).toHaveLength(69);
-    expect(d.wallet).toEqual({ coins: 900, diamonds: 12, hints: 2 });
-    expect(d.boosters).toEqual({ shield: 2, extraHeart: 1 });
+    // 2 Shields and 1 Extra Heart are paid back
+    expect(d.wallet).toEqual({ coins: 900 + 120, diamonds: 12 + 1, hints: 2 });
+    expect(d).not.toHaveProperty('boosters');
     expect(d.achievements.claimed).toEqual(['first-escape', 'shape-solver']);
     expect(d.settings).toEqual(V3.settings);
     // levels 6..69 step 3 = 22 shape levels: the 20 originals once, then heart and arrow again
@@ -195,17 +203,17 @@ describe('v3 migration (shape collection)', () => {
     expect(sanitize({ version: 4, progress: { completed: [6, 9], shapes: [] } }).progress.shapes).toEqual([]);
   });
 
-  it('migrates on load from v3 or its backup, writes v5, then removes the old keys', () => {
+  it('migrates on load from v3 or its backup, writes v6, then removes the old keys', () => {
     const s = memoryStorage({ [V3_KEY]: '{broken', [V3_BACKUP_KEY]: JSON.stringify(V3), [V2_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v3');
-    expect(res.data.wallet.coins).toBe(900);
+    expect(res.data.wallet.coins).toBe(1020);
     expect(res.data.progress.shapes).toContain('heart');
     for (const k of [V3_KEY, V3_BACKUP_KEY, V2_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v5' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
   });
 
-  it('keeps the v3 keys when the v5 write fails', () => {
+  it('keeps the v3 keys when the v6 write fails', () => {
     const s = memoryStorage({ [V3_KEY]: JSON.stringify(V3) });
     s.setItem = () => {
       throw new Error('quota');
@@ -242,12 +250,13 @@ const V4 = {
 describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
   it('keeps progress, coins, diamonds, hints, items, shapes and claims; adds a fresh daily record', () => {
     const d = migrateV4(V4);
-    expect(d.version).toBe(5);
+    expect(d.version).toBe(6);
     expect(d.progress).toMatchObject({ current: 120, unlocked: 120, perfect: [3, 6, 9], masks: [6, 9, 12] });
     expect(d.progress.completed).toHaveLength(119);
     expect(d.progress.shapes).toEqual(['heart', 'cat', 'letterB']);
-    expect(d.wallet).toEqual({ coins: 4321, diamonds: 33, hints: 7 });
-    expect(d.boosters).toEqual({ shield: 3, extraHeart: 2 });
+    // 3 Shields and 2 Extra Hearts are paid back
+    expect(d.wallet).toEqual({ coins: 4321 + 180, diamonds: 33 + 2, hints: 7 });
+    expect(d.pendingRefund).toEqual({ coins: 180, diamonds: 2 });
     expect(d.cosmetics.equipped.effect).toBe('spark');
     expect(d.items).toEqual(V4.items);
     expect(d.profile).toEqual(V4.profile);
@@ -275,21 +284,21 @@ describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
     expect(s['big-spender'].claimed).toBe(true);
   });
 
-  it('migrates on load from v4 or its backup, writes v5, then removes the v4 keys', () => {
+  it('migrates on load from v4 or its backup, writes v6, then removes the v4 keys', () => {
     const s = memoryStorage({ [V4_KEY]: '{broken', [V4_BACKUP_KEY]: JSON.stringify(V4) });
     const res = readSave(s);
     expect(res.source).toBe('v4');
-    expect(res.data.wallet.diamonds).toBe(33);
+    expect(res.data.wallet.diamonds).toBe(35);
     for (const k of [V4_KEY, V4_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v5' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
   });
 
-  it('keeps the v4 keys when the v5 write fails', () => {
+  it('keeps the v4 keys when the v6 write fails', () => {
     const s = memoryStorage({ [V4_KEY]: JSON.stringify(V4) });
     s.setItem = () => {
       throw new Error('quota');
     };
-    expect(readSave(s).data.wallet.coins).toBe(4321);
+    expect(readSave(s).data.wallet.coins).toBe(4321 + 180);
     expect(s.has(V4_KEY)).toBe(true);
   });
 
@@ -301,5 +310,65 @@ describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
     expect(d.daily).toEqual({ lastClaim: null, streak: 0, best: 0, lastSeen: 0, blockedDay: null });
     const ok = sanitize({ version: 5, daily: { lastClaim: 20000, streak: 9, best: 4, lastSeen: 1.7e12 } });
     expect(ok.daily).toMatchObject({ lastClaim: 20000, streak: 9, best: 9 });
+  });
+});
+
+/** A v5 save from 3.10.0 holding boosters. */
+const V5 = {
+  version: 5,
+  progress: { current: 40, unlocked: 40, completed: Array.from({ length: 39 }, (_, i) => i + 1), perfect: [2] },
+  wallet: { coins: 500, diamonds: 10, hints: 6 },
+  boosters: { shield: 4, extraHeart: 3 },
+  stats: { arrowsCleared: 900, boostersUsed: 7, hintsUsed: 5, cleanLevels: 12 },
+  achievements: { claimed: ['first-escape', 'level-climber-1'] },
+  daily: { lastClaim: 20000, streak: 4, best: 6, lastSeen: 1.7e12 },
+  items: { owned: { styles: ['classic', 'slate'], themes: ['blue'] }, style: 'slate', accent: 'blue' },
+};
+
+describe('v5 to v6 migration (boosters removed)', () => {
+  it('pays back 60 coins per Shield and 1 diamond per Extra Heart, keeps everything else', () => {
+    const d = migrateV5(V5);
+    expect(d.version).toBe(6);
+    expect(d.wallet).toEqual({ coins: 500 + 240, diamonds: 10 + 3, hints: 6 });
+    expect(d.pendingRefund).toEqual({ coins: 240, diamonds: 3 });
+    expect(d).not.toHaveProperty('boosters');
+    expect(d.progress).toMatchObject({ current: 40, unlocked: 40, perfect: [2] });
+    expect(d.stats).toMatchObject({ arrowsCleared: 900, hintsUsed: 5, cleanLevels: 12 });
+    expect(d.stats).not.toHaveProperty('boostersUsed');
+    expect(d.achievements.claimed).toEqual(['first-escape', 'level-climber-1']);
+    expect(d.daily).toMatchObject({ streak: 4, best: 6 });
+    expect(d.items.style).toBe('slate');
+  });
+
+  it('pays only once: a v6 save has no boosters left to refund', () => {
+    const once = migrateV5(V5);
+    const again = sanitize(JSON.parse(JSON.stringify({ ...once, pendingRefund: null })));
+    expect(again.wallet).toEqual(once.wallet);
+    expect(again.pendingRefund).toBeNull();
+  });
+
+  it('no boosters, no refund and no toast', () => {
+    const d = migrateV5({ ...V5, boosters: { shield: 0, extraHeart: 0 } });
+    expect(d.wallet).toEqual(V5.wallet);
+    expect(d.pendingRefund).toBeNull();
+    expect(migrateV5({ ...V5, boosters: { shield: -3, extraHeart: 'x' } }).pendingRefund).toBeNull();
+  });
+
+  it('migrates on load from v5 or its backup, writes v6, then removes the v5 keys', () => {
+    const s = memoryStorage({ [V5_KEY]: '{broken', [V5_BACKUP_KEY]: JSON.stringify(V5) });
+    const res = readSave(s);
+    expect(res.source).toBe('v5');
+    expect(res.data.wallet.coins).toBe(740);
+    for (const k of [V5_KEY, V5_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
+  });
+
+  it('keeps the v5 keys when the v6 write fails, so the refund is not lost', () => {
+    const s = memoryStorage({ [V5_KEY]: JSON.stringify(V5) });
+    s.setItem = () => {
+      throw new Error('quota');
+    };
+    expect(readSave(s).data.wallet.coins).toBe(740);
+    expect(s.has(V5_KEY)).toBe(true);
   });
 });

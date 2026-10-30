@@ -48,7 +48,7 @@ export const REWARDS = Object.freeze({
   arrowsPerSizeCoin: 10, // board size bonus: +1 coin per 10 arrows
   multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2, Expert: 2.5 }), // capped: Expert is the top
   perfectBonus: 20, // no heart lost, first time per level
-  perfectDiamonds: 1, // no heart lost and no hint or booster, first time per level
+  perfectDiamonds: 1, // no heart lost and no hint used, first time per level
   replayRate: 0.25, // share of coins for a level already completed
   chapterSize: 20,
   chapterCoins: 100,
@@ -128,7 +128,7 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
   {
     id: 'brain-power',
     title: 'Brain Power',
-    desc: 'Complete {goal} levels with no hint or booster',
+    desc: 'Complete {goal} levels with no hint',
     icon: 'bulb',
     steps: [
       { goal: 10, reward: 3 },
@@ -186,6 +186,11 @@ export const DAILY = Object.freeze({
   maxJumpDays: 60, // a clock jump further ahead than this since the last open pays nothing that day
 });
 
+/**
+ * Shield and Extra Heart boosters were removed in 3.11.0: what a save still holds is paid back once on load.
+ */
+export const BOOSTER_REFUND = Object.freeze({ shield: { coins: 60 }, extraHeart: { diamonds: 1 } });
+
 /** Heart refills allowed per level attempt. */
 export const MAX_REFILLS_PER_LEVEL = 2;
 
@@ -205,18 +210,6 @@ export const SHOP_THEMES = Object.freeze([
   { id: 'teal', name: 'Lagoon Teal', price: { coins: 400 }, color: '#0E9F8E' },
   { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
 ]);
-
-/** In-level boosters: price for one. */
-export const BOOSTERS = Object.freeze({
-  shield: Object.freeze({ name: 'Shield', price: { coins: 60 }, desc: 'Your next wrong tap costs no heart' }),
-  extraHeart: Object.freeze({ name: 'Extra Heart', price: { diamonds: 1 }, desc: 'Start the level with +1 heart' }),
-});
-/** Booster pack contents and price. */
-export const BOOSTER_PACK = Object.freeze({
-  name: 'Booster Pack',
-  price: Object.freeze({ coins: 200 }),
-  contents: Object.freeze({ shield: 4 }),
-});
 
 /**
  * Cosmetics by category. The first item of each category is the free default.
@@ -276,7 +269,7 @@ export const OFFERS = Object.freeze({
     name: 'Starter Pack',
     minLevel: 5, // shown once this level is unlocked
     price: Object.freeze({ diamonds: 3 }),
-    contents: Object.freeze({ hints: 5, boosters: { shield: 3 }, style: 'slate' }),
+    contents: Object.freeze({ hints: 5, style: 'slate' }),
   }),
   freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
   exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),

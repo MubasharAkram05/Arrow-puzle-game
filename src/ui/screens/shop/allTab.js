@@ -1,9 +1,9 @@
 /**
- * Shop "All" tab: every section in order under its own heading (Offers, Boosters, Styles, Effects,
+ * Shop "All" tab: every section in order under its own heading (Offers, Hints, Styles, Effects,
  * Profile items). Card taps go to the section the card belongs to.
  */
 import { icon } from '../../components/icons.js';
-import * as boosters from './boostersTab.js';
+import * as hints from './hintsTab.js';
 import * as effects from './effectsTab.js';
 import * as offers from './offersTab.js';
 import * as profile from './profileTab.js';
@@ -12,7 +12,7 @@ import * as styles from './stylesTab.js';
 /** Sections in display order. */
 export const PARTS = [
   { id: 'offers', title: 'Offers', icon: 'gift', mod: offers },
-  { id: 'boosters', title: 'Boosters', icon: 'bolt', mod: boosters },
+  { id: 'hints', title: 'Hints', icon: 'bulb', mod: hints },
   { id: 'styles', title: 'Styles', icon: 'palette', mod: styles },
   { id: 'effects', title: 'Effects', icon: 'sparkle', mod: effects },
   { id: 'profile', title: 'Profile items', icon: 'user', mod: profile },

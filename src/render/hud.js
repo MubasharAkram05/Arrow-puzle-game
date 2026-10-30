@@ -31,16 +31,7 @@ export function renderHearts(popIndex) {
     );
     box.appendChild(svg);
   }
-  if (state.levelBoost && state.levelBoost.shield) {
-    box.insertAdjacentHTML(
-      'beforeend',
-      '<svg class="icon shield-on" aria-label="Shield active"><use href="#i-shield" /></svg>',
-    );
-  }
-  box.setAttribute(
-    'aria-label',
-    `${state.hearts} hearts left${state.levelBoost && state.levelBoost.shield ? ', shield active' : ''}`,
-  );
+  box.setAttribute('aria-label', `${state.hearts} hearts left`);
 }
 
 /** Hint badge: free hints left, or the coin price once they run out. */

@@ -1,6 +1,6 @@
 /**
  * Migrations from older save formats: v1 (single key), v2 (before the shop expansion), v3 (before the
- * shape collection) and v4 (before daily rewards and tiered achievements). Pure.
+ * shape collection), v4 (before daily rewards and tiered achievements) and v5 (before boosters were removed). Pure.
  */
 import { REWARDS } from '../config.js';
 import { isShapeLevel, ORIGINAL_SHAPES, shapeSlot } from '../engine/index.js';
@@ -79,13 +79,13 @@ export function migrateV1(raw) {
 
 /**
  * Convert a v2 save. The current format keeps every v2 field (progress, coins, diamonds, items, achievements,
- * settings) and adds booster inventory, cosmetics, offers, seen "New" badges (start empty unless the v2 save
+ * settings) and adds cosmetics, offers, seen "New" badges (start empty unless the v2 save
  * already had them) and the shape collection (filled from finished shape levels).
  * @param {unknown} raw
  * @returns {object} sanitized current save
  */
 export function migrateV2(raw) {
-  return sanitize({ ...obj(raw), version: 5 });
+  return sanitize({ ...obj(raw), version: 6 });
 }
 
 /**
@@ -96,7 +96,7 @@ export function migrateV2(raw) {
  */
 export function migrateV3(raw) {
   // v3 had no shapes list, so sanitize fills it from the finished shape levels
-  return sanitize({ ...obj(raw), version: 5 });
+  return sanitize({ ...obj(raw), version: 6 });
 }
 
 /**
@@ -107,5 +107,15 @@ export function migrateV3(raw) {
  * @returns {object} sanitized v5 save
  */
 export function migrateV4(raw) {
-  return sanitize({ ...obj(raw), version: 5 });
+  return sanitize({ ...obj(raw), version: 6 });
+}
+
+/**
+ * Convert a v5 save to v6: everything is kept; Shield and Extra Heart boosters it still holds are paid back
+ * (60 coins per Shield, 1 diamond per Extra Heart) and announced once with a toast.
+ * @param {unknown} raw
+ * @returns {object} sanitized v6 save
+ */
+export function migrateV5(raw) {
+  return sanitize({ ...obj(raw), version: 6 });
 }

@@ -1,6 +1,6 @@
 import { START_HINTS } from '../config.js';
 import { newStats } from './stats.js';
-import { newInventory, newLevelBoosts } from './boosters.js';
+import { newLevelAssist } from './assist.js';
 import { newCosmetics } from './cosmetics.js';
 import { newDaily } from './daily.js';
 
@@ -44,12 +44,12 @@ export const state = {
   stats: newStats(),
   refillsUsed: 0, // heart refills bought in this attempt
   won: false, // the current attempt has been paid out
-  boosters: newInventory(), // booster counts
   offers: { starterBought: false, giftLast: 0 }, // starter pack bought, free gift last claim (ms)
   seenNew: new Set(), // shop items whose "New" badge was already shown
   daily: newDaily(), // daily reward record (src/game/daily.js)
   cosmetics: newCosmetics(), // owned/equipped effects, boards, heads, confetti, sounds, avatars, frames
-  levelBoost: newLevelBoosts(), // shield, moved, assisted for this attempt
+  levelAssist: newLevelAssist(), // a hint was used in this attempt
+  pendingRefund: null, // removed boosters paid back, waiting for its toast
   owned: { styles: ['classic'], themes: ['blue'] },
   accent: 'blue', // equipped accent theme
   claimed: new Set(), // claimed achievement ids

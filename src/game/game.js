@@ -26,9 +26,7 @@ import { showVictory } from '../ui/modals/victory.js';
 import { clearHint, updateTutorial } from './hints.js';
 import { applyWin, wallet } from './rewards.js';
 import { isTestPlay, testPlaySummary } from './unlock.js';
-import { absorbWrongTap, newLevelBoosts } from './boosters.js';
-import { breakShield } from '../render/boostFx.js';
-import { renderBoosterBar } from '../ui/screens/boosterBar.js';
+import { newLevelAssist } from './assist.js';
 import { recordLoss } from './stats.js';
 import { state } from './state.js';
 
@@ -47,7 +45,7 @@ export function loadLevel(level) {
   state.hintId = -1;
   state.refillsUsed = 0;
   state.won = false;
-  state.levelBoost = newLevelBoosts();
+  state.levelAssist = newLevelAssist();
   hidePointer();
   $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
   state.metrics = { ...strokeMetrics(boardCellPx()), head: state.cosmetics.equipped.head };
@@ -56,7 +54,6 @@ export function loadLevel(level) {
   renderHearts(-1);
   renderProgress();
   renderHintButton();
-  renderBoosterBar();
   renderGrid();
   layoutBoard();
   if (resetZoom(boardCellPx())) maybeShowZoomGuide();
@@ -123,21 +120,13 @@ function escape(a, lvl) {
   });
 }
 
-/** Arrow is blocked: lose a heart (unless a shield absorbs it) and play the bump. */
+/** Arrow is blocked: lose a heart and play the bump. */
 function block(a, lvl, blocker) {
   a.busy = true;
   playSound('bump');
   vibrate(60);
-  const shield = absorbWrongTap(state.levelBoost);
-  state.levelBoost = shield.lvl;
-  if (shield.absorbed) {
-    breakShield();
-    renderHearts(-1);
-    renderBoosterBar();
-  } else {
-    state.hearts = Math.max(0, state.hearts - 1);
-    renderHearts(state.hearts);
-  }
+  state.hearts = Math.max(0, state.hearts - 1);
+  renderHearts(state.hearts);
   if (state.hearts === 0) state.locked = true;
   animateBlocked(a, blocker).then(() => {
     a.busy = false;
@@ -152,10 +141,6 @@ function block(a, lvl, blocker) {
 export function tapArrow(a) {
   initAudio();
   const lvl = state.level; // also a token: callbacks ignore a level that was replaced
-  if (!state.levelBoost.moved) {
-    state.levelBoost = { ...state.levelBoost, moved: true };
-    renderBoosterBar();
-  }
   const blocker = rayBlocker(state.occ, lvl.rows, lvl.cols, a.path[0], a.dir);
   if (blocker) block(a, lvl, blocker);
   else escape(a, lvl);

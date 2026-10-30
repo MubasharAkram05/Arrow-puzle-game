@@ -2,7 +2,6 @@
  * Applies shop offers to the game state (no DOM). Rules live in offers.js.
  */
 import { OFFERS, SHOP_STYLES, SHOP_THEMES } from '../config.js';
-import { addBoosters } from './boosters.js';
 import { claimGift, exchange, starterPackVisible, weeklySale } from './offers.js';
 import { buyCosmeticItem, buyItem, credit, pay } from './rewards.js';
 import { state } from './state.js';
@@ -16,7 +15,7 @@ export function starterPackAvailable() {
 }
 
 /**
- * Buy the one-time starter pack: hints, boosters and the Dark Slate style.
+ * Buy the one-time starter pack: hints and the Dark Slate style.
  * @returns {{ok: boolean, reason?: string, missing?: object}}
  */
 export function buyStarterPack() {
@@ -25,7 +24,6 @@ export function buyStarterPack() {
   if (!res.ok) return res;
   const c = OFFERS.starterPack.contents;
   state.hints += c.hints;
-  state.boosters = addBoosters(state.boosters, c.boosters);
   if (!state.owned.styles.includes(c.style)) state.owned = { ...state.owned, styles: [...state.owned.styles, c.style] };
   state.offers = { ...state.offers, starterBought: true };
   return { ok: true };

@@ -16,14 +16,25 @@ import { bindProfile, openProfile } from './ui/screens/profileScreen.js';
 import { bindShop, openShop } from './ui/screens/shop/index.js';
 import { mountBottomNav } from './ui/components/bottomNav.js';
 import { startPlayClock } from './ui/screens/game.js';
-import { bindBoosterBar } from './ui/screens/boosterBar.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
 import { $ } from './ui/dom.js';
 import { loadShapeLibrary } from './engine/index.js';
 import { noteDailyOpen } from './game/rewards.js';
 import { saveProgress } from './storage/save.js';
+import { state } from './game/state.js';
+import { toast } from './ui/components/toast.js';
 import { maybeShowDaily } from './ui/modals/daily.js';
 import { renderHome } from './ui/screens/home.js';
+
+/** Removed boosters were paid back on load: say so once, then forget it. */
+function announceRefund() {
+  const r = state.pendingRefund;
+  if (!r) return;
+  const parts = [r.coins && `${r.coins} coins`, r.diamonds && `${r.diamonds} diamond${r.diamonds > 1 ? 's' : ''}`];
+  toast(`Boosters removed, refunded ${parts.filter(Boolean).join(' / ')}`);
+  state.pendingRefund = null;
+  saveProgress();
+}
 
 /** App entry: load save, apply theme, wire every screen, show home. */
 function boot() {
@@ -35,7 +46,6 @@ function boot() {
   watchSystemTheme();
   bindBoardInput();
   bindGameScreen();
-  bindBoosterBar();
   bindHome();
   bindLevels();
   bindShop();
@@ -56,6 +66,7 @@ function boot() {
   startPlayClock();
   initBackButton();
   goHome();
+  announceRefund();
   // back in front on a new day: the daily reward may be waiting
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
