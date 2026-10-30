@@ -5,7 +5,7 @@ import { BOOSTERS, BOOSTER_PACK, MAX_REFILLS_PER_LEVEL, PRICES } from '../config
 import { addBoosters, useBooster } from './boosters.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
-import { isShapeLevel } from '../engine/index.js';
+import { isShapeLevel, shapeOf } from '../engine/index.js';
 import { isTestPlay } from './unlock.js';
 import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.js';
 import { recordWin, xpForWin } from './stats.js';
@@ -54,7 +54,7 @@ export function credit(amount, source) {
  * @param {number} heartsLeft
  * @param {number} maxHearts
  * @param {number} [arrows] arrows on the board (size bonus)
- * @returns {{reward: ReturnType<typeof levelReward>, xp: number, before: {coins: number, diamonds: number}}}
+ * @returns {{reward: ReturnType<typeof levelReward>, xp: number, before: {coins: number, diamonds: number}, newShape: string|null}}
  */
 export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   const p = state.progress;
@@ -77,12 +77,19 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   });
   if (reward.perfect) p.perfect.add(n);
   if (reward.chapter) p.chaptersRewarded.add(chapter);
-  if (isShapeLevel(n)) p.masks.add(n);
+  let newShape = null;
+  if (isShapeLevel(n)) {
+    p.masks.add(n);
+    // the shape joins the collection (the library is loaded: the level was just played)
+    const id = shapeOf(n);
+    if (!p.shapes.has(id)) newShape = id;
+    p.shapes.add(id);
+  }
   setWallet(grant(before, reward, 'level'));
   const xp = xpForWin(heartsLeft);
   state.xp += xp;
   state.stats = recordWin(state.stats, reward.perfect);
-  return { reward, xp, before };
+  return { reward, xp, before, newShape };
 }
 
 /**
@@ -143,7 +150,7 @@ export function buyHints(price) {
  */
 export function achievementContext() {
   const p = state.progress;
-  return { completed: p.completed, perfect: p.perfect, masks: p.masks, stats: state.stats };
+  return { completed: p.completed, perfect: p.perfect, masks: p.masks, shapes: p.shapes, stats: state.stats };
 }
 
 /**

@@ -1,0 +1,165 @@
+/* Shape Collection on the profile page (src/ui/screens/shapeCollection.js) */
+.sc-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.sc-total {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.sc-total span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-total b {
+  color: var(--text);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.sc-total .icon {
+  width: 22px;
+  height: 22px;
+  color: var(--super);
+}
+/* category chips scroll sideways on narrow screens */
+.sc-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px -14px 12px;
+  padding: 2px 14px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.sc-tabs::-webkit-scrollbar {
+  display: none;
+}
+.sc-tab {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--pill-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+.sc-tab small {
+  font-size: 11.5px;
+  font-weight: 600;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+.sc-tab:hover {
+  transform: translateY(-1px);
+}
+.sc-tab:active {
+  transform: scale(0.96);
+}
+.sc-tab:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.sc-tab.on {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.sc-tab.full:not(.on) {
+  box-shadow: inset 0 0 0 2px var(--super);
+}
+.sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  animation: sc-in 0.25s ease;
+}
+@keyframes sc-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.sc-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 4px 6px;
+  border-radius: var(--r-sm);
+  background: var(--bg-alt);
+  color: var(--lost);
+}
+.sc-tile.got {
+  color: var(--super);
+}
+.sc-art {
+  width: 44px;
+  height: 44px;
+}
+.sc-tile:not(.got) .sc-art {
+  opacity: 0.7;
+}
+.sc-lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+.sc-tile figcaption {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sc-tile.got figcaption {
+  color: var(--text);
+  font-weight: 600;
+}
+/* placeholder tiles while the shape library loads */
+.sc-tile.skeleton {
+  height: 84px;
+  background: linear-gradient(90deg, var(--bg-alt) 25%, var(--pill) 50%, var(--bg-alt) 75%);
+  background-size: 200% 100%;
+  animation: sc-shimmer 1.2s linear infinite;
+}
+@keyframes sc-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.sc-empty {
+  grid-column: 1 / -1;
+  margin: 8px 0;
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-grid,
+  .sc-tile.skeleton {
+    animation: none;
+  }
+}

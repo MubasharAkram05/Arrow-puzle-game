@@ -1,5 +1,5 @@
 /**
- * Bridges the game state and the v3 save format (see schema.js for validation and migration).
+ * Bridges the game state and the v4 save format (see schema.js for validation and migration).
  */
 import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
@@ -7,7 +7,7 @@ import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
 import { newInventory } from '../game/boosters.js';
 import { newCosmetics } from '../game/cosmetics.js';
-import { defaultSave, readSave, sanitize, writeSave } from './schema.js';
+import { defaultSave, readSave, sanitize, VERSION, writeSave } from './schema.js';
 
 /** localStorage, or null when the browser blocks it. */
 function storage() {
@@ -19,7 +19,7 @@ function storage() {
 }
 
 /**
- * Copy a validated v3 save into the game state.
+ * Copy a validated save into the game state.
  * @param {object} raw any parsed save (it is sanitized first)
  */
 export function applySave(raw) {
@@ -31,6 +31,7 @@ export function applySave(raw) {
     completed: new Set(p.completed),
     perfect: new Set(p.perfect),
     masks: new Set(p.masks),
+    shapes: new Set(p.shapes),
     chaptersRewarded: new Set(p.chaptersRewarded),
   };
   state.coins = d.wallet.coins;
@@ -52,26 +53,27 @@ export function applySave(raw) {
 }
 
 /**
- * v3 save built from the game state.
+ * Save built from the game state.
  * @returns {object}
  */
 export function snapshot() {
   const p = state.progress;
   const progress = {};
   for (const a of achievementStatus(
-    { completed: p.completed, perfect: p.perfect, masks: p.masks, stats: state.stats },
+    { completed: p.completed, perfect: p.perfect, masks: p.masks, shapes: p.shapes, stats: state.stats },
     state.claimed,
   )) {
     progress[a.def.id] = a.value;
   }
   return {
-    version: 3,
+    version: VERSION,
     progress: {
       current: p.current,
       unlocked: p.unlocked,
       completed: [...p.completed],
       perfect: [...p.perfect],
       masks: [...p.masks],
+      shapes: [...p.shapes],
       chaptersRewarded: [...p.chaptersRewarded],
       chapterSize: REWARDS.chapterSize,
     },
@@ -91,7 +93,7 @@ export function snapshot() {
 
 /**
  * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
- * @returns {'v3'|'backup'|'v2'|'v1'|'new'} where the data came from
+ * @returns {'v4'|'backup'|'v3'|'v2'|'v1'|'new'} where the data came from
  */
 export function loadSave() {
   const s = storage();

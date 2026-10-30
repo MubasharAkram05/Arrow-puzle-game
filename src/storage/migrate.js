@@ -1,7 +1,9 @@
 /**
- * Migrations from older save formats: v1 (single key) and v2 (before the shop expansion). Pure.
+ * Migrations from older save formats: v1 (single key), v2 (before the shop expansion) and v3 (before the
+ * shape collection). Pure.
  */
 import { REWARDS } from '../config.js';
+import { isShapeLevel, ORIGINAL_SHAPES, shapeSlot } from '../engine/index.js';
 import { sanitize } from './schema.js';
 import { obj } from './validators.js';
 
@@ -29,6 +31,17 @@ export function convertChapters(rewarded, oldSize) {
     if (all) out.push(c);
   }
   return out;
+}
+
+/**
+ * Shapes a pre-collection save has already won: before 3.7.0 shape levels cycled through the 20 original
+ * shapes (level 6 heart, 9 arrow, ...), so each finished shape level gives the shape it really showed.
+ * @param {number[]} completed finished levels
+ * @returns {string[]} shape ids
+ */
+export function legacyShapes(completed) {
+  const ids = completed.filter(isShapeLevel).map((n) => ORIGINAL_SHAPES[shapeSlot(n) % ORIGINAL_SHAPES.length]);
+  return [...new Set(ids)];
 }
 
 /**
@@ -63,12 +76,23 @@ export function migrateV1(raw) {
 }
 
 /**
- * Convert a v2 save to v3. v3 keeps every v2 field (progress, coins, diamonds, items, achievements,
- * settings) and adds booster inventory, cosmetics, offers and seen "New" badges, which start empty
- * unless the v2 save already had them.
+ * Convert a v2 save. The current format keeps every v2 field (progress, coins, diamonds, items, achievements,
+ * settings) and adds booster inventory, cosmetics, offers, seen "New" badges (start empty unless the v2 save
+ * already had them) and the shape collection (filled from finished shape levels).
  * @param {unknown} raw
- * @returns {object} sanitized v3 save
+ * @returns {object} sanitized current save
  */
 export function migrateV2(raw) {
-  return sanitize({ ...obj(raw), version: 3 });
+  return sanitize({ ...obj(raw), version: 4 });
+}
+
+/**
+ * Convert a v3 save to v4: everything is kept, and the new shape collection starts with the shapes of the
+ * shape levels already finished (see legacyShapes).
+ * @param {unknown} raw
+ * @returns {object} sanitized v4 save
+ */
+export function migrateV3(raw) {
+  // v3 had no shapes list, so sanitize fills it from the finished shape levels
+  return sanitize({ ...obj(raw), version: 4 });
 }

@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS, achievementStatus, claimAchievement, claimableCount } from '../src/game/achievements.js';
 import { newStats, recordLoss, recordWin } from '../src/game/stats.js';
+import { SHAPE_CATEGORIES, shapesIn } from '../src/engine/index.js';
+
+const ALL_SHAPES = new Set(SHAPE_CATEGORIES.flatMap((c) => shapesIn(c.id)));
 
 /** Context with optional overrides. */
 const ctx = (over = {}) => ({
   completed: new Set(),
   perfect: new Set(),
   masks: new Set(),
+  shapes: new Set(),
   stats: newStats(),
   ...over,
 });
@@ -34,6 +38,25 @@ describe('achievement progress', () => {
     expect(byId['no-mistakes'].value).toBe(2);
     expect(byId['shape-solver'].value).toBe(2);
     expect(byId['big-spender'].value).toBe(300);
+  });
+
+  it('counts collected shapes: Collector (50), Alphabet (all letters), Zoo Keeper (all animals)', () => {
+    const animals = shapesIn('animals');
+    const letters = shapesIn('letters');
+    const objects = shapesIn('objects');
+    const status = (shapes) =>
+      Object.fromEntries(achievementStatus(ctx({ shapes: new Set(shapes) }), new Set()).map((a) => [a.def.id, a]));
+    let s = status([...letters.slice(0, 25), ...animals.slice(0, 10), ...objects.slice(0, 14)]);
+    expect(s.collector).toMatchObject({ value: 49, done: false });
+    expect(s.alphabet).toMatchObject({ value: 25, done: false });
+    expect(s['zoo-keeper']).toMatchObject({ value: 10, done: false });
+    s = status([...letters, ...animals, 'not-a-shape']);
+    expect(s.collector.done).toBe(true);
+    expect(s.alphabet).toMatchObject({ value: 26, done: true });
+    expect(s['zoo-keeper'].done).toBe(true);
+    expect(s['zoo-keeper'].def.goal).toBe(animals.length);
+    const rewards = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.reward]));
+    expect(rewards).toMatchObject({ collector: 3, 'zoo-keeper': 10, alphabet: 5 });
   });
 
   it('counts a perfect streak and resets it on a loss or a lost heart', () => {
@@ -79,6 +102,7 @@ describe('very large numbers', () => {
       completed: big,
       perfect: big,
       masks: big,
+      shapes: ALL_SHAPES,
       stats: {
         arrowsCleared: 1e9,
         wins: 50_000,

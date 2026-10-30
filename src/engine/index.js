@@ -24,6 +24,14 @@ export {
   shapeOrder,
   shapeSources,
 } from './shapes/library.js';
+export {
+  SHAPE_CATEGORIES,
+  SHAPE_COUNT,
+  categoryOf,
+  collectedIn,
+  collectionProgress,
+  shapesIn,
+} from './shapes/collection.js';
 export { makePlan } from './shapes.js';
 export { buildLevel, meetsConstraints, meetsGoals, generateFromConfig, generateLevel } from './generator.js';
 export { buildOccupancy, rayBlocker, rayArrows, freeArrows, clearArrow } from './board.js';

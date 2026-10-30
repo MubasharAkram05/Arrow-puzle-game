@@ -8,3 +8,4 @@ reference/
 src/engine/shapes/library.json
 scripts/shapes-preview.html
 scripts/shape-sources/
+src/engine/shapes/index.json

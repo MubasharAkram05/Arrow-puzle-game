@@ -13,9 +13,11 @@
  *    are filled, parts thinner than the board allows are trimmed and only the main connected area stays.
  * 3. The first source that passes the quality filter (src/engine/shapes/quality.js) is kept;
  *    rejected ones are logged with the reason.
- * 4. Output: src/engine/shapes/library.json (read by the game), CREDITS.md and scripts/shapes-preview.html
+ * 4. Output: src/engine/shapes/library.json (lazy chunk with the masks), src/engine/shapes/index.json (category ->
+ *    ids, loaded up front), CREDITS.md and scripts/shapes-preview.html
  *    (a contact sheet to review every shape; not part of the build).
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -270,6 +272,17 @@ function writeLibrary(shapes) {
   return { file, bytes: Buffer.byteLength(JSON.stringify(lib)) };
 }
 
+/** Small index (category -> shape ids) the game loads up front, for the collection and achievements. */
+function writeIndex(shapes) {
+  const index = {
+    categories: CATEGORIES.map(({ id, name, target }) => ({ id, name, target })),
+    members: Object.fromEntries(
+      CATEGORIES.map((c) => [c.id, shapes.filter((s) => s.category === c.id).map((s) => s.id)]),
+    ),
+  };
+  writeFileSync(join(ROOT, 'src/engine/shapes/index.json'), JSON.stringify(index));
+}
+
 function writePreview(shapes, rejected) {
   const tile = (s) => {
     const { w, h, bits } = s.mask;
@@ -345,6 +358,9 @@ for (const c of CATEGORIES) {
 const { file, bytes } = writeLibrary(shapes);
 const preview = writePreview(shapes, rejected);
 writeCredits(shapes);
+writeIndex(shapes);
+// keep generated Markdown in the repo's Prettier style
+execFileSync(join(ROOT, 'node_modules/.bin/prettier'), ['--write', join(ROOT, 'CREDITS.md')]);
 console.log(`Total ${shapes.length} shapes, ${rejected.length} rejected. ${file} (${(bytes / 1024).toFixed(1)} KB)`);
 console.log(`Preview: ${preview}`);
 if (short) process.exitCode = 1;

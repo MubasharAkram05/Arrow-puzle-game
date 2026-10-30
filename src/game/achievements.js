@@ -3,10 +3,11 @@
  * only the set of claimed ids is stored.
  */
 import { REWARDS } from '../config.js';
+import { collectedIn, shapesIn } from '../engine/index.js';
 import { chapterLevels } from './economy.js';
 
 /**
- * @typedef {{completed: Set<number>, perfect: Set<number>, masks: Set<number>, stats: object}} AchievementContext
+ * @typedef {{completed: Set<number>, perfect: Set<number>, masks: Set<number>, shapes: Set<string>, stats: object}} AchievementContext
  * @typedef {{id: string, title: string, desc: string, icon: string, goal: number, reward: number, progress: (c: AchievementContext) => number}} Achievement
  */
 
@@ -65,6 +66,33 @@ export const ACHIEVEMENTS = Object.freeze([
     goal: 5,
     reward: 3,
     progress: (c) => c.masks.size,
+  },
+  {
+    id: 'collector',
+    title: 'Collector',
+    desc: 'Collect 50 shapes',
+    icon: 'shape-star',
+    goal: 50,
+    reward: 3,
+    progress: (c) => c.shapes.size,
+  },
+  {
+    id: 'alphabet',
+    title: 'Alphabet',
+    desc: 'Collect all 26 letters',
+    icon: 'letter',
+    goal: shapesIn('letters').length,
+    reward: 5,
+    progress: (c) => collectedIn(c.shapes, 'letters'),
+  },
+  {
+    id: 'zoo-keeper',
+    title: 'Zoo Keeper',
+    desc: `Collect all ${shapesIn('animals').length} animals`,
+    icon: 'paw',
+    goal: shapesIn('animals').length,
+    reward: 10,
+    progress: (c) => collectedIn(c.shapes, 'animals'),
   },
   {
     id: 'big-spender',

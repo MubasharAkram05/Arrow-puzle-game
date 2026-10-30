@@ -69,3 +69,14 @@ export function ownedList(v, items) {
   const list = Array.isArray(v) ? v.filter((id) => ids.includes(id)) : [];
   return [...new Set([ids[0], ...list])];
 }
+
+/**
+ * Collected shape ids: unique short id strings (checked against the library when shown, not here, because
+ * the library loads later).
+ * @param {unknown} v
+ * @returns {string[]}
+ */
+export function shapeIds(v) {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,40}$/.test(x)))];
+}
