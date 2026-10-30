@@ -4,7 +4,7 @@ import {
   convertChapters,
   V1_KEY,
   V3_KEY,
-  V4_KEY,
+  V5_KEY,
   defaultSave,
   migrateV1,
   readSave,
@@ -40,7 +40,7 @@ const V1 = {
 describe('v1 migration', () => {
   it('keeps level progress, hints, settings and the equipped style', () => {
     const d = migrateV1(V1);
-    expect(d.version).toBe(4);
+    expect(d.version).toBe(5);
     expect(d.progress).toMatchObject({ current: 14, unlocked: 15 });
     expect(d.progress.completed).toEqual(V1.completed);
     expect(d.wallet.hints).toBe(6);
@@ -51,7 +51,8 @@ describe('v1 migration', () => {
 
   it('drops daily data and starts the new fields at zero', () => {
     const d = migrateV1(V1);
-    expect(JSON.stringify(d)).not.toContain('daily');
+    // v1's old daily records are dropped: the daily reward starts fresh
+    expect(d.daily).toEqual({ lastClaim: null, streak: 0, best: 0, lastSeen: 0, blockedDay: null });
     expect(d.wallet).toMatchObject({ coins: 0, diamonds: 0 });
     expect(d.xp).toBe(0);
     expect(d.achievements.claimed).toEqual([]);
@@ -63,8 +64,8 @@ describe('v1 migration', () => {
     expect(res.source).toBe('v1');
     expect(res.data.progress.current).toBe(14);
     expect(s.has(V1_KEY)).toBe(false);
-    expect(JSON.parse(s.getItem(V4_KEY)).progress.completed).toHaveLength(14);
-    expect(readSave(s).source).toBe('v4');
+    expect(JSON.parse(s.getItem(V5_KEY)).progress.completed).toHaveLength(14);
+    expect(readSave(s).source).toBe('v5');
   });
 
   it('keeps the v1 key when the v3 write fails, so nothing is lost', () => {
@@ -126,7 +127,7 @@ describe('corrupted data', () => {
 
   it('uses the backup when the main save is unreadable', () => {
     const good = sanitize({ wallet: { coins: 120 } });
-    const s = memoryStorage({ [V4_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
+    const s = memoryStorage({ [V5_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
     const res = readSave(s);
     expect(res.source).toBe('backup');
     expect(res.data.wallet.coins).toBe(120);
@@ -145,7 +146,7 @@ describe('corrupted data', () => {
   it('writes the save and a backup copy', () => {
     const s = memoryStorage();
     expect(writeSave(s, defaultSave())).toBe(true);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V4_KEY));
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V5_KEY));
   });
 });
 

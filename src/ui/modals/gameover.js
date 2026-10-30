@@ -1,10 +1,8 @@
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../../config.js';
 import { canAfford } from '../../game/economy.js';
-import { restart, resumePlay, startLevel } from '../../game/game.js';
-import { buyContinue, refillHeart, skipLevel, wallet } from '../../game/rewards.js';
-import { isTestPlay } from '../../game/unlock.js';
+import { restart, resumePlay } from '../../game/game.js';
+import { buyContinue, refillHeart, wallet } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
-import { saveProgress } from '../../storage/save.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { $ } from '../dom.js';
 import { goBack } from '../navigation.js';
@@ -28,17 +26,10 @@ function setBuyButton(id, noteId, price, blocked = '') {
 export function showGameOver() {
   $('refill-price').innerHTML = priceHTML(PRICES.heartRefill);
   $('continue-price').innerHTML = priceHTML(PRICES.continueGame);
-  $('skip-price').innerHTML = priceHTML(PRICES.skipLevel);
   const limit =
     state.refillsUsed >= MAX_REFILLS_PER_LEVEL ? `Limit reached: ${MAX_REFILLS_PER_LEVEL} refills per level.` : '';
   setBuyButton('btn-refill', 'refill-note', PRICES.heartRefill, limit);
   setBuyButton('btn-continue', 'continue-note', PRICES.continueGame);
-  setBuyButton(
-    'btn-skip',
-    'skip-note',
-    PRICES.skipLevel,
-    isTestPlay(state.levelNum, state.progress) ? 'Not in test mode.' : '',
-  );
   openModal('modal-gameover');
 }
 
@@ -54,13 +45,6 @@ export function bindGameOver() {
     if (!buyContinue().ok) return showGameOver();
     renderCurrency();
     resumePlay();
-  });
-  $('btn-skip').addEventListener('click', () => {
-    if (!skipLevel(state.levelNum).ok) return showGameOver();
-    saveProgress();
-    renderCurrency();
-    closeModals();
-    startLevel(state.progress.current);
   });
   onModalBack('modal-gameover', () => {
     closeModals();

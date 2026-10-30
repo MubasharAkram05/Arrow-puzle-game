@@ -6,8 +6,8 @@ import { addBoosters, useBooster } from './boosters.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
 import { isShapeLevel, shapeOf } from '../engine/index.js';
-import { isTestPlay } from './unlock.js';
 import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.js';
+import { claimDaily, touchDaily } from './daily.js';
 import { recordWin, xpForWin } from './stats.js';
 import { state } from './state.js';
 
@@ -88,7 +88,11 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
   setWallet(grant(before, reward, 'level'));
   const xp = xpForWin(heartsLeft);
   state.xp += xp;
-  state.stats = recordWin(state.stats, reward.perfect);
+  state.stats = recordWin(state.stats, reward.perfect, {
+    firstClear: !wasCompleted,
+    assisted: state.levelBoost.assisted,
+    heartsLeft,
+  });
   return { reward, xp, before, newShape };
 }
 
@@ -117,23 +121,6 @@ export function buyContinue() {
 }
 
 /**
- * Skip a level: mark it complete (not perfect, no coins, no XP) and unlock the next one.
- * Not allowed on a test-mode play (it would change the real progress).
- * @param {number} n
- * @returns {{ok: boolean, missing?: object, reason?: 'test'}}
- */
-export function skipLevel(n) {
-  if (isTestPlay(n, state.progress)) return { ok: false, reason: 'test' };
-  const res = pay(PRICES.skipLevel);
-  if (!res.ok) return res;
-  const p = state.progress;
-  p.completed.add(n);
-  p.unlocked = Math.max(p.unlocked, n + 1);
-  p.current = n + 1;
-  return { ok: true };
-}
-
-/**
  * Buy hints with coins (single or pack).
  * @param {{coins: number, count?: number}} price
  * @returns {{ok: boolean, missing?: object}}
@@ -150,7 +137,14 @@ export function buyHints(price) {
  */
 export function achievementContext() {
   const p = state.progress;
-  return { completed: p.completed, perfect: p.perfect, masks: p.masks, shapes: p.shapes, stats: state.stats };
+  return {
+    completed: p.completed,
+    perfect: p.perfect,
+    masks: p.masks,
+    unlocked: p.unlocked,
+    stats: state.stats,
+    dailyBest: state.daily.best,
+  };
 }
 
 /**
@@ -249,4 +243,27 @@ export function equipCosmeticItem(cat, id) {
   const res = equipCosmetic(state.cosmetics, cat, id);
   if (res.ok) state.cosmetics = res.cos;
   return res.ok;
+}
+
+/**
+ * The app was opened (or came back to the front): remember the time for the daily reward's clock checks.
+ * @param {number} [now]
+ */
+export function noteDailyOpen(now = Date.now()) {
+  state.daily = touchDaily(state.daily, now);
+}
+
+/**
+ * Claim today's daily reward: coins, diamonds and hints go to the wallet.
+ * @param {number} [now]
+ * @returns {ReturnType<typeof claimDaily> & {before?: {coins: number, diamonds: number}}}
+ */
+export function claimDailyReward(now = Date.now()) {
+  const res = claimDaily(state.daily, now);
+  if (!res.ok) return res;
+  const before = wallet();
+  state.daily = res.rec;
+  setWallet(grant(before, res.reward, 'daily'));
+  state.hints += res.reward.hints || 0;
+  return { ...res, before };
 }

@@ -20,7 +20,8 @@ describe('winning levels pays coins that are saved (regression: counters stuck a
     applyWin(2, 'Normal', 2, 3);
     expect(state.coins).toBe(65);
     reload();
-    expect(wallet()).toEqual({ coins: 65, diamonds: 0 });
+    // level 1 had no heart lost and no hint: +1 perfect diamond
+    expect(wallet()).toEqual({ coins: 65, diamonds: 1 });
   });
 
   it('migrated v1 save: progress kept and new wins still pay', () => {
@@ -64,5 +65,32 @@ describe('shape collection', () => {
     applyWin(9, 'Normal', 3, 3);
     reload();
     expect([...state.progress.shapes]).toEqual([shapeOf(6), shapeOf(9)]);
+  });
+});
+
+describe('perfect level diamond (through a real win)', () => {
+  beforeEach(() => boot(defaultSave()));
+
+  it('first perfect clear pays +1 diamond, a replay never pays it again', () => {
+    expect(applyWin(7, 'Normal', 3, 3).reward.diamonds).toBe(1);
+    expect(applyWin(7, 'Normal', 3, 3).reward.diamonds).toBe(0);
+    expect(state.diamonds).toBe(1);
+  });
+
+  it('a hint or booster on the level means no perfect diamond', () => {
+    state.levelBoost = { ...state.levelBoost, assisted: true };
+    const r = applyWin(7, 'Normal', 3, 3).reward;
+    expect(r.perfect).toBe(false);
+    expect(r.diamonds).toBe(0);
+    expect(state.stats.cleanLevels).toBe(0);
+  });
+
+  it('counts Brain Power (clean first clears) and Comeback (1 heart left)', () => {
+    state.levelBoost = { ...state.levelBoost, assisted: false };
+    applyWin(2, 'Normal', 3, 3);
+    applyWin(3, 'Normal', 1, 3);
+    applyWin(3, 'Normal', 1, 3);
+    expect(state.stats.cleanLevels).toBe(2);
+    expect(state.stats.comebacks).toBe(2);
   });
 });

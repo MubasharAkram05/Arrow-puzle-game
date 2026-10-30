@@ -56,6 +56,14 @@
             <span class="btn-text">Play<small id="play-sub">Level 1</small></span>
           </button>
         </div>
+        <div class="home-daily">
+          <span class="streak-chip" id="streak-chip" title="Daily streak">
+            <svg class="icon"><use href="#i-fire" /></svg><b id="streak-num">0</b><small>day streak</small>
+          </span>
+          <button class="btn daily-btn" id="btn-daily" hidden>
+            <svg class="icon"><use href="#i-gift" /></svg>Daily Reward<i class="daily-dot" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -229,6 +237,21 @@
       </div>
     </div>
 
+    <!-- Daily reward (src/ui/modals/daily.js) -->
+    <div class="modal" id="modal-daily">
+      <div class="card center daily-card">
+        <div class="card-head">
+          <h3>Daily Reward</h3>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <p class="muted daily-sub" id="daily-sub"></p>
+        <ol class="daily-row" id="daily-row"></ol>
+        <p class="buy-note daily-note" id="daily-note" role="status"></p>
+      </div>
+    </div>
+
     <!-- Reset confirm -->
     <div class="modal" id="modal-confirm">
       <div class="card center">
@@ -288,10 +311,6 @@
           <button class="btn" id="btn-tryagain">
             <svg class="icon"><use href="#i-restart" /></svg>Try Again
           </button>
-          <button class="link-btn" id="btn-skip">
-            <svg class="icon"><use href="#i-skip" /></svg>Skip level<span class="buy-price" id="skip-price"></span>
-          </button>
-          <p class="buy-note" id="skip-note"></p>
         </div>
       </div>
     </div>

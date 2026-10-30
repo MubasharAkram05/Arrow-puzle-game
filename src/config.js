@@ -28,6 +28,11 @@ export const HEAD_L_PX = 14;
  * Set to false before release.
  */
 export const TEST_UNLOCK_ALL = true;
+/**
+ * Shape Collection on the Profile page and the "New shape collected" toast. Collected shapes are always saved,
+ * so turning this back on shows the full collection.
+ */
+export const SHOW_SHAPE_COLLECTION = false;
 
 /** Hints given to a new player. */
 export const START_HINTS = 3;
@@ -43,6 +48,7 @@ export const REWARDS = Object.freeze({
   arrowsPerSizeCoin: 10, // board size bonus: +1 coin per 10 arrows
   multiplier: Object.freeze({ Normal: 1, Hard: 1.5, 'Super Hard': 2, Expert: 2.5 }), // capped: Expert is the top
   perfectBonus: 20, // no heart lost, first time per level
+  perfectDiamonds: 1, // no heart lost and no hint or booster, first time per level
   replayRate: 0.25, // share of coins for a level already completed
   chapterSize: 40,
   chapterCoins: 200,
@@ -57,8 +63,129 @@ export const PRICES = Object.freeze({
   hintPack: Object.freeze({ coins: 200, count: 5 }), // 5 hints for the price of 4
   heartRefill: Object.freeze({ coins: 80 }),
   continueGame: Object.freeze({ diamonds: 2 }),
-  skipLevel: Object.freeze({ diamonds: 5 }),
 });
+/**
+ * Achievements. A group with several steps shows only its next unclaimed step; each step pays once.
+ * Steps keep their ids, so claimed ones stay claimed across versions. `desc` uses {goal}.
+ * Rewards are in diamonds.
+ */
+export const ACHIEVEMENT_DEFS = Object.freeze([
+  { id: 'first-escape', title: 'First Escape', desc: 'Finish level 1', icon: 'play', steps: [{ goal: 1, reward: 1 }] },
+  {
+    id: 'perfectionist',
+    title: 'Perfectionist',
+    desc: 'Finish {goal} levels without losing a heart',
+    icon: 'crown-o',
+    steps: [{ goal: 10, reward: 3 }],
+  },
+  {
+    id: 'chapter-master',
+    title: 'Chapter Master',
+    desc: 'Finish every level of chapter 1',
+    icon: 'trophy',
+    steps: [{ goal: REWARDS.chapterSize, reward: 2 }],
+  },
+  {
+    id: 'arrow-hunter',
+    title: 'Arrow Hunter',
+    desc: 'Clear {goal} arrows',
+    icon: 'target',
+    steps: [{ goal: 1000, reward: 5 }],
+  },
+  {
+    id: 'no-mistakes',
+    title: 'No Mistakes',
+    desc: 'Finish {goal} levels in a row without losing a heart',
+    icon: 'fire',
+    steps: [{ goal: 5, reward: 3 }],
+  },
+  {
+    id: 'shape-solver',
+    title: 'Shape Solver',
+    desc: 'Finish {goal} shape levels',
+    icon: 'shape-heart',
+    steps: [{ goal: 5, reward: 3 }],
+  },
+  {
+    id: 'big-spender',
+    title: 'Big Spender',
+    desc: 'Spend {goal} coins',
+    icon: 'shop',
+    steps: [{ goal: 1000, reward: 2 }],
+  },
+  {
+    id: 'level-climber',
+    title: 'Level Climber',
+    desc: 'Reach level {goal}',
+    icon: 'levels',
+    steps: [
+      { goal: 25, reward: 2 },
+      { goal: 50, reward: 4 },
+      { goal: 100, reward: 8 },
+      { goal: 250, reward: 15 },
+    ],
+  },
+  {
+    id: 'brain-power',
+    title: 'Brain Power',
+    desc: 'Complete {goal} levels with no hint or booster',
+    icon: 'bulb',
+    steps: [
+      { goal: 10, reward: 3 },
+      { goal: 30, reward: 8 },
+    ],
+  },
+  {
+    id: 'comeback',
+    title: 'Comeback',
+    desc: 'Win a level with exactly 1 heart left ({goal}x)',
+    icon: 'heart-crack',
+    steps: [
+      { goal: 1, reward: 1 },
+      { goal: 10, reward: 4 },
+    ],
+  },
+  {
+    id: 'daily-player',
+    title: 'Daily Player',
+    desc: 'Reach a {goal}-day daily streak',
+    icon: 'fire',
+    steps: [
+      { goal: 3, reward: 1 },
+      { goal: 7, reward: 3 },
+      { goal: 30, reward: 10 },
+    ],
+  },
+  {
+    id: 'hard-worker',
+    title: 'Hard Worker',
+    desc: 'Finish {goal} Hard, Super Hard or Expert levels',
+    icon: 'bolt',
+    steps: [
+      { goal: 10, reward: 3 },
+      { goal: 50, reward: 8 },
+    ],
+  },
+]);
+
+/**
+ * Daily reward: one claim per local calendar day. The streak grows by one per claim on consecutive days and
+ * resets to day 1 after a missed day; the 7 cards repeat, the streak count keeps going.
+ */
+export const DAILY = Object.freeze({
+  rewards: Object.freeze([
+    { coins: 20 },
+    { coins: 30 },
+    { coins: 40 },
+    { coins: 50 },
+    { diamonds: 1 },
+    { coins: 70 },
+    { diamonds: 2, hints: 1 },
+  ]),
+  backwardToleranceMs: 60 * 60 * 1000, // clock changes smaller than this (time zones, DST) are fine
+  maxJumpDays: 60, // a clock jump further ahead than this since the last open pays nothing that day
+});
+
 /** Heart refills allowed per level attempt. */
 export const MAX_REFILLS_PER_LEVEL = 2;
 

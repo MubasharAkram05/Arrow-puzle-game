@@ -2,6 +2,7 @@ import { START_HINTS } from '../config.js';
 import { newStats } from './stats.js';
 import { newInventory, newLevelBoosts } from './boosters.js';
 import { newCosmetics } from './cosmetics.js';
+import { newDaily } from './daily.js';
 
 /**
  * Fresh progress record.
@@ -46,6 +47,7 @@ export const state = {
   boosters: newInventory(), // booster counts
   offers: { starterBought: false, giftLast: 0 }, // starter pack bought, free gift last claim (ms)
   seenNew: new Set(), // shop items whose "New" badge was already shown
+  daily: newDaily(), // daily reward record (src/game/daily.js)
   cosmetics: newCosmetics(), // owned/equipped effects, boards, heads, confetti, sounds, avatars, frames
   levelBoost: newLevelBoosts(), // shield, moved, assisted for this attempt
   owned: { styles: ['classic'], themes: ['blue'] },

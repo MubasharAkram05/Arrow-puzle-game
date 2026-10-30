@@ -1,13 +1,14 @@
 /**
  * Profile: avatar, editable name, player level/XP, stats, shape collection and achievements.
  */
-import { achievementStatus } from '../../game/achievements.js';
+import { visibleAchievements } from '../../game/achievements.js';
+import { currentStreak } from '../../game/daily.js';
 import { achievementContext, claim } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
 import { formatPlayTime, playerLevel, validateName } from '../../game/stats.js';
 import { saveProgress } from '../../storage/save.js';
 import { AVATAR_TOTAL, avatarSVG, premiumId } from '../components/avatars.js';
-import { COSMETICS } from '../../config.js';
+import { COSMETICS, SHOW_SHAPE_COLLECTION } from '../../config.js';
 import { buyCosmeticItem } from '../../game/rewards.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { ask } from '../modals/ask.js';
@@ -39,7 +40,7 @@ function buildSkeleton() {
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
     <h3 class="section-title">Stats</h3>
     <div class="stat-grid" id="stat-grid"></div>
-    ${collectionSkeleton()}
+    ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
     <h3 class="section-title">Achievements</h3>
     <ul class="ach-list" id="ach-list"></ul>`;
 }
@@ -72,6 +73,8 @@ function renderStats() {
     ['crown-o', p.perfect.size, 'Perfect levels'],
     ['fire', s.streak, 'Win streak'],
     ['trophy', s.bestStreak, 'Best streak'],
+    ['fire', currentStreak(state.daily, Date.now()), 'Daily streak'],
+    ['calendar', state.daily.best, 'Best daily streak'],
     ['clock', formatPlayTime(s.playSeconds), 'Play time'],
     ['bolt', s.boostersUsed, 'Boosters used'],
     ['bulb', s.hintsUsed, 'Hints used'],
@@ -86,7 +89,7 @@ function renderStats() {
 
 /** Achievement rows with progress bars and claim buttons. */
 function renderAchievements() {
-  $('ach-list').innerHTML = achievementStatus(achievementContext(), state.claimed)
+  $('ach-list').innerHTML = visibleAchievements(achievementContext(), state.claimed)
     .map(({ def, value, done, claimed, claimable }) => {
       const action = claimable
         ? `<button class="btn primary claim-btn" data-claim="${def.id}">Claim</button>`
@@ -96,7 +99,7 @@ function renderAchievements() {
       return `<li class="ach${done ? ' done' : ''}">
         <span class="ach-badge">${icon(def.icon)}</span>
         <div class="ach-body">
-          <div class="ach-top"><b>${def.title}</b><span class="ach-reward"><svg class="cur-icon"><use href="#i-gem" /></svg>${def.reward}</span></div>
+          <div class="ach-top"><b>${def.title}</b>${def.steps > 1 ? `<small class="ach-step">Step ${def.step}/${def.steps}</small>` : ''}<span class="ach-reward"><svg class="cur-icon"><use href="#i-gem" /></svg>${def.reward}</span></div>
           <small class="muted">${def.desc}</small>
           <div class="ach-progress"><div class="xp-bar"><i style="transform:scaleX(${value / def.goal})"></i></div><small>${value.toLocaleString('en-US')}/${def.goal.toLocaleString('en-US')}</small></div>
         </div>
@@ -110,7 +113,7 @@ function renderAchievements() {
 function renderProfile() {
   renderHeader();
   renderStats();
-  renderCollection();
+  if (SHOW_SHAPE_COLLECTION) renderCollection();
   renderAchievements();
 }
 
@@ -200,6 +203,6 @@ export function bindProfile() {
     const b = e.target.closest('[data-claim]');
     if (b) onClaim(b);
   });
-  bindCollection();
+  if (SHOW_SHAPE_COLLECTION) bindCollection();
   onReturn('screen-profile', renderProfile);
 }

@@ -8,6 +8,7 @@ import { goHome } from '../screens/home.js';
 import { closeModals, onModalBack, openModal } from './modal.js';
 import { getShape } from '../../engine/index.js';
 import { toast } from '../components/toast.js';
+import { SHOW_SHAPE_COLLECTION } from '../../config.js';
 
 const CUR = (kind, n) =>
   `<span class="amt"><svg class="cur-icon" aria-hidden="true"><use href="#i-${kind}" /></svg>+${n}</span>`;
@@ -59,7 +60,8 @@ export function showVictory(summary) {
   const card = $('mini-card');
   flyCurrency(card, 'coins', summary.before.coins, summary.reward.coins, 450);
   flyCurrency(card, 'diamonds', summary.before.diamonds, summary.reward.diamonds, 750);
-  if (summary.newShape) setTimeout(() => toast(`New shape collected: ${getShape(summary.newShape).name}!`), 900);
+  if (SHOW_SHAPE_COLLECTION && summary.newShape)
+    setTimeout(() => toast(`New shape collected: ${getShape(summary.newShape).name}!`), 900);
 }
 
 /** Wire the victory buttons. Back acts like "Main". */

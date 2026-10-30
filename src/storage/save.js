@@ -1,5 +1,5 @@
 /**
- * Bridges the game state and the v4 save format (see schema.js for validation and migration).
+ * Bridges the game state and the save format (see schema.js for validation and migration).
  */
 import { REWARDS, START_HINTS } from '../config.js';
 import { achievementStatus } from '../game/achievements.js';
@@ -7,6 +7,7 @@ import { newProgress, state } from '../game/state.js';
 import { newStats } from '../game/stats.js';
 import { newInventory } from '../game/boosters.js';
 import { newCosmetics } from '../game/cosmetics.js';
+import { achievementContext } from '../game/rewards.js';
 import { defaultSave, readSave, sanitize, VERSION, writeSave } from './schema.js';
 
 /** localStorage, or null when the browser blocks it. */
@@ -41,6 +42,7 @@ export function applySave(raw) {
   state.cosmetics = d.cosmetics;
   state.offers = { ...d.offers };
   state.seenNew = new Set(d.seenNew);
+  state.daily = { ...d.daily };
   state.xp = d.xp;
   state.stats = { ...newStats(), ...d.stats };
   state.claimed = new Set(d.achievements.claimed);
@@ -59,10 +61,7 @@ export function applySave(raw) {
 export function snapshot() {
   const p = state.progress;
   const progress = {};
-  for (const a of achievementStatus(
-    { completed: p.completed, perfect: p.perfect, masks: p.masks, shapes: p.shapes, stats: state.stats },
-    state.claimed,
-  )) {
+  for (const a of achievementStatus(achievementContext(), state.claimed)) {
     progress[a.def.id] = a.value;
   }
   return {
@@ -82,6 +81,7 @@ export function snapshot() {
     cosmetics: state.cosmetics,
     offers: { ...state.offers },
     seenNew: [...state.seenNew],
+    daily: { ...state.daily },
     xp: state.xp,
     stats: { ...state.stats },
     achievements: { claimed: [...state.claimed], progress },
@@ -93,7 +93,7 @@ export function snapshot() {
 
 /**
  * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
- * @returns {'v4'|'backup'|'v3'|'v2'|'v1'|'new'} where the data came from
+ * @returns {'v5'|'backup'|'v4'|'v3'|'v2'|'v1'|'new'} where the data came from
  */
 export function loadSave() {
   const s = storage();
@@ -110,7 +110,10 @@ export function saveProgress() {
   if (s) writeSave(s, snapshot());
 }
 
-/** Clear progress, currency, items, XP, stats and achievements. Settings, avatar and name stay. */
+/**
+ * Clear progress, currency, items, XP, stats and achievements. Settings, avatar, name and the daily reward
+ * record stay (resetting would let today's reward be claimed again).
+ */
 export function resetProgress() {
   state.progress = newProgress();
   state.hints = START_HINTS;

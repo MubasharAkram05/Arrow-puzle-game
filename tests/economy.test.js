@@ -77,14 +77,41 @@ describe('levelReward: diamonds', () => {
       label: 'Level 10 milestone',
       diamonds: 1,
     });
-    expect(levelReward(win({ level: 9 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 9, heartsLeft: 2 })).diamonds).toBe(0);
     expect(levelReward(win({ level: 10, heartsLeft: 1, wasCompleted: true })).diamonds).toBe(0);
-    expect(levelReward(win({ level: 11 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 11, heartsLeft: 2 })).diamonds).toBe(0);
   });
 
   it('gives +4 on chapter completion', () => {
-    expect(levelReward(win({ level: 40, chapterDone: true })).diamonds).toBe(1 + 4);
-    expect(levelReward(win({ level: 39, chapterDone: true })).diamonds).toBe(4);
+    expect(levelReward(win({ level: 40, heartsLeft: 2, chapterDone: true })).diamonds).toBe(1 + 4);
+    expect(levelReward(win({ level: 39, heartsLeft: 2, chapterDone: true })).diamonds).toBe(4);
+  });
+});
+
+describe('levelReward: perfect diamond', () => {
+  it('gives +1 diamond for no heart lost and no hint or booster', () => {
+    const r = levelReward(win({ level: 7 }));
+    expect(r.perfect).toBe(true);
+    expect(r.diamonds).toBe(1);
+    expect(r.lines).toContainEqual({ label: 'Perfect', diamonds: 1 });
+  });
+
+  it('only the first time per level: replays never give it again', () => {
+    expect(levelReward(win({ level: 7, wasCompleted: true, wasPerfect: true })).diamonds).toBe(0);
+    // a level first finished with a lost heart can still earn it once later
+    expect(levelReward(win({ level: 7, wasCompleted: true, wasPerfect: false })).diamonds).toBe(1);
+  });
+
+  it('not with a lost heart, a hint or a booster', () => {
+    expect(levelReward(win({ level: 7, heartsLeft: 2 })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 7, assisted: true })).diamonds).toBe(0);
+    expect(levelReward(win({ level: 7, assisted: true })).perfect).toBe(false);
+  });
+
+  it('adds to the every-10th-level diamond: a perfect level 10 gives 2', () => {
+    const r = levelReward(win({ level: 10 }));
+    expect(r.diamonds).toBe(2);
+    expect(r.lines.filter((l) => l.diamonds).map((l) => l.label)).toEqual(['Perfect', 'Level 10 milestone']);
   });
 });
 

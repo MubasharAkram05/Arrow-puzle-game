@@ -1,112 +1,64 @@
 /**
  * Achievements. Pure: progress is computed from a context of saved progress and stats;
- * only the set of claimed ids is stored.
+ * only the set of claimed ids is stored. Goals and rewards live in ACHIEVEMENT_DEFS (config.js).
+ *
+ * A group can have several steps (e.g. Level Climber 25 / 50 / 100 / 250). Each step is its own achievement
+ * with its own id (`level-climber-2`); single-step groups keep their plain id (`first-escape`), so saves made
+ * before steps existed keep their claims. Only the next unclaimed step of a group is shown, and steps are
+ * claimed in order, so nothing pays twice.
  */
-import { REWARDS } from '../config.js';
-import { collectedIn, shapesIn } from '../engine/index.js';
+import { ACHIEVEMENT_DEFS } from '../config.js';
+import { tierLabel } from '../engine/index.js';
 import { chapterLevels } from './economy.js';
 
 /**
- * @typedef {{completed: Set<number>, perfect: Set<number>, masks: Set<number>, shapes: Set<string>, stats: object}} AchievementContext
- * @typedef {{id: string, title: string, desc: string, icon: string, goal: number, reward: number, progress: (c: AchievementContext) => number}} Achievement
+ * @typedef {{completed: Set<number>, perfect: Set<number>, masks: Set<number>, unlocked: number, stats: object, dailyBest: number}} AchievementContext
+ * @typedef {{id: string, group: string, step: number, steps: number, title: string, desc: string, icon: string, goal: number, reward: number, progress: (c: AchievementContext) => number}} Achievement
  */
 
-/** @type {ReadonlyArray<Achievement>} reward is in diamonds */
-export const ACHIEVEMENTS = Object.freeze([
-  {
-    id: 'first-escape',
-    title: 'First Escape',
-    desc: 'Finish level 1',
-    icon: 'play',
-    goal: 1,
-    reward: 1,
-    progress: (c) => (c.completed.has(1) ? 1 : 0),
+const HARD_TIERS = new Set(['Hard', 'Super Hard', 'Expert']);
+
+/** Progress of each group, from the context. */
+const PROGRESS = {
+  'first-escape': (c) => (c.completed.has(1) ? 1 : 0),
+  perfectionist: (c) => c.perfect.size,
+  'chapter-master': (c) => chapterLevels(1).filter((l) => c.completed.has(l)).length,
+  'arrow-hunter': (c) => c.stats.arrowsCleared,
+  'no-mistakes': (c) => c.stats.bestPerfectStreak,
+  'shape-solver': (c) => c.masks.size,
+  'big-spender': (c) => c.stats.coinsSpent,
+  'level-climber': (c) => c.unlocked,
+  'brain-power': (c) => c.stats.cleanLevels,
+  comeback: (c) => c.stats.comebacks,
+  'daily-player': (c) => c.dailyBest,
+  // counted from finished levels, so old saves get credit for Hard levels they already beat
+  'hard-worker': (c) => {
+    let n = 0;
+    for (const l of c.completed) if (HARD_TIERS.has(tierLabel(l))) n++;
+    return n;
   },
-  {
-    id: 'perfectionist',
-    title: 'Perfectionist',
-    desc: 'Finish 10 levels without losing a heart',
-    icon: 'crown-o',
-    goal: 10,
-    reward: 3,
-    progress: (c) => c.perfect.size,
-  },
-  {
-    id: 'chapter-master',
-    title: 'Chapter Master',
-    desc: 'Finish every level of chapter 1',
-    icon: 'trophy',
-    goal: REWARDS.chapterSize,
-    reward: 2,
-    progress: (c) => chapterLevels(1).filter((l) => c.completed.has(l)).length,
-  },
-  {
-    id: 'arrow-hunter',
-    title: 'Arrow Hunter',
-    desc: 'Clear 1000 arrows',
-    icon: 'target',
-    goal: 1000,
-    reward: 5,
-    progress: (c) => c.stats.arrowsCleared,
-  },
-  {
-    id: 'no-mistakes',
-    title: 'No Mistakes',
-    desc: 'Finish 5 levels in a row without losing a heart',
-    icon: 'fire',
-    goal: 5,
-    reward: 3,
-    progress: (c) => c.stats.bestPerfectStreak,
-  },
-  {
-    id: 'shape-solver',
-    title: 'Shape Solver',
-    desc: 'Finish 5 shape levels',
-    icon: 'shape-heart',
-    goal: 5,
-    reward: 3,
-    progress: (c) => c.masks.size,
-  },
-  {
-    id: 'collector',
-    title: 'Collector',
-    desc: 'Collect 50 shapes',
-    icon: 'shape-star',
-    goal: 50,
-    reward: 3,
-    progress: (c) => c.shapes.size,
-  },
-  {
-    id: 'alphabet',
-    title: 'Alphabet',
-    desc: 'Collect all 26 letters',
-    icon: 'letter',
-    goal: shapesIn('letters').length,
-    reward: 5,
-    progress: (c) => collectedIn(c.shapes, 'letters'),
-  },
-  {
-    id: 'zoo-keeper',
-    title: 'Zoo Keeper',
-    desc: `Collect all ${shapesIn('animals').length} animals`,
-    icon: 'paw',
-    goal: shapesIn('animals').length,
-    reward: 10,
-    progress: (c) => collectedIn(c.shapes, 'animals'),
-  },
-  {
-    id: 'big-spender',
-    title: 'Big Spender',
-    desc: 'Spend 1000 coins',
-    icon: 'shop',
-    goal: 1000,
-    reward: 2,
-    progress: (c) => c.stats.coinsSpent,
-  },
-]);
+};
+
+/** @type {ReadonlyArray<Achievement>} every step of every group, in display order */
+export const ACHIEVEMENTS = Object.freeze(
+  ACHIEVEMENT_DEFS.flatMap((g) =>
+    g.steps.map((s, i) => ({
+      id: g.steps.length === 1 ? g.id : `${g.id}-${i + 1}`,
+      group: g.id,
+      step: i + 1,
+      steps: g.steps.length,
+      title: g.steps.length === 1 ? g.title : `${g.title} ${['I', 'II', 'III', 'IV', 'V'][i] || i + 1}`,
+      desc: g.desc.replace('{goal}', s.goal.toLocaleString('en-US')),
+      icon: g.icon,
+      goal: s.goal,
+      reward: s.reward,
+      progress: PROGRESS[g.id],
+    })),
+  ),
+);
 
 /**
- * Status of every achievement.
+ * Status of every achievement step.
  * @param {AchievementContext} ctx
  * @param {Set<string>} claimed
  * @returns {{def: Achievement, value: number, done: boolean, claimed: boolean, claimable: boolean}[]}
@@ -116,12 +68,29 @@ export function achievementStatus(ctx, claimed) {
     const value = Math.min(def.goal, Math.max(0, def.progress(ctx) || 0));
     const done = value >= def.goal;
     const isClaimed = claimed.has(def.id);
-    return { def, value, done, claimed: isClaimed, claimable: done && !isClaimed };
+    const earlierOpen = ACHIEVEMENTS.some((d) => d.group === def.group && d.step < def.step && !claimed.has(d.id));
+    return { def, value, done, claimed: isClaimed, claimable: done && !isClaimed && !earlierOpen };
   });
 }
 
 /**
- * Number of finished achievements waiting to be claimed.
+ * What the profile shows: per group, the first unclaimed step (or the last step once all are claimed).
+ * @param {AchievementContext} ctx
+ * @param {Set<string>} claimed
+ * @returns {ReturnType<typeof achievementStatus>}
+ */
+export function visibleAchievements(ctx, claimed) {
+  const all = achievementStatus(ctx, claimed);
+  const out = [];
+  for (const g of ACHIEVEMENT_DEFS) {
+    const steps = all.filter((a) => a.def.group === g.id);
+    out.push(steps.find((a) => !a.claimed) || steps[steps.length - 1]);
+  }
+  return out;
+}
+
+/**
+ * Number of finished achievements waiting to be claimed (the next step of each group).
  * @param {AchievementContext} ctx
  * @param {Set<string>} claimed
  * @returns {number}
@@ -131,16 +100,17 @@ export function claimableCount(ctx, claimed) {
 }
 
 /**
- * Claim an achievement.
+ * Claim an achievement step.
  * @param {string} id
  * @param {AchievementContext} ctx
  * @param {Set<string>} claimed
- * @returns {{ok: boolean, reason?: 'unknown'|'not-done'|'claimed', diamonds: number, claimed: Set<string>}}
+ * @returns {{ok: boolean, reason?: 'unknown'|'not-done'|'claimed'|'order', diamonds: number, claimed: Set<string>}}
  */
 export function claimAchievement(id, ctx, claimed) {
-  const def = ACHIEVEMENTS.find((a) => a.id === id);
-  if (!def) return { ok: false, reason: 'unknown', diamonds: 0, claimed };
-  if (claimed.has(id)) return { ok: false, reason: 'claimed', diamonds: 0, claimed };
-  if ((def.progress(ctx) || 0) < def.goal) return { ok: false, reason: 'not-done', diamonds: 0, claimed };
-  return { ok: true, diamonds: def.reward, claimed: new Set([...claimed, id]) };
+  const s = achievementStatus(ctx, claimed).find((a) => a.def.id === id);
+  if (!s) return { ok: false, reason: 'unknown', diamonds: 0, claimed };
+  if (s.claimed) return { ok: false, reason: 'claimed', diamonds: 0, claimed };
+  if (!s.done) return { ok: false, reason: 'not-done', diamonds: 0, claimed };
+  if (!s.claimable) return { ok: false, reason: 'order', diamonds: 0, claimed };
+  return { ok: true, diamonds: s.def.reward, claimed: new Set([...claimed, id]) };
 }

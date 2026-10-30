@@ -1,6 +1,6 @@
 /**
- * Migrations from older save formats: v1 (single key), v2 (before the shop expansion) and v3 (before the
- * shape collection). Pure.
+ * Migrations from older save formats: v1 (single key), v2 (before the shop expansion), v3 (before the
+ * shape collection) and v4 (before daily rewards and tiered achievements). Pure.
  */
 import { REWARDS } from '../config.js';
 import { isShapeLevel, ORIGINAL_SHAPES, shapeSlot } from '../engine/index.js';
@@ -83,16 +83,27 @@ export function migrateV1(raw) {
  * @returns {object} sanitized current save
  */
 export function migrateV2(raw) {
-  return sanitize({ ...obj(raw), version: 4 });
+  return sanitize({ ...obj(raw), version: 5 });
 }
 
 /**
- * Convert a v3 save to v4: everything is kept, and the new shape collection starts with the shapes of the
+ * Convert a v3 save: everything is kept, and the new shape collection starts with the shapes of the
  * shape levels already finished (see legacyShapes).
  * @param {unknown} raw
- * @returns {object} sanitized v4 save
+ * @returns {object} sanitized current save
  */
 export function migrateV3(raw) {
   // v3 had no shapes list, so sanitize fills it from the finished shape levels
-  return sanitize({ ...obj(raw), version: 4 });
+  return sanitize({ ...obj(raw), version: 5 });
+}
+
+/**
+ * Convert a v4 save to v5: everything is kept; the daily reward starts fresh and the new stats (clean levels,
+ * comebacks) start at 0. Claimed achievements stay claimed (removed ones keep their diamonds), and new steps the
+ * old progress already meets become claimable.
+ * @param {unknown} raw
+ * @returns {object} sanitized v5 save
+ */
+export function migrateV4(raw) {
+  return sanitize({ ...obj(raw), version: 5 });
 }
