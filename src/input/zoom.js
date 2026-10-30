@@ -3,7 +3,10 @@
  * (translate + scale), so taps, the hint hand and effects keep working through getBoundingClientRect.
  */
 import { ZOOM } from '../config.js';
+import { onMinimapTap, setMinimapLevel, updateMinimap } from '../render/minimap.js';
+import { placePointer } from '../render/pointer.js';
 import { $ } from '../ui/dom.js';
+import { maxScaleFor, startScale, translateFor } from './zoomMath.js';
 
 const pointers = new Map(); // pointerId -> {x, y}
 let view = { s: 1, x: 0, y: 0 };
@@ -11,11 +14,66 @@ let maxScale = 1;
 let gesture = null; // {kind: 'pinch'|'pan', ...start values}
 let lastEmptyTap = 0;
 
-/** Apply the current view to the board card. */
+/** Apply the current view to the board card, then follow it with the hand and the mini-map. */
 function apply() {
   $('board-card').style.transform = view.s === 1 ? '' : `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
   $('board-wrap').classList.toggle('zoomed', view.s > 1);
   $('btn-fit').hidden = view.s <= 1;
+  updateMinimap(view.s > 1.01 ? visibleArea() : null);
+  placePointer();
+}
+
+/** Part of the board on screen, as fractions of the board (for the mini-map). */
+function visibleArea() {
+  const r = $('board-card').getBoundingClientRect();
+  const w = $('board-wrap').getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const left = Math.max(r.left, w.left);
+  const top = Math.max(r.top, w.top);
+  const right = Math.min(r.right, w.right);
+  const bottom = Math.min(r.bottom, w.bottom);
+  return {
+    x: (left - r.left) / r.width,
+    y: (top - r.top) / r.height,
+    w: Math.max(0, right - left) / r.width,
+    h: Math.max(0, bottom - top) / r.height,
+  };
+}
+
+/** Centre of the visible board area (the board area minus the button row). */
+function viewCentre() {
+  const w = $('board-wrap').getBoundingClientRect();
+  return { x: w.left + w.width / 2, y: w.top + w.height / 2 };
+}
+
+/**
+ * Pan so a board point (fractions 0-1) is in the middle of the view.
+ * @param {number} fx
+ * @param {number} fy
+ */
+function centreOn(fx, fy) {
+  const card = $('board-card');
+  const q = { x: (fx - 0.5) * card.offsetWidth, y: (fy - 0.5) * card.offsetHeight };
+  const o = origin();
+  const t = translateFor(q, viewCentre(), { x: o.cx, y: o.cy }, view.s);
+  view.x = t.x;
+  view.y = t.y;
+  clampView();
+  apply();
+}
+
+/**
+ * Pan (keeping the zoom) so a screen point is well inside the view, e.g. a hinted arrow.
+ * @param {number} x client x
+ * @param {number} y client y
+ */
+export function ensureVisible(x, y) {
+  if (view.s <= 1) return;
+  const w = $('board-wrap').getBoundingClientRect();
+  const m = Math.min(w.width, w.height) * 0.2;
+  if (x > w.left + m && x < w.right - m && y > w.top + m && y < w.bottom - m) return;
+  const r = $('board-card').getBoundingClientRect();
+  centreOn((x - r.left) / r.width, (y - r.top) / r.height);
 }
 
 /** Keep the zoomed board covering the middle of the view: it can't be dragged away. */
@@ -32,15 +90,20 @@ function clampView() {
 }
 
 /**
- * Reset to the fitted board and set how far this board may zoom.
- * @param {number} cellPx on-screen cell size at scale 1
+ * Start view for a new level: dense boards open zoomed in on the centre (cells about 30px),
+ * small boards open fully fitted.
+ * @param {number} cellPx on-screen cell size when the whole board fits
+ * @param {object} [level] level, for the mini-map outline
+ * @returns {boolean} true when the level starts zoomed
  */
-export function resetZoom(cellPx) {
-  if (cellPx) maxScale = Math.max(1, Math.min(ZOOM.maxScale, ZOOM.targetCellPx / cellPx));
-  view = { s: 1, x: 0, y: 0 };
+export function resetZoom(cellPx, level) {
+  maxScale = maxScaleFor(cellPx);
+  view = { s: startScale(cellPx), x: 0, y: 0 };
   pointers.clear();
   gesture = null;
+  if (level) setMinimapLevel(level);
   apply();
+  return view.s > 1;
 }
 
 /** @returns {boolean} true when this board can zoom (big board, small cells) */
@@ -200,4 +263,5 @@ export function bindZoom() {
   wrap.addEventListener('wheel', onWheel, { passive: false });
   $('btn-fit').addEventListener('pointerdown', (e) => e.stopPropagation());
   $('btn-fit').addEventListener('click', fit);
+  onMinimapTap(centreOn);
 }

@@ -3,13 +3,15 @@ export const CELL = 100;
 /** Fallback hit radius around lines, in cells (used when no cell is hit exactly). */
 export const HIT_FALLBACK = 0.3;
 /** Board cells stay compact like the reference: about 140px for tiny boards, at least this many px per cell. */
-export const BASE_CELL_PX = 24;
+export const BASE_CELL_PX = 30;
 /** Width a small board aims for (px), so 3x3 gets big cells and 8x8 stays at BASE_CELL_PX. */
 export const SMALL_BOARD_PX = 140;
 /** Pinch zoom on big boards. */
 export const ZOOM = Object.freeze({
   targetCellPx: 46, // zoom in until a cell is about a fingertip wide
-  maxScale: 5,
+  minTapPx: 28, // cells smaller than this are hard to tap: such a level starts zoomed in...
+  startCellPx: 30, // ...so a cell is about this wide (28-32px)
+  maxScale: 6,
   dragPx: 10, // movement that turns a tap into a drag
   doubleTapMs: 350, // double tap on empty space resets the zoom
   hintKey: 'arrowEscape:zoomHint',

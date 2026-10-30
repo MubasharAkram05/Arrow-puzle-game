@@ -49,7 +49,7 @@ export function loadLevel(level) {
   renderBoosterBar();
   renderGrid();
   layoutBoard();
-  resetZoom(boardCellPx());
+  resetZoom(boardCellPx(), level);
   maybeShowZoomHint(level.cols);
 }
 
