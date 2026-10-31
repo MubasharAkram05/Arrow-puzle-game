@@ -130,7 +130,9 @@
       <div class="progress"><div class="progress-fill" id="progress"></div></div>
       <div class="board-wrap" id="board-wrap">
         <div class="board-card" id="board-card">
-          <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puzzle board"></svg>
+          <div id="board" role="img" aria-label="Puzzle board">
+            <canvas id="board-canvas"></canvas><canvas id="board-sharp"></canvas>
+          </div>
         </div>
         <div class="pointer" id="pointer">
           <!-- cartoon glove, fingertip at (6, 6) -->

@@ -3,6 +3,7 @@ import { DIRS } from '../engine/index.js';
 import { state } from '../game/state.js';
 import { $, svgEl } from '../ui/dom.js';
 import { placePointer } from './pointer.js';
+import { setBoardCell } from './canvasBoard.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -179,13 +180,14 @@ export function boardCellPx() {
   return cellSizeFor(state.level.rows, state.level.cols, w, h);
 }
 
-/** Fit the board svg into the free space and keep the hand overlay in place. */
+/** Fit the board into the free space and keep the hand overlay in place. */
 export function layoutBoard() {
   if (!state.level || !$('screen-game').classList.contains('active')) return;
   const { rows, cols } = state.level;
   const cell = boardCellPx();
-  const svg = $('board');
-  svg.setAttribute('width', Math.floor(cell * cols));
-  svg.setAttribute('height', Math.floor(cell * rows));
+  const board = $('board');
+  board.style.width = `${cell * cols}px`;
+  board.style.height = `${cell * rows}px`;
+  setBoardCell(cell);
   placePointer();
 }

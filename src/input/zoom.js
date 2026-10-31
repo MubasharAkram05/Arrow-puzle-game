@@ -4,6 +4,7 @@
  */
 import { ZOOM } from '../config.js';
 import { placePointer } from '../render/pointer.js';
+import { setBoardZoom } from '../render/canvasBoard.js';
 import { $ } from '../ui/dom.js';
 import { hideZoomGuide, notePinch } from '../ui/zoomGuide.js';
 import { maxScaleFor, startScale, translateFor } from './zoomMath.js';
@@ -14,11 +15,18 @@ let maxScale = 1;
 let gesture = null; // {kind: 'pinch'|'pan', ...start values}
 let lastEmptyTap = 0;
 
-/** Apply the current view to the board card, then follow it with the hand. */
+let sharpTimer = 0;
+
+/**
+ * Apply the current view to the board card (a CSS transform: fast, the bitmap is stretched), then follow
+ * it with the hand. Once the view has been still for ZOOM.sharpMs the canvas redraws at the new scale.
+ */
 function apply() {
   $('board-card').style.transform = view.s === 1 ? '' : `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
   $('board-wrap').classList.toggle('zoomed', view.s > 1);
   placePointer();
+  clearTimeout(sharpTimer);
+  sharpTimer = setTimeout(() => setBoardZoom(view.s), ZOOM.sharpMs);
 }
 
 /** Centre of the visible board area (the board area minus the button row). */
@@ -82,6 +90,7 @@ export function resetZoom(cellPx) {
   pointers.clear();
   gesture = null;
   apply();
+  setBoardZoom(view.s, maxScale);
   return view.s > 1;
 }
 

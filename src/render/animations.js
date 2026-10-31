@@ -1,6 +1,6 @@
 import { CELL } from '../config.js';
 import { state } from '../game/state.js';
-import { setArrowOffset } from './board.js';
+import { requestFrame, startMoving, stopMoving } from './canvasBoard.js';
 import { escapeFx } from './effects/index.js';
 
 /**
@@ -16,6 +16,7 @@ export function tween(duration, ease, step) {
     function frame(now) {
       const t = Math.min(1, (now - t0) / duration);
       step(ease(t));
+      requestFrame();
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
     }
@@ -36,10 +37,12 @@ export function animateEscape(a) {
   const dist = g.dashLen + (g.toEdge + 1.5) * CELL;
   const dur = Math.max(260, Math.min(450, 200 + dist * 0.06));
   const fx = escapeFx(a); // equipped escape effect (null for the classic slide or reduced motion)
-  a.el.classList.add('out');
+  a.pressed = false;
+  a.tone = 'primary';
+  startMoving(a);
   return tween(dur, easeIn, (t) => {
-    setArrowOffset(a, dist * t);
-    if (t > 0.6) a.el.style.opacity = String(1 - (t - 0.6) / 0.4);
+    a.offset = dist * t;
+    if (t > 0.6) a.alpha = 1 - (t - 0.6) / 0.4;
     if (fx) fx(t, dist * t);
   });
 }
@@ -53,23 +56,33 @@ export function animateEscape(a) {
 export async function animateBlocked(a, block) {
   const m = state.metrics;
   const hit = (block.dist + 1) * CELL - m.sw / 2 - m.tip;
-  await tween(Math.min(300, 140 + block.dist * 25), easeIn, (t) => setArrowOffset(a, hit * t));
-  a.el.classList.add('err');
+  a.pressed = false;
+  startMoving(a);
+  await tween(Math.min(300, 140 + block.dist * 25), easeIn, (t) => (a.offset = hit * t));
+  a.tone = 'err';
   const other = state.arrows[block.id];
-  if (other && other.el && !other.escaped) bump(other.el, a.geom.dx, a.geom.dy);
-  await tween(280, easeOut, (t) => setArrowOffset(a, hit * (1 - t)));
+  if (other && !other.escaped) bump(other, a.geom.dx, a.geom.dy);
+  await tween(280, easeOut, (t) => (a.offset = hit * (1 - t)));
   await wait(120);
-  a.el.classList.remove('err');
+  a.tone = null;
+  a.offset = 0;
+  if (state.hintId !== a.id) stopMoving(a);
+  requestFrame();
 }
 
 /** Small nudge on the arrow that was hit. */
-function bump(el, dx, dy) {
+function bump(o, dx, dy) {
+  startMoving(o);
   tween(
     180,
     (t) => t,
     (t) => {
       const k = Math.sin(t * Math.PI) * 6;
-      el.setAttribute('transform', `translate(${dx * k} ${dy * k})`);
+      o.bumpX = dx * k;
+      o.bumpY = dy * k;
     },
-  ).then(() => el.removeAttribute('transform'));
+  ).then(() => {
+    o.bumpX = o.bumpY = 0;
+    if (!o.tone && !o.pressed && state.hintId !== o.id) stopMoving(o);
+  });
 }
