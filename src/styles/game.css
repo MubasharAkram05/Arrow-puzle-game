@@ -85,7 +85,8 @@ html:not([data-style='classic']) .board-card {
   -webkit-tap-highlight-color: transparent;
 }
 #board-canvas,
-#board-sharp {
+#board-sharp,
+#board-fx {
   position: absolute;
   pointer-events: none;
 }

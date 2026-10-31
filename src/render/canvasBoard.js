@@ -1,12 +1,13 @@
 /**
  * The game board, drawn on canvas (2D context) instead of SVG, so zooming never shows half-drawn arrows.
  *
- * - Two layers. "full" covers the whole board (plus MARGIN cells for arrows sliding out), drawn once per
- *   level and size at up to devicePixelRatio x the furthest zoom. When the board is zoomed in further
- *   than that bitmap allows, "sharp" covers just the visible part at full sharpness, on top.
- * - Each layer keeps its arrows in an offscreen static canvas. A frame copies it and draws only the
- *   arrows that move or change colour (escape slide, bump-back, press highlight, hint glow). A tap only
- *   redraws the box around the arrow that started or stopped moving.
+ * - Three canvases. "full" holds every resting arrow of the whole board (plus MARGIN cells for arrows
+ *   sliding out), drawn once per level and size at up to devicePixelRatio x the furthest zoom. When the
+ *   board is zoomed in further than that bitmap allows, "sharp" holds the resting arrows of the visible
+ *   part at full sharpness, on top. "fx" covers the visible part and holds only the arrows that move or
+ *   change colour (escape slide, bump-back, press highlight, hint glow): it is the only canvas redrawn
+ *   every frame, and it is small.
+ * - A tap only redraws the box around the arrow that starts or stops moving on the resting canvases.
  * - During a pinch or pan the zoom is a CSS transform on the board card: the bitmaps are stretched,
  *   always complete. setBoardZoom() lays the layers out and redraws them once the gesture has ended
  *   (input/zoom.js waits ZOOM.sharpMs).
@@ -18,12 +19,17 @@ import { arrowBox, drawArrow, drawDots, overlaps, withLengths } from './canvasDr
 
 /** Extra cells drawn around the board for arrows that slide out. */
 export const MARGIN = 1.5;
-/** Largest bitmap of each layer (pixels), well below the canvas area limits of mobile browsers. */
-const LAYER_PIXELS = 4e6;
+/**
+ * Largest bitmaps (pixels), well below the canvas area limits of mobile browsers. The whole-board canvas
+ * is mostly hidden under the sharp one when zoomed in, so it stays smaller (cheaper to composite).
+ */
+const FULL_PIXELS = 2e6;
+const LAYER_PIXELS = 3e6;
 
 const R = {
   full: null,
   sharp: null,
+  fx: null,
   level: null,
   arrows: [],
   look: { m: null, colors: null, hintId: -1 }, // stroke metrics, theme colours, hinted arrow
@@ -39,14 +45,11 @@ const R = {
   lastPressMs: 0, // press -> highlight drawn
 };
 
-/** A layer: an on-screen canvas plus its static copy, covering a board region (board units). */
+/** A layer: an on-screen canvas covering a board region (board units). */
 function makeLayer(canvas) {
-  const stat = document.createElement('canvas');
   return {
     canvas,
     ctx: canvas.getContext('2d'),
-    stat,
-    sctx: stat.getContext('2d'),
     scale: 0, // bitmap px per css px at zoom 1
     unit: 0, // css px per board unit
     k: 1, // bitmap px per board unit
@@ -93,15 +96,15 @@ function allDirty() {
   requestFrame();
 }
 
-/** Redraw a static canvas: the dirty box only, or everything (dots plus every resting arrow). */
+/** Redraw a resting canvas: the dirty box only, or everything (dots plus every resting arrow). */
 function drawStatic(L) {
   const t0 = performance.now();
-  const ctx = L.sctx;
+  const ctx = L.ctx;
   const full = L.staticDirty;
   const box = full ? L : L.dirty;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  if (full) ctx.clearRect(0, 0, L.stat.width, L.stat.height);
+  if (full) ctx.clearRect(0, 0, L.canvas.width, L.canvas.height);
   layerTransform(L, ctx);
   if (!full) {
     ctx.beginPath();
@@ -117,13 +120,12 @@ function drawStatic(L) {
   L.dirty = null;
 }
 
-/** Draw one layer: its static canvas plus the hint glow and the arrows drawn per frame. */
-function drawLayer(L, now) {
-  if (L.staticDirty || L.dirty) drawStatic(L);
+/** The fx canvas: the hint glow and the arrows that move or change colour, nothing else. */
+function drawFx(now) {
+  const L = R.fx;
   const ctx = L.ctx;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, L.canvas.width, L.canvas.height);
-  ctx.drawImage(L.stat, 0, 0);
   layerTransform(L, ctx);
   const hint = R.arrows[R.look.hintId];
   if (hint && !hint.escaped) {
@@ -132,19 +134,15 @@ function drawLayer(L, now) {
   }
   for (const a of R.overlay) if (!R.moving.has(a) && !a.escaped) drawArrow(ctx, a, R.look);
   for (const a of R.moving) drawArrow(ctx, a, R.look);
-  // the sharp layer sits on top and draws its own area
-  if (L === R.full && R.sharp.on) {
-    const S = R.sharp;
-    ctx.clearRect(S.x0, S.y0, S.x1 - S.x0, S.y1 - S.y0);
-  }
 }
 
-/** One frame for both layers. Keeps going while anything moves or a hint glows. */
+/** One frame. Keeps going while anything moves or a hint glows. */
 function frame(now) {
   R.frame = 0;
   if (!R.full || !R.level || !R.full.scale) return;
-  drawLayer(R.full, now);
-  if (R.sharp.on) drawLayer(R.sharp, now);
+  if (R.full.staticDirty || R.full.dirty) drawStatic(R.full);
+  if (R.sharp.on && (R.sharp.staticDirty || R.sharp.dirty)) drawStatic(R.sharp);
+  drawFx(now);
   if (R.pressAt) {
     R.lastPressMs = performance.now() - R.pressAt;
     R.pressAt = 0;
@@ -168,16 +166,14 @@ function placeLayer(L, x0, y0, x1, y1, scale) {
   const same = L.x0 === x0 && L.y0 === y0 && L.x1 === x1 && L.y1 === y1 && L.unit === unit;
   if (same && L.canvas.width === bw && L.canvas.height === bh) return;
   Object.assign(L, { x0, y0, x1, y1, unit, scale, k: unit * scale });
-  for (const c of [L.canvas, L.stat]) {
-    c.width = bw;
-    c.height = bh;
-  }
+  L.canvas.width = bw;
+  L.canvas.height = bh;
   Object.assign(L.canvas.style, { width: `${w}px`, height: `${h}px`, left: `${x0 * unit}px`, top: `${y0 * unit}px` });
   L.staticDirty = true;
 }
 
 /** Bitmap scale a layer covering this many css px may have. */
-const scaleFor = (want, cssArea) => Math.min(want, Math.sqrt(LAYER_PIXELS / cssArea));
+const scaleFor = (want, cssArea, max = LAYER_PIXELS) => Math.min(want, Math.sqrt(max / cssArea));
 
 /** Lay out both layers for the current size, zoom and visible area, then draw. */
 function layout() {
@@ -191,24 +187,29 @@ function layout() {
   const fy1 = rows * CELL + pad;
   // the whole board is drawn once per level and size, as sharp as the furthest zoom allows (within
   // LAYER_PIXELS), so zooming never reallocates it
-  const fs = scaleFor((window.devicePixelRatio || 1) * R.maxZoom, (fx1 + pad) * (fy1 + pad) * unit * unit);
+  const fs = scaleFor((window.devicePixelRatio || 1) * R.maxZoom, (fx1 + pad) * (fy1 + pad) * unit * unit, FULL_PIXELS);
   placeLayer(F, -pad, -pad, fx1, fy1, fs);
-  // the sharp layer: just the visible part of the board (plus a little)
+  // the visible part of the board (plus a little): the sharp resting layer when needed, and fx
   const S = R.sharp;
   const board = $('board').getBoundingClientRect();
   const view = $('board-wrap').getBoundingClientRect();
-  S.on = F.scale < want * 0.95 && board.width > 0;
-  S.canvas.style.display = S.on ? '' : 'none';
-  if (S.on) {
+  let vis = [-pad, -pad, fx1, fy1];
+  if (board.width > 0) {
     const u = (cols * CELL) / board.width; // board units per screen px
     const mx = (view.width * u) / 10;
     const my = (view.height * u) / 10;
-    const x0 = Math.max(-pad, Math.floor((view.left - board.left) * u - mx));
-    const y0 = Math.max(-pad, Math.floor((view.top - board.top) * u - my));
-    const x1 = Math.min(fx1, Math.ceil((view.right - board.left) * u + mx));
-    const y1 = Math.min(fy1, Math.ceil((view.bottom - board.top) * u + my));
-    placeLayer(S, x0, y0, x1, y1, scaleFor(want, (x1 - x0) * (y1 - y0) * unit * unit));
+    vis = [
+      Math.max(-pad, Math.floor((view.left - board.left) * u - mx)),
+      Math.max(-pad, Math.floor((view.top - board.top) * u - my)),
+      Math.min(fx1, Math.ceil((view.right - board.left) * u + mx)),
+      Math.min(fy1, Math.ceil((view.bottom - board.top) * u + my)),
+    ];
   }
+  const visScale = scaleFor(want, (vis[2] - vis[0]) * (vis[3] - vis[1]) * unit * unit);
+  S.on = F.scale < want * 0.95 && board.width > 0;
+  S.canvas.style.display = S.on ? '' : 'none';
+  if (S.on) placeLayer(S, ...vis, visScale);
+  placeLayer(R.fx, ...vis, visScale);
   requestFrame();
 }
 
@@ -222,6 +223,7 @@ export function mountBoard(level, arrows, m) {
   if (!R.full) {
     R.full = makeLayer($('board-canvas'));
     R.sharp = makeLayer($('board-sharp'));
+    R.fx = makeLayer($('board-fx'));
     // dark mode, arrow style or board colours changed: redraw with the new colours
     new MutationObserver(() => refreshBoardLook()).observe(document.documentElement, {
       attributes: true,
@@ -233,7 +235,7 @@ export function mountBoard(level, arrows, m) {
   R.look = { m, colors: readColors(), hintId: -1 };
   R.moving.clear();
   R.overlay.clear();
-  for (const L of [R.full, R.sharp]) Object.assign(L, { x1: 0, dirty: null, staticDirty: true, scale: 0 });
+  for (const L of [R.full, R.sharp, R.fx]) Object.assign(L, { x1: 0, dirty: null, staticDirty: true, scale: 0 });
   for (const a of arrows) {
     a.geom = withLengths(arrowGeometry(a, m, level.rows, level.cols));
     a.box = arrowBox(a);
