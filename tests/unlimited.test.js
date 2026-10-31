@@ -4,12 +4,14 @@
  * timed in generator.test.js.)
  */
 import { describe, expect, it } from 'vitest';
-import { getLevelConfig, isShapeLevel } from '../src/engine/index.js';
+import { getLevelConfig, isShapeLevel, loadShapeLibrary } from '../src/engine/index.js';
 import { achievementStatus } from '../src/game/achievements.js';
 import { chapterLevels, chapterOf, levelReward } from '../src/game/economy.js';
 import { newStats } from '../src/game/stats.js';
 import { isPlayable } from '../src/game/unlock.js';
 import { sanitize } from '../src/storage/schema.js';
+
+await loadShapeLibrary(); // every level from 4 is a shape board
 
 const HUGE = [1_000_000, 2_500_000, 5_000_000];
 
@@ -34,8 +36,8 @@ describe('unlimited levels', () => {
 
   it('level configs exist for any number', () => {
     for (const n of HUGE) {
-      const plain = isShapeLevel(n) ? n + 1 : n; // a plain level needs no shape library
-      const c = getLevelConfig(plain);
+      expect(isShapeLevel(n)).toBe(true);
+      const c = getLevelConfig(n);
       expect(c.rows).toBeGreaterThan(0);
       expect(c.difficulty).toBe('Expert');
     }

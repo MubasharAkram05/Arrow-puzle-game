@@ -1,7 +1,7 @@
 import { hashSeed, mulberry32, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { absorbLeftovers, growArrow, pickLength } from './grow.js';
-import { LEVEL_ONE, MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig } from './levels.js';
+import { LEVEL_ONE, MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig, shapeOf } from './levels.js';
 import { analyzeLevel } from './difficulty.js';
 import { joinLongArrows } from './longArrows.js';
 import { bestHeads, createGrid } from './heads.js';
@@ -123,8 +123,8 @@ export function meetsGoals(report, goals) {
  * @param {object} cfg
  * @returns {object} level with seed and attempt
  */
-export function generateFromConfig(cfg) {
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
     const level = buildLevel(cfg, rng);
     if (level.rejected || !meetsConstraints(level, cfg)) continue;
@@ -167,7 +167,29 @@ function levelOne() {
  */
 export function generateLevel(n) {
   if (n === 1) return levelOne();
-  const level = generateFromConfig(getLevelConfig(n));
+  const level = shapeFallbacks(n).reduce((found, [shape, grow, tries]) => {
+    if (found) return found;
+    try {
+      const lv = generateFromConfig(getLevelConfig(n, shape, grow), tries);
+      if (shape) console.warn(`Level ${n}: shape ${shapeOf(n)} missed its floors, used ${shape} +${grow}`);
+      return lv;
+    } catch {
+      return null;
+    }
+  }, null);
+  if (!level) throw new Error(`Could not generate level ${n}`);
   level.number = n;
   return level;
+}
+
+/**
+ * What generateLevel tries, in order: the level's own board; for a shape level that keeps missing its
+ * floors, the same shape on two bigger boards, then the next shapes of its cycle. Never a plain board.
+ * @param {number} n
+ * @returns {[string|undefined, number, number][]} [shape (undefined = the level's own), extra cells, attempts]
+ */
+function shapeFallbacks(n) {
+  const own = shapeOf(n);
+  if (!own) return [[undefined, 0, MAX_ATTEMPTS]];
+  return [[undefined, 0, 80], [own, 4, 40], [own, 8, 40], ...[1, 2, 3].map((i) => [shapeOf(n + i), 0, 80])];
 }

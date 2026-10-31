@@ -1,7 +1,7 @@
 /** Public engine API: pure logic, no DOM. */
 export { DIRS, opposite } from './directions.js';
 export { mulberry32, hashSeed, randInt, weightedPick } from './rng.js';
-export { ORIGINAL_SHAPES, makeMask, insideShape } from './masks.js';
+export { ORIGINAL_SHAPES, makeMask, insideShape, minBoardSide, smoothMask } from './masks.js';
 export { SHAPE_ART } from './shapeArt.js';
 export {
   MIN_LEN,
@@ -9,11 +9,13 @@ export {
   MIN_FILL,
   LEVEL_ONE,
   getLevelConfig,
+  levelMask,
   isShapeLevel,
   shapeOf,
-  shapeSlot,
   shapeSize,
 } from './levels.js';
+export { cycleOrder, shapeAt } from './shapes/plan.js';
+export { REMOVED_SHAPES } from './shapes/removed.js';
 export {
   allShapes,
   getShape,

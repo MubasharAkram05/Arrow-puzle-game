@@ -342,9 +342,8 @@ export const LEVELS = Object.freeze({
     2: { cols: 5, rows: 6, arrows: [6, 8], rounds: [2, 4] },
     3: { cols: 6, rows: 8, arrows: [12, 16], rounds: [2, 3] },
   }),
-  shapeEvery: 3, // every 3rd level is a shape board...
-  shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
-  // shape levels take turns between categories (first round in this order), easy shapes first
+  shapeFrom: 4, // every level after the tutorial is a shape board (src/engine/shapes/plan.js)
+  // the library order: categories take turns (first round in this order), easy shapes first
   shapeRotation: [
     'animals',
     'food',
@@ -409,3 +408,6 @@ export const TIER_FLOORS = Object.freeze({
     maxEdgeFreeRatio: 0.5,
   }),
 });
+
+/** Smallest board a shape may use: one piece and close to its smooth outline (see minBoardSide). */
+export const SHAPE_BOARD = Object.freeze({ fromSide: 16, maxSide: 40, minSimilarity: 0.88 });

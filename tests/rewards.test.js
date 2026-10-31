@@ -1,6 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { loadShapeLibrary, shapeOf } from '../src/engine/index.js';
 import { applyWin, pay, wallet } from '../src/game/rewards.js';
+
+// every level from 4 is a shape level, and a win records its shape
+await loadShapeLibrary();
 import { state } from '../src/game/state.js';
 import { applySave, snapshot } from '../src/storage/save.js';
 import { defaultSave, migrateV1, sanitize } from '../src/storage/schema.js';
@@ -36,7 +39,7 @@ describe('winning levels pays coins that are saved (regression: counters stuck a
     expect(state.style).toBe('olive');
   });
 
-  it('pays diamonds for a shape level and keeps them after a reload', () => {
+  it('pays diamonds for a 10th level and keeps them after a reload', () => {
     applyWin(10, 'Normal', 1, 3);
     expect(state.diamonds).toBe(1);
     reload();
@@ -57,7 +60,7 @@ describe('shape collection', () => {
   beforeEach(() => boot(defaultSave()));
 
   it('a won shape level unlocks its shape once, and it survives a reload', () => {
-    expect(applyWin(5, 'Normal', 3, 3).newShape).toBeNull();
+    expect(applyWin(3, 'Normal', 3, 3).newShape).toBeNull(); // tutorial levels are plain
     const first = applyWin(6, 'Normal', 3, 3);
     expect(first.newShape).toBe(shapeOf(6));
     expect(state.progress.shapes.has(shapeOf(6))).toBe(true);
