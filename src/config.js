@@ -1,7 +1,9 @@
 /** SVG units per grid cell. */
 export const CELL = 100;
 /** Fallback hit radius around lines, in cells (used when no cell is hit exactly). */
-export const HIT_FALLBACK = 0.3;
+export const HIT_FALLBACK = 0.45;
+/** A release is a tap when the finger moved less than movePx and was down less than maxMs. */
+export const TAP = Object.freeze({ movePx: 10, maxMs: 350 });
 /** Board cells stay compact like the reference: about 140px for tiny boards, at least this many px per cell. */
 export const BASE_CELL_PX = 30;
 /** Width a small board aims for (px), so 3x3 gets big cells and 8x8 stays at BASE_CELL_PX. */
@@ -14,6 +16,7 @@ export const ZOOM = Object.freeze({
   maxScale: 6,
   dragPx: 10, // movement that turns a tap into a drag
   doubleTapMs: 350, // double tap on empty space resets the zoom
+  sharpMs: 100, // the board redraws sharp this long after a pinch, pan or wheel zoom stops
   guideKey: 'arrowEscape:zoomGuide',
   guideTimes: 3, // the zoom guide shows on the first 3 zoomed levels, then only until the first pinch
   guideMs: 3000,
