@@ -33,19 +33,20 @@ describe('level node state', () => {
     expect(status(3, progress(), true)).toBe('perfect');
   });
 
-  it('marks shape levels (every 3rd from 6) and every 10th level', () => {
+  it('marks shape levels (every level from 4) and every 10th level', () => {
     expect(levelNodeState(6, progress(), false)).toMatchObject({ shape: true, milestone: false });
-    expect(levelNodeState(10, progress(), false)).toMatchObject({ shape: false, milestone: true });
+    expect(levelNodeState(10, progress(), false)).toMatchObject({ shape: true, milestone: true });
     expect(levelNodeState(30, progress(), false)).toMatchObject({ shape: true, milestone: true });
     expect(levelNodeState(3, progress(), false)).toMatchObject({ shape: false, milestone: false });
   });
 
   it('renders the right icon and label per state', () => {
-    expect(nodeHTML(levelNodeState(14, progress(), false), 0)).toContain('#i-lock');
+    // from level 4 every node shows its board outline (a placeholder until the shape library is in)
+    expect(nodeHTML(levelNodeState(14, progress(), false), 0)).toMatch(/pn-locked[\s\S]*data-shape-level="14"/);
     expect(nodeHTML(levelNodeState(13, progress(), false), 0)).toContain('START');
     expect(nodeHTML(levelNodeState(3, progress(), false), 0)).toContain('#i-crown');
     expect(nodeHTML(levelNodeState(1, progress(), false), 0)).toContain('#i-check');
-    expect(nodeHTML(levelNodeState(10, progress(), false), 0)).toMatch(/pn-star[\s\S]*#i-shape-star/);
+    expect(nodeHTML(levelNodeState(10, progress(), false), 0)).toMatch(/pn-star[\s\S]*data-shape-level="10"/);
     expect(nodeHTML(levelNodeState(14, progress(), false), 0)).toContain('aria-label="Level 14, locked"');
   });
 });
