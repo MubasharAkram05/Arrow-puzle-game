@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board every 3rd level (621 shapes in 10 categories)
+- Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board on every level from 4 (386 shapes in 10 categories, no repeats within a cycle)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
@@ -78,7 +78,8 @@ src/
     cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
     offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
     offerActions.js     applies offers to the game state
-  render/               SVG board, HUD, pointing hand, animations, confetti
+  render/               canvas board (canvasBoard.js layers, canvasDraw.js arrows, canvasHeads.js heads),
+                        HUD, pointing hand, animations, confetti; board.js keeps the small SVG boards
     effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
@@ -161,9 +162,13 @@ There is no last level: any level number works (tested up to 1,000,000) with the
 
 Two arrows pointing straight at each other on the same line can never appear: each would block the other forever, so the "trap look" comes from arrows that point at each other's bodies or across each other instead.
 
-**Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board from the shape library (see [Shape library](#shape-library)). On the Levels path, a shape level's node shows its shape.
+**Shape levels**: every level after the tutorial (from level 4) is a shape board from the shape library (see [Shape library](#shape-library)); there are no plain rectangles any more. On the Levels path, each node shows its level's exact board outline.
 
-Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as plain levels of that number (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
+- **Order** (`src/engine/shapes/plan.js`): every cycle of 386 levels shows each shape exactly once, in a seeded shuffle. The library order is split in two halves (easier, more compact shapes first) and each half is shuffled on its own, with a new seed per cycle; a shape stays in its half, so it never comes back within half a cycle, even across the end of a cycle. (A brand-new full shuffle each cycle could put a shape from the end of one cycle at the start of the next, a few levels apart.) Later cycles get bigger boards, as the size curve keeps growing with the level.
+- **Never a plain board**: a shape that misses its floors gets more seeds, then two bigger boards, then the next shapes of its cycle (logged with `console.warn`, so a shape that fails often can be removed). The tests check levels 1-500 plus 200 random ones up to 1,000,000 and none needs a fallback.
+- Every shape board is at least its shape's minimum size (`minBoardSide` in `src/engine/masks.js`) and its mask is smoothed at board size (see [Shape library](#shape-library)).
+
+Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as the tier asks of any level (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
 After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms locally, 300 ms on CI).
 
@@ -180,27 +185,30 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 
 ### Shape library
 
-621 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing):
+621 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing). 386 are in play: 235 that did not read as their name on a real board were taken out in 3.13.0 (see below).
 
-| Category  | Target |  Shapes |
-| --------- | -----: | ------: |
-| Letters   |     26 |      26 |
-| Numbers   |     10 |      10 |
-| Symbols   |     50 |      62 |
-| Transport |     50 |      55 |
-| Objects   |    100 |     134 |
-| Food      |     50 |      65 |
-| Fruits    |     40 |      42 |
-| Nature    |     60 |      62 |
-| Animals   |     80 |     110 |
-| Others    |     40 |      55 |
-| **Total** |        | **621** |
+| Category  |   Built | In play |
+| --------- | ------: | ------: |
+| Letters   |      26 |      26 |
+| Numbers   |      10 |      10 |
+| Symbols   |      62 |      58 |
+| Transport |      55 |      33 |
+| Objects   |     134 |     100 |
+| Food      |      65 |      31 |
+| Fruits    |      42 |      25 |
+| Nature    |      62 |      33 |
+| Animals   |     110 |      40 |
+| Others    |      55 |      30 |
+| **Total** | **621** | **386** |
 
 - **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 32 cells on its longest side, small holes are filled, parts too thin for a board are trimmed (at most 12% of the shape) and only the main connected area stays. The game only reads the generated JSON.
 - **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 20x20, one connected area, and still connected and similar (70%+ overlap) on an 18x18 board, the smallest shape board. Every rejected source is logged with the reason; a name tries its next source until one passes.
 - **Excluded on purpose**: brand logos, copyrighted characters, country flags, religious or political symbols, weapons, armour and violence, skulls and bones, blood, alcohol, cigarettes, drugs and anything offensive. A keyword scan of names and sources runs before each release (3.8.0 removed Soda, whose icon was a cocktail glass, and the Viking and Knight helmets).
 - **Files**: `library.json` (77 KB, 30 KB gzipped; one row per shape with id, name, category, width, height, source, license and the run-length-encoded mask) is a lazy chunk preloaded after the home screen. `index.json` (7 KB, category -> ids) is in the main bundle for the collection counts and achievements. `scripts/shapes-preview.html` is a contact sheet of every shape plus the rejected list; it is not part of the build.
-- **Order**: shape levels take turns between categories, first in the order of `LEVELS.shapeRotation` (animals, food, letters, transport, nature, objects, fruits, symbols, others, numbers), then in proportion to what each category has left, so letters never come 26 in a row. Inside a category compact shapes come first. Never two of the same category back to back. The order is deterministic; after all 621 shapes (1,863 levels) it starts again on bigger boards.
+- **Library order**: categories take turns, first in the order of `LEVELS.shapeRotation` (animals, food, letters, transport, nature, objects, fruits, symbols, others, numbers), then in proportion to what each category has left; inside a category compact shapes come first. The levels shuffle each half of this order per cycle (see [Shape levels](#levels-and-difficulty)).
+- **Clean masks at board size** (`makeMask` in `src/engine/masks.js`): after sampling the shape at cell centres, single-cell spurs and bumps (a cell with at most one filled neighbour) are removed and single-cell notches and holes (an empty cell with three or four filled neighbours) are filled, so the outline stays the same but loses its noise.
+- **Minimum board size** (`minBoardSide`): the smallest square board on which the shape is one piece and overlaps a smooth area-average of its outline by at least 88% (`SHAPE_BOARD` in `src/config.js`). A board never goes below it; small, detailed shapes get more cells.
+- **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.13.0 no shape was flagged; the 235 removed shapes were picked by eye from the sheet (blobs that did not look like their name at board size, like Sheep, Goat, Police Car or Envelope) and are listed in `src/engine/shapes/removed.js`. They stay in the library, so a save that collected one keeps it.
 - **Credits**: sources that need attribution are listed in `CREDITS.md` and in Settings > Credits.
 
 ### Shape Collection (hidden)
@@ -210,8 +218,16 @@ Won shapes are always saved (`progress.shapes`). The Profile section that shows 
 ### Zoom
 
 - **Default zoom:** when a level starts, if the cells would be smaller than 18px when fitted, the board opens zoomed in on its centre so a cell is about 22px. Boards whose cells are 18px or more open fully fitted. Both values are `ZOOM.zoomBelowPx` and `ZOOM.startCellPx` in `src/config.js`.
-- **Gestures:** pinch to zoom out to the whole board or in further (until a cell is about a fingertip wide), drag with one finger to move. Taps fire on release, so a drag or pinch never removes an arrow. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
-- **Full board:** a double tap on empty space zooms out to the whole board.
+- **Gestures:** pinch to zoom out to the whole board or in further (until a cell is about a fingertip wide), drag with one finger to move. Desktop browsers zoom with Ctrl + mouse wheel or a trackpad pinch.
+- **Full board:** a double tap on empty space zooms out to the whole board. Taps on arrows never wait for a second tap.
+- **Rendering** (`src/render/canvasBoard.js`): the board is drawn on canvas, not SVG, so zooming never shows half-drawn arrows or loose heads. Three canvases: the whole board's resting arrows (drawn once per level and size, up to devicePixelRatio x the furthest zoom, capped at 2M pixels), a sharp copy of just the visible part when zoomed in further than that (drawn 100 ms after a pinch, pan or wheel zoom stops, `ZOOM.sharpMs`), and a small fx canvas over the visible part for the arrows that move or change colour (the only one redrawn every frame). During a gesture the zoom is a CSS transform on the board card: the bitmaps are stretched and always complete. A tap only redraws the box around the arrow that starts or stops moving. Same look as before: round caps and joins, every arrowhead shape, theme colours, dark mode, arrow styles and board backgrounds. The victory mini board and shop previews stay small SVGs.
+
+### Taps
+
+- Feedback is instant: the arrow under the finger lights up on pointerdown (drawn on the fx canvas over its resting copy) and acts on pointerup.
+- Hit test (`arrowAt` in `src/input/board-input.js`): the cell under the finger gives the arrow straight from the occupancy grid; otherwise only the arrows in the 3x3 cells around it are measured, nearest within 0.45 cell. Constant time on any board.
+- A release is a tap when the finger moved less than 10 px and was down less than 350 ms (`TAP` in `src/config.js`); anything else is a pan or pinch.
+- The board uses `touch-action: none` and has no transform transitions, so nothing delays a tap, and the next arrow can be tapped while the previous one is still sliding out.
 - **Zoom guide:** when a level starts zoomed, two hands show "Pinch to zoom" and one finger shows "Double-tap to see full board". It appears on the first 3 zoomed levels, then only while the player has never pinched. It fades on the first touch or after 3 seconds and never takes taps. Settings has "Show zoom tips again".
 - **Hints:** a hint pans (keeping the zoom) so the highlighted arrow is on screen.
 - **Levels page:** only a few chapters around the current level are rendered; more load while scrolling up or down, with no end.
@@ -221,7 +237,7 @@ Won shapes are always saved (`progress.shapes`). The Profile section that shows 
 The Levels page is a winding path (`src/ui/screens/levels/`), our own design:
 
 - **Chapter banner** (`chapterBanner.js`): gradient card with "CHAPTER n", the chapter name, progress (e.g. 12/20) and the chapter reward; it sticks to the top while its chapter scrolls by.
-- **Nodes** (`pathNode.js`): round 3D buttons (darker bottom edge, soft shine) in a gentle S-curve. Completed nodes show a check, perfect ones a crown, the current level is bigger with a pulsing ring and a START bubble, locked ones are grey with a lock. Shape levels show their shape and every 10th level is an amber star node (a corner badge marks them done).
+- **Nodes** (`pathNode.js`): round 3D buttons (darker bottom edge, soft shine) in a gentle S-curve. The current level is bigger with a pulsing ring and a START bubble, locked ones are grey, every 10th level is an amber star node (a corner badge marks them done). From level 4 every node shows its level's board outline: `levelMask(n)` gives the same shape, size and mask the generator uses, drawn as crisp vector cells (sharp at any size, light and dark). The tutorial levels show a check, a crown or their number. A test checks that the icon and the game board use the same shape and mask for levels 4-1000.
 - **Chest** after each chapter's last level: closed, wiggling when the chapter is finished but not paid yet, and open once the chapter reward is paid (the opening animation plays once).
 - Light arrow and dot doodles fill the space beside the curve. A round button at the bottom right jumps back to the current level when it is off screen.
 - Performance (`pathView.js`): at most 8 chapters (160 nodes) are in the DOM; more are added while scrolling and far ones are removed, and off-screen chapters skip layout (`content-visibility`). Checked with 50,000 unlocked levels: no long tasks while scrolling.
