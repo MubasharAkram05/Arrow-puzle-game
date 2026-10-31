@@ -48,6 +48,7 @@ function makeLayer(canvas) {
     stat,
     sctx: stat.getContext('2d'),
     scale: 0, // bitmap px per css px at zoom 1
+    unit: 0, // css px per board unit
     k: 1, // bitmap px per board unit
     x0: 0,
     y0: 0,
@@ -164,9 +165,9 @@ function placeLayer(L, x0, y0, x1, y1, scale) {
   const h = (y1 - y0) * unit;
   const bw = Math.max(1, Math.round(w * scale));
   const bh = Math.max(1, Math.round(h * scale));
-  if (L.x0 === x0 && L.y0 === y0 && L.x1 === x1 && L.y1 === y1 && L.canvas.width === bw && L.canvas.height === bh)
-    return;
-  Object.assign(L, { x0, y0, x1, y1, scale, k: unit * scale });
+  const same = L.x0 === x0 && L.y0 === y0 && L.x1 === x1 && L.y1 === y1 && L.unit === unit;
+  if (same && L.canvas.width === bw && L.canvas.height === bh) return;
+  Object.assign(L, { x0, y0, x1, y1, unit, scale, k: unit * scale });
   for (const c of [L.canvas, L.stat]) {
     c.width = bw;
     c.height = bh;
