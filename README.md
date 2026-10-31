@@ -56,7 +56,13 @@ src/
                         collection.js (collected per category)
     levels.js           tier and board size for a level number (numbers from config.js)
     shapes.js           turn plans for straight, L, U, zig-zag, spiral, snake
-    generator.js        reverse-peeling generator with retries
+    generator.js        reverse-peeling generator with retries (and repairs for hard boards)
+    heads.js            peeling grid and the choice of the next arrow head
+    hardBoard.js        hard-board passes: hidden first move, deepen, late walls, decoys, repairs
+    deepen.js           turns arrows around so they leave later (keeps boards solvable)
+    firstMoves.js       hides or removes obvious first moves on the board's edge
+    reshape.js          decoy cuts and late walls (joins)
+    metrics.js          free per round, longest chain, decoys, free heads on the edge
     longArrows.js       joins neighbours into long arrows without breaking solvability
     board.js            occupancy, ray checks, free arrows
     solver.js           greedy solver and structural validation
@@ -100,34 +106,77 @@ Every level is generated from its number, so a level is always the same. The gen
 
 Difficulty is measured, not guessed:
 
-| Metric         | Meaning                                                 |
-| -------------- | ------------------------------------------------------- |
-| Blocking depth | How many arrows must leave before a given arrow is free |
-| Free at start  | Arrows you can safely tap on the first move             |
-| Rounds         | Longest chain of "this must go before that"             |
+| Metric          | Meaning                                                                           |
+| --------------- | --------------------------------------------------------------------------------- |
+| Blocking depth  | How many arrows must leave before a given arrow is free                           |
+| Free at start   | Arrows you can safely tap on the first move                                       |
+| Rounds          | Removal waves when every free arrow leaves at once                                |
+| Free per round  | Arrows / rounds: how many options you have at a time (lower = harder)             |
+| Longest chain   | Longest "A is blocked by B, B by C ..." chain of nearest blockers, in arrows      |
+| Decoy ratio     | Share of arrows blocked by exactly one arrow: they look free but cost a heart     |
+| Edge-free ratio | Share of the first moves whose head sits on the outer ring (lower = hidden moves) |
+
+All are worked out by `analyzeLevel` (`src/engine/difficulty.js`, `src/engine/metrics.js`).
 
 **First levels.** Level 1 is drawn by hand like the reference: three straight arrows (two up, one down) with the tutorial hand. Level 2 has 6-8 arrows, level 3 has 12-16 arrows and needs 2-3 removal rounds.
 
-**The curve (level 4 onward).** `difficultyFor(level)` in `src/engine/difficulty.js` gives every number a level needs: grid size, target arrows, max free arrows at start, min average depth, min solve rounds, long-arrow share and shape scale. Each value rises a little on every level and never goes back: a square-root ramp (fast early, slower later) grows the board from 16x21 at level 4 to 42x54 at level 200. After that the board stays the same size and difficulty keeps rising on a log scale up to level 20,000: deeper blocking (0.21 to 0.225 x arrows), more solve rounds (0.17 to 0.18 x arrows), more long arrows (17% to 20%) and, from level 20,000, only one free arrow at the start. All constants live in `LEVELS.curve` in `src/config.js`.
+**The curve (level 4 onward).** `difficultyFor(level)` in `src/engine/difficulty.js` gives every number a level needs: grid size, target arrows, max free arrows at start, min average depth, min solve rounds, long-arrow share and shape scale. Each value rises a little on every level and never goes back: a square-root ramp (fast early, slower later) grows the board from 16x21 at level 4 to 42x54 at level 200. After that the board stays the same size and difficulty keeps rising on a log scale up to level 20,000: deeper blocking (0.21 to 0.225 x arrows), more solve rounds (0.17 to 0.18 x arrows), more long arrows (17% to 20%). All constants live in `LEVELS.curve` in `src/config.js`; the per-tier floors live in `TIER_FLOORS`.
 
-| Label (display only) | Levels  | Max free at start           | Notes                                                         |
-| -------------------- | ------- | --------------------------- | ------------------------------------------------------------- |
-| Normal               | 1-30    | 3                           | levels 1-3 are the tutorial                                   |
-| Hard                 | 31-100  | 2                           | board reaches 34x44 at level 100                              |
-| Super Hard           | 101-999 | 2                           | 15-20% long arrows; mean depth over 64 (old Super Hard: 45.8) |
-| Expert               | 1000+   | 2, then 1 from level 20,000 | deepest chains; Expert pays x2.5 coins (the cap)              |
+**Tier floors (3.12.0).** Every board from level 4 must meet its tier's floors. Depth and rounds are the curve above times `boost` (+40% compared with 3.11.0). Each tier is at least as strict as the one before, so difficulty never drops from level N to N+10.
+
+| Tier       | Levels  | Max free at start | Max free per round | Depth / rounds | Min longest chain | Min decoys | Max edge-free |
+| ---------- | ------- | ----------------- | ------------------ | -------------- | ----------------- | ---------- | ------------- |
+| Normal     | 4-30    | 2                 | 3.0                | +40%           | 8                 | 12%        | 60%           |
+| Hard       | 31-100  | 2                 | 3.0                | +40%           | 14                | 12%        | 50%           |
+| Super Hard | 101-999 | 2                 | 3.0                | +40%           | 20                | 12%        | 50%           |
+| Expert     | 1000+   | 2                 | 3.0                | +40%           | 22                | 12%        | 50%           |
+
+Levels 1-3 (the tutorial) are unchanged. Expert pays x2.5 coins (the cap).
+
+**Requested targets vs what ships.** The starting targets were tuned so every level still builds fast. Normal and Hard reach their targets except where a later tier's floor had to be lower (floors may never get easier from one tier to the next). On the full-size 42x54 board (~270 arrows) Super Hard and Expert could not reach the targets fast enough, so their floors were set close to what the generator reliably reaches:
+
+| Floor              | Normal target / set | Hard target / set | Super Hard target / set | Expert target / set |
+| ------------------ | ------------------- | ----------------- | ----------------------- | ------------------- |
+| Max free at start  | 2 / 2               | 2 / 2             | 1 / 2                   | 1 / 2               |
+| Max free per round | 3 / 3.0             | 2.5 / 3.0         | 2 / 3.0                 | 1.5 / 3.0           |
+| Depth and rounds   | +40% / +40%         | +40% / +40%       | +40% / +40%             | +50% / +40%         |
+| Min longest chain  | 8 / 8               | 14 / 14           | 20 / 20                 | 28 / 22             |
+| Min decoys         | 15% / 12%           | 20% / 12%         | 25% / 12%               | 30% / 12%           |
+| Max edge-free      | 60% / 60%           | 50% / 50%         | 40% / 50%               | 30% / 50%           |
+
+Typical boards beat the floors: free per round is about 1.8-2.3 on Normal and Hard and 2.5-2.9 on Super Hard and Expert, decoys are 15-30%, solve rounds are about 1.4-2.5x what they were in 3.11.0.
+
+**How hard boards are built** (`src/engine/hardBoard.js`, settings in `LEVELS.curve.hardness`):
+
+- A short empty corridor (1-2 cells) runs in from one edge, so the one free arrow chosen on purpose sits inside the board. Other free arrows on the edge are trimmed, turned around or removed.
+- The peeling prefers heads behind the latest arrows (long chains) and heads with exactly one arrow in front (decoys).
+- Arrows are turned around (tail becomes head) when that makes them leave later. A turn is only kept when nothing in the new way out waits for the arrow and the way out does not cross its own body, so every board stays solvable.
+- Short arrows are joined onto the tails of arrows that leave later, building long walls that come out late and cutting the free arrows per round.
+- A few tail cells are cut so some arrows end up with exactly one arrow in their way (decoys), within the fill floor (90%).
+- A board that misses its depth, free-per-round or decoy floor by a little is repaired; otherwise the generator retries with the next seed.
 
 There is no last level: any level number works (tested up to 1,000,000) with the same deterministic seeds.
 
 **Arrow lengths.** About 70% short (2-6 cells), 15-20% medium (7-12) and 10-15% long (13-30). Long arrows are made after the board is built by joining neighbouring arrows onto the tail of a deep arrow (`src/engine/longArrows.js`). The deep arrow keeps its head, so it still leaves late, and the long body becomes a wall that blocks many others. A neighbour is only joined when it is not one of the arrow's blockers (directly or through a chain), which keeps every board solvable.
 
-Two arrows pointing straight at each other on the same line can never appear: each would block the other forever.
+Two arrows pointing straight at each other on the same line can never appear: each would block the other forever, so the "trap look" comes from arrows that point at each other's bodies or across each other instead.
 
 **Shape levels**: every 3rd level after the tutorial (6, 9, 12, ...) is a shape board from the shape library (see [Shape library](#shape-library)). On the Levels path, a shape level's node shows its shape.
 
-Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same arrow count, depth and solve-round floors as plain levels of that number. Only the start-free cap is wider: a jagged edge lets more arrows out, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
+Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as plain levels of that number (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
-After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms each; the average is about 25 ms on a laptop).
+After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms locally, 300 ms on CI).
+
+Build time and retries per tier (3.12.0, measured on the cloud test machine, which is slower than a laptop; the same 700 levels):
+
+| Tier       | Median | 95th percentile | Slowest | Most retries | Mean retries |
+| ---------- | ------ | --------------- | ------- | ------------ | ------------ |
+| Normal     | 5 ms   | 10 ms           | 12 ms   | 11           | 0.6          |
+| Hard       | 12 ms  | 22 ms           | 31 ms   | 1            | 0.1          |
+| Super Hard | 38 ms  | 101 ms          | 208 ms  | 6            | 0.5          |
+| Expert     | 54 ms  | 173 ms          | 245 ms  | 9            | 1.2          |
+
+On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms; none take over 300 ms.
 
 ### Shape library
 

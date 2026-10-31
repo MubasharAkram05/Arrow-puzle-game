@@ -122,11 +122,22 @@ export function getLevelConfig(n, shape) {
   let cols = d.gridW;
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells
   if (mask) cols = rows = shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale));
-  const goals = { maxStartFree: d.maxStartFree, minAvgDepth: d.minAvgDepth, minRounds: d.minSolveRounds };
+  const goals = {
+    maxStartFree: d.maxStartFree,
+    minAvgDepth: d.minAvgDepth,
+    minRounds: d.minSolveRounds,
+    maxFreePerRound: d.maxFreePerRound,
+    minLongestChain: d.minLongestChain,
+    minDecoyRatio: d.minDecoyRatio,
+    maxEdgeFreeRatio: d.maxEdgeFreeRatio,
+  };
+  // a shape's jagged edge lets more arrows out at the start, so shapes keep their extra first moves
+  // (and those sit on the shape's edge); every other floor is the same as a plain level of that number
   if (mask)
     Object.assign(goals, {
       maxStartFree: d.maxStartFree + LEVELS.maskExtraFree,
       maxStartFreeShare: LEVELS.maskFreeShare,
+      maxEdgeFreeRatio: 1,
     });
   return {
     ...base,
@@ -145,5 +156,6 @@ export function getLevelConfig(n, shape) {
     },
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare),
     goals,
+    ...LEVELS.curve.hardness,
   };
 }
