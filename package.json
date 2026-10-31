@@ -16,7 +16,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write . && eslint --fix .",
     "shapes:sources": "npm --prefix scripts/shape-sources ci",
-    "shapes:build": "node scripts/build-shapes.mjs"
+    "shapes:build": "node scripts/build-shapes.mjs",
+    "shapes:sheet": "node scripts/shape-sheet.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

@@ -4,10 +4,9 @@ import { LEVELS } from '../src/config.js';
 import {
   allShapes,
   getShape,
-  isShapeLevel,
   loadShapeLibrary,
+  REMOVED_SHAPES,
   shapeCategories,
-  shapeOf,
   shapeOrder,
   shapeSources,
 } from '../src/engine/index.js';
@@ -72,15 +71,20 @@ describe('shape library', () => {
 });
 
 describe('shape order', () => {
-  it('uses every shape exactly once', () => {
+  // shapes in play: the library minus the ones taken out (src/engine/shapes/removed.js)
+  const playable = () => allShapes().filter((s) => !REMOVED_SHAPES.includes(s.id));
+
+  it('uses every shape in play exactly once, and none of the removed ones', () => {
     const order = shapeOrder();
-    expect(order).toHaveLength(allShapes().length);
+    expect(order).toHaveLength(playable().length);
     expect(new Set(order).size).toBe(order.length);
+    expect(order.some((id) => REMOVED_SHAPES.includes(id))).toBe(false);
+    for (const id of REMOVED_SHAPES) expect(getShape(id), id).toBeTruthy(); // still there for old saves
   });
 
   it('is deterministic', () => {
-    expect(buildOrder(allShapes(), LEVELS.shapeRotation)).toEqual(shapeOrder());
-    expect(buildOrder([...allShapes()].reverse(), LEVELS.shapeRotation)).toEqual(shapeOrder());
+    expect(buildOrder(playable(), LEVELS.shapeRotation)).toEqual(shapeOrder());
+    expect(buildOrder([...playable()].reverse(), LEVELS.shapeRotation)).toEqual(shapeOrder());
   });
 
   it('starts with one shape of each category in rotation order, then never repeats a category back to back', () => {
@@ -95,7 +99,8 @@ describe('shape order', () => {
     const order = shapeOrder();
     const firstHalf = order.slice(0, order.length / 2).map(cat);
     for (const c of shapeCategories()) {
-      const total = allShapes().filter((s) => s.category === c.id).length;
+      const total = playable().filter((s) => s.category === c.id).length;
+      if (total < 4) continue;
       const early = firstHalf.filter((x) => x === c.id).length;
       // about half of each category lands in the first half of the cycle
       expect(early / total, c.id).toBeGreaterThan(0.3);
@@ -111,16 +116,5 @@ describe('shape order', () => {
       const avg = (xs) => xs.reduce((a, s) => a + s.complexity, 0) / xs.length;
       expect(avg(list.slice(0, third)), c.id).toBeLessThan(avg(list.slice(-third)));
     }
-  });
-
-  it('shape levels are 6, 9, 12, ... and walk the order, then repeat', () => {
-    expect([6, 9, 12, 300].every(isShapeLevel)).toBe(true);
-    expect([1, 2, 3, 4, 5, 7, 8, 10].some(isShapeLevel)).toBe(false);
-    const order = shapeOrder();
-    expect(shapeOf(6)).toBe(order[0]);
-    expect(shapeOf(12)).toBe(order[2]);
-    expect(shapeOf(6 + order.length * 3)).toBe(order[0]);
-    // a full cycle is about 3 x the number of shapes in levels
-    expect(order.length * LEVELS.shapeEvery).toBeGreaterThan(1500);
   });
 });

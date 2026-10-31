@@ -1,7 +1,8 @@
 import { DIRS } from './directions.js';
 import { insideArt, SHAPE_ART } from './shapeArt.js';
 import { getShape } from './shapes/library.js';
-import { insideMask } from './shapes/quality.js';
+import { areaMask, components, insideMask, similarity } from './shapes/quality.js';
+import { SHAPE_BOARD } from '../config.js';
 
 /**
  * The game's first 20 shapes, in the order shape levels used before the shape library (3.7.0).
@@ -80,9 +81,45 @@ export function insideShape(shape, x, y) {
   }
 }
 
+/** Filled 4-neighbours of a cell. */
+function neighbours(m, rows, cols, r, c) {
+  let n = 0;
+  for (const { dr, dc } of DIRS) {
+    const rr = r + dr;
+    const cc = c + dc;
+    if (rr >= 0 && rr < rows && cc >= 0 && cc < cols && m[rr * cols + cc]) n++;
+  }
+  return n;
+}
+
 /**
- * Build a 0/1 usable-cell array for a library shape (the library must be loaded).
- * Cells with no usable neighbour are dropped.
+ * Clean a sampled mask at board size without changing what it looks like: single-cell spurs and bumps
+ * (a cell with at most one filled neighbour) go, single-cell notches and holes (an empty cell with three or
+ * four filled neighbours) are filled. Mutates m.
+ * @param {number[]} m
+ * @param {number} rows
+ * @param {number} cols
+ */
+export function smoothMask(m, rows, cols) {
+  for (let pass = 0, changed = true; changed && pass < 3; pass++) {
+    changed = false;
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        if (m[r * cols + c] && neighbours(m, rows, cols, r, c) <= 1) {
+          m[r * cols + c] = 0;
+          changed = true;
+        }
+  }
+  const fill = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      if (!m[r * cols + c] && neighbours(m, rows, cols, r, c) >= 3) fill.push(r * cols + c);
+  for (const i of fill) m[i] = 1;
+}
+
+/**
+ * Build a 0/1 usable-cell array for a library shape (the library must be loaded): sampled at cell centres,
+ * then smoothed (see smoothMask).
  * @param {string|null} shape shape id, null = every cell usable
  * @param {number} rows
  * @param {number} cols
@@ -100,16 +137,29 @@ export function makeMask(shape, rows, cols) {
       m[r * cols + c] = insideMask(art, x, y);
     }
   }
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (!m[r * cols + c]) continue;
-      const hasNeighbour = DIRS.some(({ dr, dc }) => {
-        const rr = r + dr;
-        const cc = c + dc;
-        return rr >= 0 && rr < rows && cc >= 0 && cc < cols && m[rr * cols + cc];
-      });
-      if (!hasNeighbour) m[r * cols + c] = 0;
-    }
-  }
+  smoothMask(m, rows, cols);
   return m;
+}
+
+const minSides = new Map();
+
+/**
+ * Smallest square board on which a shape still reads as itself: its smoothed board mask is one piece and
+ * overlaps (IoU) a smooth area-average of the full-detail shape by at least SHAPE_BOARD.minSimilarity.
+ * Small, detailed shapes need more cells. Capped at SHAPE_BOARD.maxSide.
+ * @param {string} shape
+ * @returns {number}
+ */
+export function minBoardSide(shape) {
+  if (!minSides.has(shape)) {
+    const art = getShape(shape);
+    let n = SHAPE_BOARD.fromSide;
+    for (; n < SHAPE_BOARD.maxSide; n++) {
+      const bits = Uint8Array.from(makeMask(shape, n, n));
+      const board = { w: n, h: n, bits };
+      if (components(board).length === 1 && similarity(board, areaMask(art, n)) >= SHAPE_BOARD.minSimilarity) break;
+    }
+    minSides.set(shape, n);
+  }
+  return minSides.get(shape);
 }

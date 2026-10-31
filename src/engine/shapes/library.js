@@ -4,6 +4,7 @@
  */
 import { LEVELS } from '../../config.js';
 import { components, decodeRle, fillRatio } from './quality.js';
+import { REMOVED_SHAPES } from './removed.js';
 
 /**
  * @typedef {object} Shape
@@ -111,7 +112,11 @@ export function setShapeLibrary(json) {
     byId,
     categories: json.categories,
     sources: json.sources,
-    order: buildOrder(shapes, LEVELS.shapeRotation),
+    // removed shapes stay looked up by id (old saves may have collected one) but no level uses them
+    order: buildOrder(
+      shapes.filter((s) => !REMOVED_SHAPES.includes(s.id)),
+      LEVELS.shapeRotation,
+    ),
   };
   return lib;
 }
