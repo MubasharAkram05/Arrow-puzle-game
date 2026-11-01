@@ -417,4 +417,9 @@ export const TIER_FLOORS = Object.freeze({
 });
 
 /** Smallest board a shape may use: one piece and close to its smooth outline (see minBoardSide). */
-export const SHAPE_BOARD = Object.freeze({ fromSide: 16, maxSide: 40, minSimilarity: 0.88 });
+export const SHAPE_BOARD = Object.freeze({
+  fromSide: 16,
+  maxSide: 64, // the library resolution: a bigger board shows no more detail
+  minSimilarity: 0.88,
+  lateSide: 40, // shapes that need a bigger board than this come in the second half of each cycle
+});

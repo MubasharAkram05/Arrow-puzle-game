@@ -5,13 +5,14 @@
 
 /** Quality rules a shape must pass to become a board. */
 export const QUALITY = Object.freeze({
-  size: 32, // library resolution (longest side)
+  size: 64, // library resolution (longest side)
   minFill: 0.25, // filled share of the bounding box
   maxFill: 0.85,
   minAspect: 0.4, // short side / long side: long thin shapes make poor boards
-  thinRes: 20, // no part thinner than 2 cells at this resolution
-  smallRes: 18, // still recognizable at the smallest shape board
+  thinRes: 32, // no part thinner than 2 cells at this resolution (thin parts are thickened first)
+  smallRes: 32, // still one piece and recognizable at this size (each shape also has its own minimum board)
   minSimilarity: 0.7, // overlap (IoU) between the small and the full version
+  thinCells: 4, // parts thinner than this many cells (at size) are thickened, not cut off
 });
 
 /** @returns {{w: number, h: number, bits: Uint8Array}} */
@@ -114,6 +115,63 @@ export function openMask(m, k) {
       if (full) for (let dy = 0; dy < k; dy++) for (let dx = 0; dx < k; dx++) out.bits[(y + dy) * w + x + dx] = 1;
     }
   return out;
+}
+
+/** Grow a set of cells by one cell in the 8 directions. */
+function dilate(m) {
+  const { w, h, bits } = m;
+  const out = emptyMask(w, h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!bits[y * w + x]) continue;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < w && ny < h) out.bits[ny * w + nx] = 1;
+        }
+    }
+  return out;
+}
+
+/**
+ * Thicken thin parts instead of cutting them off: cells not covered by any full k x k block (legs, tails,
+ * stems, wings) grow by one cell on every side; thick parts stay as they are. The mask gets a 1-cell margin
+ * so a thin part on the edge can grow too.
+ * @param {{w: number, h: number, bits: Uint8Array}} m
+ * @param {number} k
+ * @returns {{w: number, h: number, bits: Uint8Array}}
+ */
+export function thickenThin(m, k) {
+  const pad = emptyMask(m.w + 2, m.h + 2);
+  for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) pad.bits[(y + 1) * pad.w + x + 1] = m.bits[y * m.w + x];
+  const open = openMask(pad, k);
+  const thin = emptyMask(pad.w, pad.h);
+  for (let i = 0; i < pad.bits.length; i++) thin.bits[i] = pad.bits[i] && !open.bits[i] ? 1 : 0;
+  const grown = dilate(thin);
+  for (let i = 0; i < pad.bits.length; i++) grown.bits[i] |= pad.bits[i];
+  return crop(grown);
+}
+
+/**
+ * Smooth edges: single-cell spurs (at most one filled neighbour) go and single-cell notches (three or four
+ * filled neighbours) are filled, twice.
+ */
+export function smoothEdges(m) {
+  let cur = m;
+  for (let pass = 0; pass < 2; pass++) {
+    const { w, h, bits } = cur;
+    const out = { w, h, bits: bits.slice() };
+    const n = (x, y) => (x >= 0 && y >= 0 && x < w && y < h ? bits[y * w + x] : 0);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const k = n(x - 1, y) + n(x + 1, y) + n(x, y - 1) + n(x, y + 1);
+        if (bits[y * w + x] && k <= 1) out.bits[y * w + x] = 0;
+        else if (!bits[y * w + x] && k >= 3) out.bits[y * w + x] = 1;
+      }
+    cur = out;
+  }
+  return cur;
 }
 
 /** Is any filled cell outside every full 2x2 block (a part only 1 cell thin)? */

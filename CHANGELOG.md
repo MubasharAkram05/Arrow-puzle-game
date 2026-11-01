@@ -2,6 +2,20 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.14.0] - 2026-11-01
+
+### Changed
+
+- The shape library is rebuilt at 64x64 (was 32x32), aspect ratio kept, from the same sources, licenses and credits. Thin parts (legs, tails, wings, stems) are thickened instead of cut off: dilation of parts thinner than 4 cells only, run twice. Holes are filled, edges smoothed, one connected area kept. 720 shapes built (621 before); `library.json` is 79 KB gzipped.
+- Every shape was checked again by eye, including the 222 removed in 3.13.0. 443 are in play (399 before): 81 came back, 46 are new and 83 went out. Clearer sources for Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice and Crab.
+- Shapes that need a big board have their own minimum (`SHAPE_MIN_SIDE`, 48 cells for 49 shapes) and always come in the second half of a cycle (`SHAPE_BOARD.lateSide` 40). `SHAPE_BOARD.maxSide` is 64, the library resolution.
+- The library size test checks the gzipped size (under 150 KB).
+
+### Removed
+
+- From play (still in the library, so saves keep every collected id): 277 shapes, each with a reason in `src/engine/shapes/removed.js`. 12 of them only because they were the slowest to generate: Bandage, Baseball, Bush, Clock, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. 21 old ids that miss the quality filter at 64 (Letter Q, Ribbon, Muffin, Dinosaur, Bat...) are kept out of play.
+- `BIG_BOARD_SHAPES` (replaced by `SHAPE_MIN_SIDE`).
+
 ## [3.13.0] - 2026-10-31
 
 ### Changed

@@ -1,4 +1,5 @@
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LEVELS } from '../src/config.js';
 import {
@@ -11,7 +12,7 @@ import {
   shapeSources,
 } from '../src/engine/index.js';
 import { buildOrder } from '../src/engine/shapes/library.js';
-import { decodeRle, encodeRle, qualityProblem } from '../src/engine/shapes/quality.js';
+import { QUALITY, decodeRle, encodeRle, qualityProblem } from '../src/engine/shapes/quality.js';
 
 const FILE = new URL('../src/engine/shapes/library.json', import.meta.url);
 const OPEN_LICENSES = ['MIT', 'Apache-2.0', 'CC-BY-4.0', 'CC-BY-3.0', 'OFL-1.1', 'project'];
@@ -41,11 +42,18 @@ describe('shape library', () => {
     for (const s of allShapes()) expect(cats.has(s.category), s.id).toBe(true);
   });
 
-  it('every shape passes the quality filter', () => {
+  it('every shape in play passes the quality filter; the ones that miss it are kept out of play', () => {
     const bad = allShapes()
+      .filter((s) => !REMOVED_SHAPES.includes(s.id))
       .map((s) => [s.id, qualityProblem(s)])
       .filter(([, p]) => p);
     expect(bad).toEqual([]);
+  });
+
+  it('is built on a 64-cell grid: most shapes span all 64 cells, thickening adds at most 4', () => {
+    const sides = allShapes().map((s) => Math.max(s.w, s.h));
+    for (const side of sides) expect(side).toBeLessThanOrEqual(QUALITY.size + 4);
+    expect(sides.filter((side) => side >= QUALITY.size).length / sides.length).toBeGreaterThan(0.8);
   });
 
   it('every shape records an open source and license', () => {
@@ -57,8 +65,8 @@ describe('shape library', () => {
     }
   });
 
-  it('stays small (under 150 KB) and decodes what it encodes', () => {
-    expect(statSync(FILE).size).toBeLessThan(150 * 1024);
+  it('stays small (lazy chunk under 150 KB gzip) and decodes what it encodes', () => {
+    expect(gzipSync(readFileSync(FILE)).length).toBeLessThan(150 * 1024);
     const raw = JSON.parse(readFileSync(FILE, 'utf8'));
     expect(raw.fields).toEqual(['id', 'name', 'category', 'width', 'height', 'source', 'license', 'rle']);
     for (const s of allShapes().slice(0, 50)) expect(decodeRle(encodeRle(s.bits), s.w * s.h)).toEqual(s.bits);

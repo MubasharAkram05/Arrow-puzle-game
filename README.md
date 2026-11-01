@@ -185,30 +185,33 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 
 ### Shape library
 
-621 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing). 399 are in play: 222 were taken out in 3.13.0 (221 that did not read as their name even on a big board, and Asterisk, which was too slow to build; see below).
+720 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing), on a 64-cell grid. 443 are in play; 277 stay out (they do not read as their name from the silhouette, or are too slow to generate; see below).
 
-| Category  |   Built | In play |
-| --------- | ------: | ------: |
-| Letters   |      26 |      26 |
-| Numbers   |      10 |      10 |
-| Symbols   |      62 |      57 |
-| Transport |      55 |      34 |
-| Objects   |     134 |     102 |
-| Food      |      65 |      32 |
-| Fruits    |      42 |      26 |
-| Nature    |      62 |      34 |
-| Animals   |     110 |      48 |
-| Others    |      55 |      30 |
-| **Total** | **621** | **399** |
+| Category  |   Built | In play (3.13.0) | In play |
+| --------- | ------: | ---------------: | ------: |
+| Letters   |      26 |               26 |      25 |
+| Numbers   |      10 |               10 |      10 |
+| Symbols   |      65 |               57 |      56 |
+| Transport |      65 |               34 |      42 |
+| Objects   |     153 |              102 |     108 |
+| Food      |      70 |               32 |      39 |
+| Fruits    |      53 |               26 |      27 |
+| Nature    |      72 |               34 |      39 |
+| Animals   |     144 |               48 |      70 |
+| Others    |      62 |               30 |      27 |
+| **Total** | **720** |          **399** | **443** |
 
-- **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 32 cells on its longest side, small holes are filled, parts too thin for a board are trimmed (at most 12% of the shape) and only the main connected area stays. The game only reads the generated JSON.
-- **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 20x20, one connected area, and still connected and similar (70%+ overlap) on an 18x18 board, the smallest shape board. Every rejected source is logged with the reason; a name tries its next source until one passes.
+- **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 64 cells on its longest side (aspect ratio kept). Small holes are filled. Parts thinner than 4 cells (legs, tails, wings, stems) are thickened instead of cut off: a morphological dilation of the thin parts only, run twice, so a 1-cell line ends up 5 cells wide and is still 2+ cells wide on a board half the size. Then single-cell spurs and notches are smoothed and only the main connected area stays. A shape that shipped before and now misses the quality filter is kept (for old saves) but out of play. The game only reads the generated JSON.
+- **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests on every shape in play): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 32x32, one connected area, and still connected and similar (70%+ overlap) at 32x32. Every rejected source is logged with the reason; a name tries its next source until one passes.
 - **Excluded on purpose**: brand logos, copyrighted characters, country flags, religious or political symbols, weapons, armour and violence, skulls and bones, blood, alcohol, cigarettes, drugs and anything offensive. A keyword scan of names and sources runs before each release (3.8.0 removed Soda, whose icon was a cocktail glass, and the Viking and Knight helmets).
-- **Files**: `library.json` (77 KB, 30 KB gzipped; one row per shape with id, name, category, width, height, source, license and the run-length-encoded mask) is a lazy chunk preloaded after the home screen. `index.json` (7 KB, category -> ids) is in the main bundle for the collection counts and achievements. `scripts/shapes-preview.html` is a contact sheet of every shape plus the rejected list; it is not part of the build.
+- **Files**: `library.json` (168 KB, 79 KB gzipped, tested to stay under 150 KB gzipped; one row per shape with id, name, category, width, height, source, license and the run-length-encoded mask) is a lazy chunk preloaded after the home screen. `index.json` (8 KB, category -> ids) is in the main bundle for the collection counts and achievements. `scripts/shapes-preview.html` is a contact sheet of every shape plus the rejected list; it is not part of the build.
 - **Library order**: categories take turns, first in the order of `LEVELS.shapeRotation` (animals, food, letters, transport, nature, objects, fruits, symbols, others, numbers), then in proportion to what each category has left; inside a category compact shapes come first. The levels shuffle each half of this order per cycle (see [Shape levels](#levels-and-difficulty)).
 - **Clean masks at board size** (`makeMask` in `src/engine/masks.js`): after sampling the shape at cell centres, single-cell spurs and bumps (a cell with at most one filled neighbour) are removed and single-cell notches and holes (an empty cell with three or four filled neighbours) are filled, so the outline stays the same but loses its noise.
 - **Minimum board size** (`minBoardSide`): the smallest square board on which the shape is one piece and overlaps a smooth area-average of its outline by at least 88% (`SHAPE_BOARD` in `src/config.js`). A board never goes below it; small, detailed shapes get more cells.
-- **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level next to its silhouette, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.13.0 no shape was flagged. Shapes were then checked by eye from the silhouettes: every one that looked wrong was first tried on bigger boards (40 and 72 cells). The library masks are 32 cells on their longest side with thin parts already trimmed, so a bigger board adds no detail: a shape that is a blob at 32 stays a blob. 14 read as their name on a big board and came back (Bird, Cat Head, Chick, Dinosaur, Dog Head, Frog, Kettle, Poppy, Sailboat, Shark, School, Spaghetti, Starfruit, Tiger); they have a 40-cell minimum (`BIG_BOARD_SHAPES`) and always come in the second half of a cycle, where boards are already that big, so no early level gets bigger or slower. 221 stay out because their silhouette itself does not look like the name (Sheep, Goat, Police Car, Envelope, Lion, Turtle, Strawberry...), and Asterisk because its thin arms need an 89-cell board and many retries. All are listed in `src/engine/shapes/removed.js`; they stay in the library, so a save that collected one keeps it. Bringing more back needs the library rebuilt at a higher resolution (`npm run shapes:build`).
+- **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level next to its silhouette, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.14.0 no shape was flagged.
+- **Checked by eye** (3.14.0): every built shape, including the 222 taken out in 3.13.0, was looked at as a board silhouette at 32 and 56 cells. Only shapes a kid could name stay in play. For some popular names a clearer source was picked first (Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice, Crab). 81 shapes came back, 46 new ones joined, and 83 that were in play went out. Everything out of play is in `src/engine/shapes/removed.js` with its reason; it stays in the library, so a save that collected it keeps it.
+- **Big-board shapes** (`SHAPE_MIN_SIDE` in `removed.js`): 49 shapes with thin legs, wheels or many small parts only read well from about 48 cells (Bicycle, Spider, Butterfly, Helicopter, Grapes...). They get that minimum board and always come in the second half of a cycle (`SHAPE_BOARD.lateSide`), where boards are already that big, so no early level gets bigger or slower.
+- **Speed**: 12 shapes are out because they were the slowest to generate (holes and thin rims make the generator retry): Bandage, Baseball, Bush, Clock, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. Median build time on a big Expert board is about 57 ms (53 ms in 3.13.0). Every tested level is under the 300 ms CI limit; 21 of the 713 tested levels are over the 150 ms local target (9 in 3.13.0), because the 64-cell outlines have more edge detail.
 - **Credits**: sources that need attribution are listed in `CREDITS.md` and in Settings > Credits.
 
 ### Shape Collection (hidden)

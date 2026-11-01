@@ -6,11 +6,11 @@ credits in Settings > Credits.
 
 | Source                                                                   | Author                            | License    | Shapes |
 | ------------------------------------------------------------------------ | --------------------------------- | ---------- | -----: |
-| [Tabler Icons (filled)](https://tabler.io/icons)                         | Paweł Kuna                        | MIT        |      9 |
-| [Material Symbols (filled)](https://fonts.google.com/icons)              | Google                            | Apache-2.0 |     94 |
-| [Font Awesome Free 6 (solid)](https://fontawesome.com)                   | Fonticons, Inc.                   | CC-BY-4.0  |    210 |
-| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    196 |
-| [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     58 |
+| [Tabler Icons (filled)](https://tabler.io/icons)                         | Paweł Kuna                        | MIT        |      8 |
+| [Material Symbols (filled)](https://fonts.google.com/icons)              | Google                            | Apache-2.0 |     89 |
+| [Font Awesome Free 6 (solid)](https://fontawesome.com)                   | Fonticons, Inc.                   | CC-BY-4.0  |    221 |
+| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    289 |
+| [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     59 |
 | [Inter (Black 900)](https://rsms.me/inter/)                              | Rasmus Andersson                  | OFL-1.1    |     35 |
 | [Roboto Slab (Black 900)](https://fonts.google.com/specimen/Roboto+Slab) | Christian Robertson               | Apache-2.0 |      1 |
 | Arrow Escape original shapes                                             | Arrow Escape                      | project    |     18 |
@@ -25,4 +25,4 @@ credits in Settings > Credits.
 - **Inter** by Rasmus Andersson is licensed under the [SIL Open Font License 1.1](https://openfontlicense.org).
 - **Roboto Slab** by Christian Robertson is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-The shapes are changed from the originals: filled, downsampled to a 32-cell grid and trimmed to play as boards.
+The shapes are changed from the originals: filled, downsampled to a 64-cell grid, with thin parts thickened, to play as boards.
