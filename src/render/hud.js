@@ -1,3 +1,4 @@
+import { setBoardGrid } from './canvasBoard.js';
 import { PRICES } from '../config.js';
 import { state } from '../game/state.js';
 import { $, svgEl } from '../ui/dom.js';
@@ -47,7 +48,7 @@ export function renderHintButton() {
 
 /** Grid toggle button and dot visibility. */
 export function renderGrid() {
-  $('board').classList.toggle('no-grid', !state.grid);
+  setBoardGrid(state.grid);
   $('btn-grid').classList.toggle('on', state.grid);
   $('btn-grid').setAttribute('aria-pressed', String(state.grid));
 }

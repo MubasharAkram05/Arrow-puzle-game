@@ -11,7 +11,8 @@ import { HINT_EVERY } from '../config.js';
 import { animateBlocked, animateEscape } from '../render/animations.js';
 import { resetZoom } from '../input/zoom.js';
 import { hideZoomGuide, maybeShowZoomGuide } from '../ui/zoomGuide.js';
-import { boardCellPx, drawArrows, layoutBoard, strokeMetrics } from '../render/board.js';
+import { boardCellPx, layoutBoard, strokeMetrics } from '../render/board.js';
+import { mountBoard, stopMoving } from '../render/canvasBoard.js';
 import { renderGrid, renderHearts, renderHintButton, renderProgress } from '../render/hud.js';
 import { hidePointer } from '../render/pointer.js';
 import { initAudio, playSound } from '../audio/sound.js';
@@ -49,7 +50,7 @@ export function loadLevel(level) {
   hidePointer();
   $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
   state.metrics = { ...strokeMetrics(boardCellPx()), head: state.cosmetics.equipped.head };
-  drawArrows($('board'), state.arrows, level, true, state.metrics);
+  mountBoard(level, state.arrows, state.metrics);
   setDifficultyBadge(level.difficulty);
   renderHearts(-1);
   renderProgress();
@@ -111,7 +112,7 @@ function escape(a, lvl) {
   if (state.remaining === 0) state.locked = true;
   else updateTutorial();
   animateEscape(a).then(() => {
-    a.el.remove();
+    stopMoving(a);
     // several escape animations can end after the last arrow left: only the first one finishes the level
     if (state.level === lvl && state.remaining === 0 && !state.won) {
       state.won = true;

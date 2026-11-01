@@ -3,14 +3,14 @@
  * after each chapter. Only a few chapters are in the DOM at once (more are added while scrolling and far
  * ones removed), so the page stays light with any number of levels.
  */
-import { loadShapeLibrary, shapeLibraryReady, shapeOf } from '../../../engine/index.js';
+import { loadShapeLibrary, shapeLibraryReady } from '../../../engine/index.js';
 import { chapterLevels, chapterOf, chapterWindow } from '../../../game/economy.js';
 import { startLevel } from '../../../game/game.js';
 import { clearHint } from '../../../game/hints.js';
 import { state } from '../../../game/state.js';
 import { isPlayable } from '../../../game/unlock.js';
 import { hidePointer } from '../../../render/pointer.js';
-import { shapeIcon } from '../../components/shapeIcon.js';
+import { levelIcon } from '../../components/shapeIcon.js';
 import { toast } from '../../components/toast.js';
 import { $ } from '../../dom.js';
 import { navigate, onReturn, openTab } from '../../navigation.js';
@@ -105,7 +105,7 @@ function renderLevels() {
 function fillPendingShapes() {
   if (shapeLibraryReady()) {
     for (const el of grid().querySelectorAll('.shape-pending'))
-      el.outerHTML = shapeIcon(shapeOf(Number(el.dataset.shapeLevel)), 'pn-shape');
+      el.outerHTML = levelIcon(Number(el.dataset.shapeLevel), 'pn-shape');
     return;
   }
   loadShapeLibrary()

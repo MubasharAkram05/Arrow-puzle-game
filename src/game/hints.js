@@ -3,6 +3,7 @@ import { ensureVisible } from '../input/zoom.js';
 import { saveProgress } from '../storage/save.js';
 import { renderHintButton } from '../render/hud.js';
 import { hidePointer, showPointer } from '../render/pointer.js';
+import { headClientPoint, setHintArrow } from '../render/canvasBoard.js';
 import { noteHintUsed } from './rewards.js';
 import { state } from './state.js';
 
@@ -22,31 +23,18 @@ export function currentFreeArrows() {
 export function showHint(a) {
   clearHint();
   state.hintId = a.id;
-  const m = state.metrics;
-  const glow = a.shaft.cloneNode();
-  glow.setAttribute('class', 'glow');
-  glow.setAttribute('stroke-width', m.sw * 2.8);
-  const glowHead = a.headEl.cloneNode();
-  glowHead.setAttribute('class', 'glow-head');
-  glowHead.setAttribute('stroke-width', m.sw * 1.4);
-  a.el.insertBefore(glowHead, a.shaft);
-  a.el.insertBefore(glow, glowHead);
-  a.el.classList.add('hint');
+  setHintArrow(a.id);
   // when zoomed, pan (keeping the zoom) so the hinted arrow is on screen
-  const head = a.headEl.getBoundingClientRect();
-  ensureVisible(head.left + head.width / 2, head.top + head.height / 2);
+  const head = headClientPoint(a);
+  ensureVisible(head.x, head.y);
   showPointer(a.id, false);
 }
 
 /** Remove the hint glow and hand. */
 export function clearHint() {
   if (state.hintId === -1) return;
-  const a = state.arrows[state.hintId];
-  if (a && a.el) {
-    a.el.classList.remove('hint');
-    a.el.querySelectorAll('.glow, .glow-head').forEach((n) => n.remove());
-  }
   state.hintId = -1;
+  setHintArrow(-1);
   hidePointer();
 }
 

@@ -160,7 +160,8 @@ describe('v3 migration (shape collection)', () => {
     // 2 Shields and 1 Extra Heart are paid back
     expect(d.wallet).toEqual({ coins: 900 + 120, diamonds: 12 + 1, hints: 2 });
     expect(d).not.toHaveProperty('boosters');
-    expect(d.achievements.claimed).toEqual(['first-escape', 'shape-solver']);
+    // the old single-step Shape Solver claim counts as Shape Solver I
+    expect(d.achievements.claimed).toEqual(['first-escape', 'shape-solver-1']);
     expect(d.settings).toEqual(V3.settings);
     // levels 6..69 step 3 = 22 shape levels: the 20 originals once, then heart and arrow again
     expect(new Set(d.progress.shapes)).toEqual(

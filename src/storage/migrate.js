@@ -3,7 +3,7 @@
  * shape collection), v4 (before daily rewards and tiered achievements) and v5 (before boosters were removed). Pure.
  */
 import { REWARDS } from '../config.js';
-import { isShapeLevel, ORIGINAL_SHAPES, shapeSlot } from '../engine/index.js';
+import { ORIGINAL_SHAPES } from '../engine/index.js';
 import { sanitize } from './schema.js';
 import { obj } from './validators.js';
 
@@ -42,7 +42,10 @@ export function convertChapters(rewarded, oldSize) {
  * @returns {string[]} shape ids
  */
 export function legacyShapes(completed) {
-  const ids = completed.filter(isShapeLevel).map((n) => ORIGINAL_SHAPES[shapeSlot(n) % ORIGINAL_SHAPES.length]);
+  // the old rule: every 3rd level from 6 was a shape level, slot 0 at level 6
+  const ids = completed
+    .filter((n) => n >= 6 && n % 3 === 0)
+    .map((n) => ORIGINAL_SHAPES[(n / 3 - 2) % ORIGINAL_SHAPES.length]);
   return [...new Set(ids)];
 }
 

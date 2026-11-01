@@ -7,9 +7,9 @@
  */
 import { isMilestoneLevel } from '../../../game/economy.js';
 import { isPlayable } from '../../../game/unlock.js';
-import { isShapeLevel, shapeLibraryReady, shapeOf } from '../../../engine/index.js';
+import { isShapeLevel, shapeLibraryReady } from '../../../engine/index.js';
 import { icon } from '../../components/icons.js';
-import { shapeIcon } from '../../components/shapeIcon.js';
+import { levelIcon } from '../../components/shapeIcon.js';
 
 /**
  * @typedef {{n: number, status: 'completed'|'perfect'|'current'|'open'|'locked', shape: boolean, milestone: boolean}} NodeState
@@ -55,15 +55,16 @@ export const nodeOffset = (i) => Math.round(Math.sin((i * Math.PI) / 4) * 100) /
 
 /** Shape silhouette, or a placeholder until the shape library chunk has loaded (pathView fills it in). */
 function shapeMark(n) {
-  if (shapeLibraryReady()) return shapeIcon(shapeOf(n), 'pn-shape');
+  if (shapeLibraryReady()) return levelIcon(n, 'pn-shape');
   return `<i class="pn-shape shape-pending" data-shape-level="${n}"></i>`;
 }
 
 /** Icon in the middle of a node. */
 function nodeIcon(s) {
+  // every level after the tutorial shows its board outline (locked ones greyed, star levels in amber)
+  if (s.shape) return shapeMark(s.n);
   if (s.status === 'locked') return icon('lock', 'pn-ico');
   if (s.milestone) return icon('shape-star', 'pn-ico solid');
-  if (s.shape) return shapeMark(s.n);
   if (s.status === 'perfect') return icon('crown', 'pn-ico solid');
   if (s.status === 'completed') return icon('check', 'pn-ico');
   return `<b class="pn-num">${s.n}</b>`;

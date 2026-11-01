@@ -1,6 +1,6 @@
 {
   "name": "arrow-escape",
-  "version": "3.12.0",
+  "version": "3.13.0",
   "private": true,
   "description": "Tap Away Arrows style puzzle game. Vanilla JS + Vite, packaged for Android with Capacitor.",
   "type": "module",
@@ -16,7 +16,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write . && eslint --fix .",
     "shapes:sources": "npm --prefix scripts/shape-sources ci",
-    "shapes:build": "node scripts/build-shapes.mjs"
+    "shapes:build": "node scripts/build-shapes.mjs",
+    "shapes:sheet": "node scripts/shape-sheet.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

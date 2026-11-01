@@ -14,6 +14,7 @@ import {
   meetsGoals,
   buildOccupancy,
   clearArrow,
+  generateFromConfig,
   generateLevel,
   mulberry32,
   rayBlocker,
@@ -159,16 +160,24 @@ describe('levels 1-500 and 200 random levels up to 1,000,000', { timeout: 120000
         expect(report.edgeFreeRatio).toBeLessThanOrEqual(d.maxEdgeFreeRatio);
       }
     }
+    // never a fallback shape: the Levels page icon shows shapeOf(n)
+    if (n >= LEVEL_CFG.shapeFrom) expect(level.shape).toBe(shapeOf(n));
     expect(again.arrows).toEqual(level.arrows);
     expect(ms).toBeLessThan(LIMIT_MS);
   });
 });
 
 describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
-  /** Mean of a metric over plain levels in a range (step to keep it quick). */
+  /** Start-free cap of a shape level: the level's cap + 12, or 14% of its arrows if that is more. */
+  const freeCap = (n) => {
+    const g = getLevelConfig(n).goals;
+    return Math.max(g.maxStartFree, Math.ceil(g.maxStartFreeShare * get(n).level.arrows.length));
+  };
+
+  /** Mean of a metric over levels in a range (step to keep it quick). */
   const mean = (from, to, step, f) => {
     const xs = [];
-    for (let n = from; n <= to; n += step) if (!shapeOf(n)) xs.push(f(get(n)));
+    for (let n = from; n <= to; n += step) xs.push(f(get(n)));
     return xs.reduce((a, b) => a + b, 0) / xs.length;
   };
 
@@ -176,7 +185,8 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
     const depth = mean(101, 500, 7, (x) => x.report.avgDepth);
     expect(depth).toBeGreaterThanOrEqual(45.8 * 1.4);
     expect(difficultyFor(101).minAvgDepth).toBeGreaterThanOrEqual(26 * 1.4);
-    for (let n = 101; n <= 500; n += 7) if (!shapeOf(n)) expect(get(n).report.startFree).toBeLessThanOrEqual(2);
+    // every level is a shape board: the start-free cap is the level's cap + 12 (see getLevelConfig)
+    for (let n = 101; n <= 500; n += 7) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 
   it('Super Hard has 15-20% long blocking arrows', () => {
@@ -191,10 +201,10 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
   });
 
   it('Expert levels have the deepest chains', () => {
-    const expert = BIG.filter((n) => n >= 1000 && !shapeOf(n)).slice(0, 15);
+    const expert = BIG.filter((n) => n >= 1000).slice(0, 15);
     const deep = expert.reduce((a, n) => a + get(n).report.avgDepth, 0) / expert.length;
     expect(deep).toBeGreaterThan(mean(101, 300, 9, (x) => x.report.avgDepth));
-    for (const n of expert) expect(get(n).report.startFree).toBeLessThanOrEqual(2);
+    for (const n of expert) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 
   it('long arrows leave later than average in the solve', () => {
@@ -202,8 +212,9 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
     let nLong = 0;
     let allPos = 0;
     let nAll = 0;
+    // the joining logic itself, on plain boards (on shape boards long arrows leave about on average)
     for (let n = 4; n <= 120; n += 3) {
-      const { level } = get(n);
+      const level = generateFromConfig(getLevelConfig(n, null));
       const order = solveLevel(level).order;
       order.forEach((id, i) => {
         const pos = i / order.length;
@@ -220,15 +231,11 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
 });
 
 describe('shapes', () => {
-  it('every 3rd level after the tutorial is a shape, walking the library order and starting again', () => {
-    expect([1, 2, 3, 4, 5, 7, 8, 10, 11].map(shapeOf)).toEqual(Array(9).fill(null));
-    expect([1, 2, 3, 4, 5, 7, 8, 10, 11].some(isShapeLevel)).toBe(false);
-    const order = shapeOrder();
-    expect(shapeOf(6)).toBe(order[0]);
-    expect(shapeOf(9)).toBe(order[1]);
-    const levels = Array.from({ length: 20 }, (_, i) => 6 + i * 3);
+  it('every level after the tutorial is a shape (see tests/shapePlan.test.js for the order)', () => {
+    expect([1, 2, 3].map(shapeOf)).toEqual([null, null, null]);
+    expect([4, 5, 6, 7, 8].every(isShapeLevel)).toBe(true);
+    const levels = Array.from({ length: 20 }, (_, i) => 4 + i);
     expect(new Set(levels.map((n) => generateLevel(n).shape)).size).toBe(20);
-    expect(shapeOf(6 + order.length * 3)).toBe(order[0]);
   });
 
   it('the 20 original shapes are still in the game (same ids)', () => {
@@ -243,7 +250,7 @@ describe('shapes', () => {
 
 describe('shape boards grow with the level', () => {
   it('later shape levels are bigger, small shapes get bigger boards', () => {
-    expect(getLevelConfig(shapeOrder().length * 3 * 4 + 6).cols).toBeGreaterThan(getLevelConfig(6).cols);
+    expect(getLevelConfig(shapeOrder().length * 4 + 6).cols).toBeGreaterThan(getLevelConfig(6).cols);
     expect(shapeSize('arrow', 16, 400)).toBeGreaterThan(shapeSize('plus', 16, 400));
     expect(getLevelConfig(9).cols).toBeLessThanOrEqual(LEVEL_CFG.maskMaxCols);
   });

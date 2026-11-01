@@ -176,6 +176,12 @@ export function qualityProblem(m, q = QUALITY) {
   return null;
 }
 
+/**
+ * Smooth reference of a mask on an n x n board: each cell is filled when at least half of its area is.
+ * @returns {{w: number, h: number, bits: Uint8Array}}
+ */
+export const areaMask = (m, n) => downTo(toBoard(m, n * 4), n);
+
 /** Box-average an n*k square mask down to n x n (a cell is filled when at least half of it is). */
 function downTo(m, n) {
   const k = m.w / n;

@@ -7,3 +7,7 @@ ios/
 *.log
 .vite/
 scripts/shape-sources/node_modules/
+shape-sheet.html
+shapes-preview.html
+shapes-preview-*.png
+shapes-review.md

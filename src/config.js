@@ -1,7 +1,9 @@
 /** SVG units per grid cell. */
 export const CELL = 100;
 /** Fallback hit radius around lines, in cells (used when no cell is hit exactly). */
-export const HIT_FALLBACK = 0.3;
+export const HIT_FALLBACK = 0.45;
+/** A release is a tap when the finger moved less than movePx and was down less than maxMs. */
+export const TAP = Object.freeze({ movePx: 10, maxMs: 350 });
 /** Board cells stay compact like the reference: about 140px for tiny boards, at least this many px per cell. */
 export const BASE_CELL_PX = 30;
 /** Width a small board aims for (px), so 3x3 gets big cells and 8x8 stays at BASE_CELL_PX. */
@@ -14,6 +16,7 @@ export const ZOOM = Object.freeze({
   maxScale: 6,
   dragPx: 10, // movement that turns a tap into a drag
   doubleTapMs: 350, // double tap on empty space resets the zoom
+  sharpMs: 100, // the board redraws sharp this long after a pinch, pan or wheel zoom stops
   guideKey: 'arrowEscape:zoomGuide',
   guideTimes: 3, // the zoom guide shows on the first 3 zoomed levels, then only until the first pinch
   guideMs: 3000,
@@ -104,7 +107,14 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
     title: 'Shape Solver',
     desc: 'Finish {goal} shape levels',
     icon: 'shape-heart',
-    steps: [{ goal: 5, reward: 3 }],
+    // every level from 4 is a shape level (3.13.0), so this is tiered; the old single step (5 levels, 3 diamonds)
+    // counts as step I when a save claimed it (see RENAMED_CLAIMS in src/storage/schema.js)
+    steps: [
+      { goal: 25, reward: 2 },
+      { goal: 100, reward: 5 },
+      { goal: 250, reward: 10 },
+      { goal: 500, reward: 20 },
+    ],
   },
   {
     id: 'big-spender',
@@ -339,9 +349,8 @@ export const LEVELS = Object.freeze({
     2: { cols: 5, rows: 6, arrows: [6, 8], rounds: [2, 4] },
     3: { cols: 6, rows: 8, arrows: [12, 16], rounds: [2, 3] },
   }),
-  shapeEvery: 3, // every 3rd level is a shape board...
-  shapeFrom: 4, // ...after the tutorial (6, 9, 12, ...)
-  // shape levels take turns between categories (first round in this order), easy shapes first
+  shapeFrom: 4, // every level after the tutorial is a shape board (src/engine/shapes/plan.js)
+  // the library order: categories take turns (first round in this order), easy shapes first
   shapeRotation: [
     'animals',
     'food',
@@ -406,3 +415,6 @@ export const TIER_FLOORS = Object.freeze({
     maxEdgeFreeRatio: 0.5,
   }),
 });
+
+/** Smallest board a shape may use: one piece and close to its smooth outline (see minBoardSide). */
+export const SHAPE_BOARD = Object.freeze({ fromSide: 16, maxSide: 40, minSimilarity: 0.88 });

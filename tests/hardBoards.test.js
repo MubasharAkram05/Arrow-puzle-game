@@ -4,6 +4,7 @@ import {
   analyzeLevel,
   buildLevel,
   buildOccupancy,
+  generateFromConfig,
   generateLevel,
   getLevelConfig,
   hashSeed,
@@ -140,9 +141,9 @@ describe('hard-board passes keep every board solvable', () => {
   });
 
   it('plain hard boards hide a first move inside the board (the corridor end)', () => {
-    const plain = [];
-    for (let n = 101; n < 160; n++) if (n % 3) plain.push(n); // every 3rd level is a shape
-    for (const n of plain) expect(analyzeLevel(generateLevel(n)).edgeFreeRatio, `level ${n}`).toBeLessThan(1);
+    // every level is a shape board now; plain boards (getLevelConfig(n, null)) still get the corridor
+    for (let n = 101; n < 140; n++)
+      expect(analyzeLevel(generateFromConfig(getLevelConfig(n, null))).edgeFreeRatio, `level ${n}`).toBeLessThan(1);
   });
 });
 

@@ -9,6 +9,7 @@ import {
 } from '../src/game/achievements.js';
 import { newStats, recordLoss, recordWin } from '../src/game/stats.js';
 import { tierLabel } from '../src/engine/index.js';
+import { sanitize } from '../src/storage/schema.js';
 
 /** Context with optional overrides. */
 const ctx = (over = {}) => ({
@@ -107,7 +108,7 @@ describe('achievement progress', () => {
     expect(s['chapter-master'].def.goal).toBe(20);
     expect(s['arrow-hunter'].value).toBe(1000);
     expect(s['no-mistakes'].value).toBe(2);
-    expect(s['shape-solver'].value).toBe(2);
+    expect(s['shape-solver-1'].value).toBe(2);
     expect(s['big-spender'].value).toBe(300);
   });
 
@@ -253,5 +254,28 @@ describe('Chapter Master with 20-level chapters', () => {
     expect(at(range(1, 19))).toMatchObject({ value: 19, done: false });
     expect(at(range(2, 40))).toMatchObject({ value: 19, done: false });
     expect(at(range(1, 20))).toMatchObject({ value: 20, done: true, claimable: true });
+  });
+});
+
+describe('Shape Solver (tiered, every level is a shape)', () => {
+  it('has four steps: 25 / 100 / 250 / 500 shape levels for 2 / 5 / 10 / 20 diamonds', () => {
+    const steps = ACHIEVEMENTS.filter((a) => a.group === 'shape-solver');
+    expect(steps.map((a) => [a.id, a.goal, a.reward])).toEqual([
+      ['shape-solver-1', 25, 2],
+      ['shape-solver-2', 100, 5],
+      ['shape-solver-3', 250, 10],
+      ['shape-solver-4', 500, 20],
+    ]);
+    expect(steps.map((a) => a.title)).toEqual([
+      'Shape Solver I',
+      'Shape Solver II',
+      'Shape Solver III',
+      'Shape Solver IV',
+    ]);
+  });
+
+  it('an old claim of the single-step Shape Solver counts as step I, so it never pays twice', () => {
+    const d = sanitize({ version: 6, achievements: { claimed: ['shape-solver', 'first-escape'] } });
+    expect(d.achievements.claimed).toEqual(['shape-solver-1', 'first-escape']);
   });
 });

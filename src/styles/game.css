@@ -74,18 +74,21 @@ html:not([data-style='classic']) .board-card {
   justify-content: center;
   padding: 16px 16px 112px;
 }
+/* The board is a canvas (src/render/canvasBoard.js); it is bigger than the board so arrows can slide out */
 #board {
+  position: relative;
   display: block;
-  overflow: visible;
   touch-action: none;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-#board.no-grid .dots {
-  opacity: 0;
-}
-.dots {
-  fill: var(--dot);
-  transition: opacity 0.2s ease;
+#board-canvas,
+#board-sharp,
+#board-fx {
+  position: absolute;
+  pointer-events: none;
 }
 .arrow .shaft {
   fill: none;

@@ -1,6 +1,8 @@
 import { LEVELS } from '../config.js';
 import { makeMask } from './masks.js';
 import { shapeOrder } from './shapes/library.js';
+import { shapeAt } from './shapes/plan.js';
+import { minBoardSide } from './masks.js';
 import { difficultyFor, tierLabel } from './difficulty.js';
 
 /** Global arrow length limits. */
@@ -10,29 +12,21 @@ export const MAX_LEN = LEVELS.maxLen;
 export const MIN_FILL = LEVELS.minFill;
 
 /**
- * Is level n a shape level (every 3rd level after the tutorial: 6, 9, 12, ...)? Works without the library.
+ * Is level n a shape level? Every level after the tutorial is. Works without the library.
  * @param {number} n
  * @returns {boolean}
  */
-export const isShapeLevel = (n) => n >= LEVELS.shapeFrom && n % LEVELS.shapeEvery === 0;
+export const isShapeLevel = (n) => n >= LEVELS.shapeFrom;
 
 /**
- * Index of a shape level among all shape levels (level 6 -> 0, 9 -> 1, ...).
- * @param {number} n
- * @returns {number}
- */
-export const shapeSlot = (n) => n / LEVELS.shapeEvery - Math.ceil(LEVELS.shapeFrom / LEVELS.shapeEvery);
-
-/**
- * Board shape id of a level, or null for a plain rectangle. Shape levels walk through the library's order
- * (see buildOrder) and start again after the last shape, on bigger boards. Needs the shape library.
+ * Board shape id of a level (null for the tutorial). Every cycle of (library size) levels shows each shape
+ * once, in a seeded shuffle (see shapes/plan.js); later cycles get bigger boards. Needs the shape library.
  * @param {number} n
  * @returns {string|null}
  */
 export function shapeOf(n) {
   if (!isShapeLevel(n)) return null;
-  const order = shapeOrder();
-  return order[shapeSlot(n) % order.length];
+  return shapeAt(shapeOrder(), n - LEVELS.shapeFrom);
 }
 
 const sizeCache = new Map();
@@ -52,9 +46,22 @@ export function shapeSize(mask, from, cells) {
     const cover = usable(from) / (from * from);
     let n = Math.max(from, Math.floor(Math.sqrt(cells / Math.max(cover, 0.05))) - 2);
     while (n < LEVELS.maskMaxCols && usable(n) < cells) n++;
-    sizeCache.set(key, n);
+    // never below the size where the shape still reads as itself
+    sizeCache.set(key, Math.max(n, minBoardSide(mask)));
   }
   return sizeCache.get(key);
+}
+
+/**
+ * The exact board mask a level plays on: the same shape, size and mask the generator uses (Levels page
+ * icons draw this). Null for the tutorial.
+ * @param {number} n
+ * @returns {{shape: string, rows: number, cols: number, bits: number[]}|null}
+ */
+export function levelMask(n) {
+  const cfg = getLevelConfig(n);
+  if (!cfg.mask) return null;
+  return { shape: cfg.mask, rows: cfg.rows, cols: cfg.cols, bits: makeMask(cfg.mask, cfg.rows, cfg.cols) };
 }
 
 /**
@@ -87,10 +94,11 @@ export const LEVEL_ONE = Object.freeze({
  * Board size, goals and mask for a level number (any number). Levels 2-3 are small tutorial boards;
  * from level 4 everything follows difficultyFor.
  * @param {number} n level number (1-based)
- * @param {string} [shape] play this shape at level n's difficulty instead of the level's own board (tests)
+ * @param {string|null} [shape] play this shape at level n's difficulty instead of the level's own board (null: plain)
+ * @param {number} [grow] cells added to a shape board's side (when the shape keeps missing its floors)
  * @returns {LevelConfig & object}
  */
-export function getLevelConfig(n, shape) {
+export function getLevelConfig(n, shape, grow = 0) {
   const base = {
     seed: n,
     hearts: LEVELS.hearts,
@@ -117,11 +125,11 @@ export function getLevelConfig(n, shape) {
     };
   }
   const d = difficultyFor(n);
-  const mask = shape ?? shapeOf(n);
+  const mask = shape === undefined ? shapeOf(n) : shape; // null: a plain board (tests)
   let rows = d.gridH;
   let cols = d.gridW;
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells
-  if (mask) cols = rows = shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale));
+  if (mask) cols = rows = shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale)) + grow;
   const goals = {
     maxStartFree: d.maxStartFree,
     minAvgDepth: d.minAvgDepth,

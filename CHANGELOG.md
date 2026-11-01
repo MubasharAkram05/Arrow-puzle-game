@@ -2,6 +2,26 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.13.0] - 2026-10-31
+
+### Changed
+
+- The game board is drawn on canvas instead of SVG: no half-drawn arrows or loose heads at any zoom, on 42x54 boards too. Pinch and pan stretch the bitmap (CSS transform); 100 ms after a gesture a sharp copy of the visible part is drawn. Only a small canvas with the moving arrows is redrawn per frame.
+- Taps are instant: the arrow lights up on pointerdown and acts on pointerup, never waiting for a double tap (double tap still zooms out on empty space). Hit test by grid cell, nearest arrow within 0.45 cell as a fallback. A tap is under 10 px and 350 ms.
+- Every level from 4 is a shape board (levels 1-3 stay plain). Each cycle shows every shape once in a seeded shuffle; a shape never comes back within half a cycle. A shape that misses its floors tries more seeds, then bigger boards, then the next shape (logged); never a plain board.
+- Shape masks are smoothed at board size and never smaller than the shape's minimum board.
+- Levels page nodes show the exact board outline of their level (same mask as the game), as crisp vector icons.
+
+- Shape Solver is tiered: Shape Solver I / II / III / IV for 25 / 100 / 250 / 500 shape levels, 2 / 5 / 10 / 20 diamonds. A save that claimed the old single step (5 levels, 3 diamonds) keeps those diamonds and has step I claimed, so nothing pays twice.
+
+### Removed
+
+- 222 shapes (list in `src/engine/shapes/removed.js`); 399 remain. 221 did not look like their name even on a big board; Asterisk was too slow to build. 14 that only read well on a big board are kept with a 40-cell minimum and come in the second half of each cycle. Saves that collected a removed shape keep it.
+
+### Added
+
+- `npm run shapes:sheet`: a contact sheet of every shape's real first-level board next to its silhouette, with flags.
+
 ## [3.12.0] - 2026-10-30
 
 ### Changed
