@@ -126,10 +126,13 @@ export function getLevelConfig(n, shape, grow = 0) {
   }
   const d = difficultyFor(n);
   const mask = shape === undefined ? shapeOf(n) : shape; // null: a plain board (tests)
-  let rows = d.gridH;
-  let cols = d.gridW;
+  // Expert boards get boardGrow more cells on each side, but never past growUpTo (a board already
+  // bigger than that keeps its own size)
+  const grown = (side) => Math.max(side, Math.min(side + d.boardGrow, d.growUpTo));
+  let rows = grown(d.gridH);
+  let cols = grown(d.gridW);
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells
-  if (mask) cols = rows = shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale)) + grow;
+  if (mask) cols = rows = grown(shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale))) + grow;
   const goals = {
     maxStartFree: d.maxStartFree,
     minAvgDepth: d.minAvgDepth,
@@ -164,6 +167,7 @@ export function getLevelConfig(n, shape, grow = 0) {
     },
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare),
     goals,
+    floorFallback: d.floorFallback,
     ...LEVELS.curve.hardness,
   };
 }

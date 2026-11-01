@@ -6,6 +6,7 @@
 export const REMOVED_SHAPES = Object.freeze([
   // too slow to generate: over 300 ms on its first-cycle level, or the slowest on big Expert boards
   // (holes and thin rims make the generator retry)
+  'box',
   'bush',
   'cross-circle',
   'die',

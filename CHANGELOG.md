@@ -7,10 +7,14 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 ### Changed
 
 - The shape library is rebuilt at 64x64 (was 32x32), aspect ratio kept, from the same sources, licenses and credits. Thin parts (legs, tails, wings, stems) are thickened instead of cut off: dilation of parts thinner than 4 cells only, run twice. Holes are filled, edges smoothed, one connected area kept. 721 shapes built (621 before); `library.json` is 79 KB gzipped.
-- Every shape was checked again by eye, including the 222 removed in 3.13.0. 448 are in play (399 before): 83 came back, 47 are new and 81 went out. Clearer sources for Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice and Crab.
+- Every shape was checked again by eye, including the 222 removed in 3.13.0. 447 are in play (399 before): 83 came back, 47 are new and 82 went out. Clearer sources for Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice and Crab.
 - Shapes that need a big board have their own minimum (`SHAPE_MIN_SIDE`, 48 cells for 49 shapes) and always come in the second half of a cycle (`SHAPE_BOARD.lateSide` 40). `SHAPE_BOARD.maxSide` is 64, the library resolution.
 - The library size test checks the gzipped size (under 150 KB).
 - The Expert vs Super Hard depth test compares every cached level of both tiers (200 and 400) instead of 15 and 23, which swung with the shape order.
+
+- Expert is clearly harder: boards get 6 more cells on each side (`boardGrow`, up to 104 cells), depth and solve-round floors are the curve x1.6 (Super Hard x1.4). On the tested levels Expert's average depth is 122.9 vs 106.4 on Super Hard (+15.4%); a test now requires at least +14%. Free arrows per round stay about the same (2.82 vs 2.76).
+- Expert floor fallback (`floorFallback`): after 2 attempts the best attempt that missed only free per round (+0.2), decoys (-2 points) or longest chain (-2) is used, never depth or rounds; count-based, so deterministic, and `level.relaxed` names the floors. 21 of the 200 tested Expert levels use it; every Expert level builds in under 300 ms locally.
+- The every-shape board test checks speed only for shapes in play (removed shapes are never generated in a level); all shapes must still be solvable and meet their floors.
 
 ### Added
 
@@ -18,7 +22,7 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ### Removed
 
-- From play (still in the library, so saves keep every collected id): 273 shapes, each with a reason in `src/engine/shapes/removed.js`. 11 of them only because they were the slowest to generate: Bandage, Baseball, Bush, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. 20 old ids that miss the quality filter at 64 (Ribbon, Muffin, Dinosaur, Bat...) are kept out of play.
+- From play (still in the library, so saves keep every collected id): 274 shapes, each with a reason in `src/engine/shapes/removed.js`. 12 of them only because they were the slowest to generate: Bandage, Baseball, Box, Bush, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. 20 old ids that miss the quality filter at 64 (Ribbon, Muffin, Dinosaur, Bat...) are kept out of play.
 - `BIG_BOARD_SHAPES` (replaced by `SHAPE_MIN_SIDE`).
 
 ## [3.13.0] - 2026-10-31

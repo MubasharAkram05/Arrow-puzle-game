@@ -12,6 +12,7 @@ import {
   difficultyFor,
   getLevelConfig,
   meetsGoals,
+  relaxGoals,
   buildOccupancy,
   clearArrow,
   generateFromConfig,
@@ -143,10 +144,18 @@ describe('levels 1-500 and 200 random levels up to 1,000,000', { timeout: 120000
     expect(validateLevel(level)).toEqual([]);
     expect(replay(level)).toBe(-1);
     const cfg = getLevelConfig(n);
-    if (n > 1) expect(meetsGoals(report, cfg.goals)).toBe(true);
+    // an Expert level may use the floor fallback: only the floors it names, each by at most its slack
+    const relaxed = level.relaxed || [];
+    if (relaxed.length) {
+      expect(cfg.floorFallback, `level ${n}`).toBeTruthy();
+      for (const k of relaxed) expect(['maxFreePerRound', 'minDecoyRatio', 'minLongestChain']).toContain(k);
+    }
+    const goals = relaxed.length ? relaxGoals(cfg.goals, cfg.floorFallback, relaxed) : cfg.goals;
+    if (n > 1) expect(meetsGoals(report, goals)).toBe(true);
     if (n >= LEVEL_CFG.curve.firstLevel) {
-      // shape levels meet the same floors as plain levels of that number
-      const d = difficultyFor(n);
+      // shape levels meet the same floors as plain levels of that number (depth and rounds never relaxed)
+      const d = { ...difficultyFor(n) };
+      for (const k of relaxed) d[k] = goals[k];
       expect(level.arrows.length).toBeGreaterThanOrEqual(Math.floor(d.targetArrows * LEVEL_CFG.curve.minArrowsShare));
       expect(report.avgDepth).toBeGreaterThanOrEqual(d.minAvgDepth);
       expect(report.rounds).toBeGreaterThanOrEqual(d.minSolveRounds);
@@ -200,11 +209,11 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
     expect(share).toBeLessThanOrEqual(0.22);
   });
 
-  it('Expert levels have the deepest chains', () => {
+  it('Expert levels block at least 14% deeper than Super Hard', () => {
     // every cached level of both tiers (200 Expert, 400 Super Hard): small samples swing with the shape order
     const expert = BIG.filter((n) => n >= 1000);
     const deep = expert.reduce((a, n) => a + get(n).report.avgDepth, 0) / expert.length;
-    expect(deep).toBeGreaterThan(mean(101, 500, 1, (x) => x.report.avgDepth));
+    expect(deep).toBeGreaterThanOrEqual(1.14 * mean(101, 500, 1, (x) => x.report.avgDepth));
     for (const n of expert) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 

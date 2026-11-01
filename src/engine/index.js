@@ -35,7 +35,14 @@ export {
   shapesIn,
 } from './shapes/collection.js';
 export { makePlan } from './shapes.js';
-export { buildLevel, meetsConstraints, meetsGoals, generateFromConfig, generateLevel } from './generator.js';
+export {
+  buildLevel,
+  meetsConstraints,
+  meetsGoals,
+  generateFromConfig,
+  generateLevel,
+  relaxGoals,
+} from './generator.js';
 export { buildOccupancy, rayBlocker, rayArrows, freeArrows, clearArrow } from './board.js';
 export { solveLevel, validateLevel } from './solver.js';
 export { analyzeLevel, difficultyFor, tierLabel } from './difficulty.js';

@@ -407,7 +407,12 @@ export const TIER_FLOORS = Object.freeze({
     maxEdgeFreeRatio: 0.5,
   }),
   Expert: Object.freeze({
-    boost: 1.4,
+    boost: 1.6, // depth and solve-round floors 1.6x the curve (Super Hard 1.4x)
+    boardGrow: 6, // cells added to each side of the board: more arrows, longer chains
+    growUpTo: 104, // ...but never past this side (huge boards cost too much per attempt)
+    // bigger boards miss a floor more often: after this many attempts, take the best attempt that missed
+    // only these floors, each by at most this much (depth and solve rounds are never relaxed)
+    floorFallback: Object.freeze({ after: 2, maxFreePerRound: 0.2, minDecoyRatio: 0.02, minLongestChain: 2 }),
     maxStartFree: 2,
     maxFreePerRound: 3,
     minLongestChain: 22,

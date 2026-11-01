@@ -103,7 +103,7 @@ export function tierLabel(n) {
  * @returns {{gridW: number, gridH: number, targetArrows: number, maxStartFree: number,
  *   minAvgDepth: number, minSolveRounds: number, maxFreePerRound: number, minLongestChain: number,
  *   minDecoyRatio: number, maxEdgeFreeRatio: number, longArrowShare: number, shapeScale: number,
- *   depthBias: number, tier: string}}
+ *   depthBias: number, boardGrow: number, growUpTo: number, floorFallback: object|null, tier: string}}
  */
 export function difficultyFor(level) {
   const n = Math.max(1, Math.floor(Number(level) || 1));
@@ -124,6 +124,9 @@ export function difficultyFor(level) {
     minLongestChain: f.minLongestChain,
     minDecoyRatio: f.minDecoyRatio,
     maxEdgeFreeRatio: f.maxEdgeFreeRatio,
+    boardGrow: f.boardGrow || 0,
+    growUpTo: f.growUpTo || Infinity,
+    floorFallback: f.floorFallback || null,
     longArrowShare: Math.round(ramp(C.longArrowShare, n) * 1000) / 1000,
     shapeScale: Math.round(lerp(C.shapeScale[0], C.shapeScale[1], e) * 1000) / 1000,
     depthBias: Math.round(lerp(C.depthBias[0], C.depthBias[1], e) * 100) / 100,
