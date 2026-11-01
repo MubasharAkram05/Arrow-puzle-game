@@ -107,7 +107,14 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
     title: 'Shape Solver',
     desc: 'Finish {goal} shape levels',
     icon: 'shape-heart',
-    steps: [{ goal: 5, reward: 3 }],
+    // every level from 4 is a shape level (3.13.0), so this is tiered; the old single step (5 levels, 3 diamonds)
+    // counts as step I when a save claimed it (see RENAMED_CLAIMS in src/storage/schema.js)
+    steps: [
+      { goal: 25, reward: 2 },
+      { goal: 100, reward: 5 },
+      { goal: 250, reward: 10 },
+      { goal: 500, reward: 20 },
+    ],
   },
   {
     id: 'big-spender',

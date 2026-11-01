@@ -99,6 +99,12 @@ export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, migrateV5,
  * @param {unknown} raw
  * @returns {object}
  */
+/**
+ * Achievement ids that changed. A save that claimed the old single-step Shape Solver (5 levels, 3 diamonds)
+ * keeps those diamonds, and that claim counts as Shape Solver I, so it is never paid twice.
+ */
+const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
+
 export function sanitize(raw) {
   const d = obj(raw);
   const def = defaultSave();
@@ -149,7 +155,9 @@ export function sanitize(raw) {
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
-      claimed: Array.isArray(ach.claimed) ? [...new Set(ach.claimed.filter((x) => typeof x === 'string'))] : [],
+      claimed: Array.isArray(ach.claimed)
+        ? [...new Set(ach.claimed.filter((x) => typeof x === 'string').map((x) => RENAMED_CLAIMS[x] ?? x))]
+        : [],
       progress: Object.fromEntries(Object.entries(obj(ach.progress)).map(([k, v]) => [k, count(v)])),
     },
     items: {
