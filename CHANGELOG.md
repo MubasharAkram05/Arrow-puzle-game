@@ -16,6 +16,8 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - Expert floor fallback (`floorFallback`): after 2 attempts the best attempt that missed only free per round (+0.2), decoys (-2 points) or longest chain (-2) is used, never depth or rounds; count-based, so deterministic, and `level.relaxed` names the floors. 21 of the 200 tested Expert levels use it; every Expert level builds in under 300 ms locally.
 - The every-shape board test checks speed only for shapes in play (removed shapes are never generated in a level); all shapes must still be solvable and meet their floors.
 
+- A zoomed level opens on arrows, never on an empty area: the first view is the window nearest the board centre that is at least 80% arrows (holding a free arrow on big boards). Ring and hollow shapes (Watch, Donut, Ring) no longer open on their empty hole.
+
 ### Added
 
 - 6 hand-drawn shapes, our own designs from plain geometry (`scripts/shape-drawings.mjs`, source `draw:`, license `project`): Lion, Fox, Letter Q, Clock, Pizza Slice and the new Tiger Head. Lion, Fox, Letter Q and Clock are back in play; Pizza Slice uses the new drawing. Lion, Clock and Tiger Head have a 32-cell minimum board.

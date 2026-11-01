@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { ZOOM } from '../src/config.js';
-import { maxScaleFor, startScale, translateFor } from '../src/input/zoomMath.js';
+import { maxScaleFor, startFocus, startScale, translateFor } from '../src/input/zoomMath.js';
+import { buildOccupancy, freeArrows, generateLevel, loadShapeLibrary, shapeOf } from '../src/engine/index.js';
 
 describe('default zoom', () => {
   it('uses the config values: zoom below 18px, open at about 22px', () => {
@@ -47,5 +48,65 @@ describe('zoom guide', () => {
     expect(shouldShowGuide({ shown: 3, pinched: true })).toBe(false);
     expect(shouldShowGuide({ shown: 3, pinched: false })).toBe(true);
     expect(shouldShowGuide({ shown: 50, pinched: false })).toBe(true);
+  });
+});
+
+/** Share of arrow cells in the w x h window centred on a focus (as the view would show it). */
+function coverAt(level, f, w, h) {
+  const cells = new Set(level.arrows.flatMap((a) => a.path.map((p) => p.r * level.cols + p.c)));
+  const r0 = Math.max(0, Math.min(level.rows - h, Math.round(f.fy * level.rows - h / 2)));
+  const c0 = Math.max(0, Math.min(level.cols - w, Math.round(f.fx * level.cols - w / 2)));
+  let n = 0;
+  for (let r = r0; r < r0 + h; r++) for (let c = c0; c < c0 + w; c++) n += cells.has(r * level.cols + c) ? 1 : 0;
+  return { share: n / (w * h), r0, c0 };
+}
+
+/** A square board filled with 1-cell 'arrows' wherever keep(r, c) is true. */
+function fakeBoard(n, keep) {
+  const arrows = [];
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) if (keep(r, c)) arrows.push({ id: arrows.length, path: [{ r, c }] });
+  return { rows: n, cols: n, arrows };
+}
+
+describe('first view of a zoomed level', () => {
+  beforeAll(() => loadShapeLibrary());
+
+  it('a full board opens on its centre', () => {
+    const f = startFocus(
+      fakeBoard(40, () => true),
+      [],
+      16,
+      20,
+    );
+    expect(f.fx).toBeCloseTo(0.5, 1);
+    expect(f.fy).toBeCloseTo(0.5, 1);
+  });
+
+  it('a ring opens on the ring, not on the empty hole in the middle', () => {
+    const ring = fakeBoard(60, (r, c) => Math.hypot(r - 29.5, c - 29.5) > 18 && Math.hypot(r - 29.5, c - 29.5) < 30);
+    const f = startFocus(ring, [], 16, 20);
+    expect(coverAt(ring, f, 16, 20).share).toBeGreaterThanOrEqual(0.75);
+  });
+
+  it('a big board opens on a window that holds a free arrow', () => {
+    const board = fakeBoard(80, () => true);
+    const free = board.arrows.find((a) => a.path[0].r === 5 && a.path[0].c === 70).id;
+    const f = startFocus(board, [free], 16, 20);
+    const { r0, c0 } = coverAt(board, f, 16, 20);
+    expect(5).toBeGreaterThanOrEqual(r0);
+    expect(5).toBeLessThan(r0 + 20);
+    expect(70).toBeGreaterThanOrEqual(c0);
+    expect(70).toBeLessThan(c0 + 16);
+  });
+
+  it('Watch, Donut, Ring and level 500 open on arrows (a 360px phone shows about 16 x 20 cells)', () => {
+    for (const n of [422, 35, 444, 500]) {
+      const level = generateLevel(n);
+      if (n !== 500) expect(['watch', 'donut', 'ring']).toContain(shapeOf(n));
+      const free = freeArrows(buildOccupancy(level), level);
+      const f = startFocus(level, free, 16, 20);
+      expect(coverAt(level, f, 16, 20).share, `level ${n}`).toBeGreaterThanOrEqual(0.75);
+    }
   });
 });
