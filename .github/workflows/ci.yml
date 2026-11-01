@@ -15,5 +15,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      - run: npm run test:unit
+      # generation-speed tests: their own step, one file at a time, so other tests do not slow them down
+      - run: npm run test:timing
       - run: npm run build

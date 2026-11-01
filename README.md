@@ -31,7 +31,9 @@ npm install
 npm run dev       # dev server with hot reload
 npm run build     # production build in dist/
 npm run preview   # serve the build locally
-npm test          # Vitest: engine, 700 levels, every shape at 3 sizes, economy, achievements, storage
+npm test          # Vitest: test:unit, then test:timing
+npm run test:unit # everything except the speed tests, files in parallel (seconds)
+npm run test:timing # 700 levels and every shape at 3 sizes, one file at a time (a few minutes)
 npm run lint      # ESLint + Prettier check
 npm run format    # auto-fix formatting and lint issues
 npm run shapes:sources  # once: install the icon sets and fonts the shape library is built from
@@ -185,7 +187,7 @@ Two arrows pointing straight at each other on the same line can never appear: ea
 
 Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as the tier asks of any level (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
 
-After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms locally, 300 ms on CI).
+After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms locally, 300 ms on CI). Build time is the median of three builds, and the speed test files (`generator`, `shapeBoards`, `hitTest`) run in their own step, one file at a time (`npm run test:timing`), so other tests running in parallel can't make them flaky. The slowest tested level is Super Hard level 341 (Hanger) at about 250 ms on the cloud test machine: Hanger is a thin shape, so its board grows to 137 cells to hold enough arrows, and it needs 6 attempts (the first misses free per round by 0.08). Every other tested level is under about 170 ms.
 
 Build time and retries per tier (3.12.0, measured on the cloud test machine, which is slower than a laptop; the same 700 levels):
 
