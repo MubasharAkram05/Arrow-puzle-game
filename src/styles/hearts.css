@@ -1,15 +1,9 @@
-/* ---------- Stats row: arrows left, hearts, difficulty ---------- */
-.stats {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 8px;
-  align-items: center;
-  width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 14px 12px 12px;
+/* ---------- Hearts (centred in the game top bar) ---------- */
+.icon.solid {
+  fill: currentColor;
+  stroke-width: 1.5;
 }
-.stats .hearts {
+.hearts {
   justify-self: center;
 }
 .stats > :first-child {
@@ -111,16 +105,4 @@
   100% {
     transform: scale(1);
   }
-}
-
-/* Expert: the top label for very high levels, laid out like Super Hard in red */
-.diff[data-level='expert'] {
-  gap: 6px;
-  padding: 6px 12px;
-  color: #e8453c;
-  font-weight: 700;
-}
-.diff[data-level='expert'] .crown {
-  display: block;
-  color: #e8453c;
 }

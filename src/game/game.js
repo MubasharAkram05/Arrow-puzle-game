@@ -52,7 +52,6 @@ export function loadLevel(level) {
   $('screen-game').classList.toggle('tutorial', state.levelNum === 1);
   state.metrics = { ...strokeMetrics(boardCellPx()), head: state.cosmetics.equipped.head };
   mountBoard(level, state.arrows, state.metrics);
-  setDifficultyBadge(level.difficulty);
   renderHearts(-1);
   renderProgress();
   renderHintButton();
@@ -60,14 +59,6 @@ export function loadLevel(level) {
   layoutBoard();
   if (resetZoom(boardCellPx(), level, freeArrows(state.occ, level))) maybeShowZoomGuide();
   else hideZoomGuide();
-}
-
-/** Difficulty pill; Super Hard gets the crown and purple label. */
-function setDifficultyBadge(difficulty) {
-  const badge = $('diff-badge');
-  badge.dataset.level = difficulty.replace(' ', '-').toLowerCase();
-  $('stats').classList.toggle('super', difficulty === 'Super Hard' || difficulty === 'Expert');
-  $('diff-label').textContent = difficulty;
 }
 
 /**
@@ -88,7 +79,8 @@ export function startLevel(n) {
     state.progress.current = n;
     saveProgress();
   }
-  $('game-title').textContent = `Level ${n}`;
+  // no title on screen: the level number stays for screen readers
+  $('screen-game').setAttribute('aria-label', `Level ${n}`);
   navigate('screen-game');
   loadLevel(generateLevel(n));
   if (n === 1) updateTutorial();

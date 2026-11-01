@@ -2,7 +2,17 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [3.14.0] - 2026-11-01
+## [3.15.0] - 2026-11-01
+
+### Changed
+
+- Cleaner game header: the top row is back, restart and the hearts, centred on the screen. The board gets the freed space (about 64 px more height; on tablets the board is up to 8% bigger). Tapping the hearts still buys one back (80 coins), and the lose and refill animations are the same. The level number stays for screen readers (the game screen's label).
+
+### Removed
+
+- From the game screen: the arrows-left pill, the difficulty pill, the "Level X" title and the settings button (settings stay on Home and Profile). Arrows cleared and difficulty are still tracked for stats, rewards and achievements.
+
+- 2026-11-01
 
 ### Changed
 

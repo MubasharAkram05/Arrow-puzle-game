@@ -110,10 +110,9 @@
   border: 2px solid var(--bg);
 }
 
-/* Level 1 shows only the title, like the reference tutorial */
+/* Level 1 (tutorial) shows only the board and the hand */
 #screen-game.tutorial .topbar .left,
-#screen-game.tutorial .topbar .right,
-#screen-game.tutorial .stats,
+#screen-game.tutorial .topbar .hearts,
 #screen-game.tutorial .progress,
 #screen-game.tutorial .fab-row {
   visibility: hidden;
