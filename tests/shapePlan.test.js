@@ -12,7 +12,7 @@ import {
   shapeOrder,
   smoothMask,
 } from '../src/engine/index.js';
-import { LEVELS } from '../src/config.js';
+import { LEVELS, SHAPE_BOARD } from '../src/config.js';
 import { components } from '../src/engine/shapes/quality.js';
 
 beforeAll(() => loadShapeLibrary());
@@ -115,20 +115,21 @@ describe('Levels page matches the game', () => {
   });
 });
 
-describe('shapes brought back on big boards', () => {
+describe('shapes that need a big board', () => {
   it('come in the second half of every cycle, on a board at least their minimum size', async () => {
-    const { BIG_BOARD_SHAPES, REMOVED_SHAPES } = await import('../src/engine/shapes/removed.js');
+    const { SHAPE_MIN_SIDE, REMOVED_SHAPES } = await import('../src/engine/shapes/removed.js');
     const order = shapeOrder();
     const half = Math.ceil(order.length / 2);
-    for (const id of Object.keys(BIG_BOARD_SHAPES)) {
+    expect(Object.keys(SHAPE_MIN_SIDE).length).toBeGreaterThan(0);
+    for (const id of Object.keys(SHAPE_MIN_SIDE)) {
       expect(REMOVED_SHAPES).not.toContain(id);
       expect(order).toContain(id);
-      expect(minBoardSide(id)).toBeGreaterThanOrEqual(BIG_BOARD_SHAPES[id]);
+      expect(minBoardSide(id)).toBeGreaterThanOrEqual(SHAPE_MIN_SIDE[id]);
       for (const c of [0, 1, 2]) {
         const k = cycleOrder(order, c).indexOf(id);
-        expect(k, `${id} in cycle ${c}`).toBeGreaterThanOrEqual(half);
+        if (SHAPE_MIN_SIDE[id] > SHAPE_BOARD.lateSide) expect(k, `${id} in cycle ${c}`).toBeGreaterThanOrEqual(half);
         const n = LEVELS.shapeFrom + c * order.length + k;
-        expect(getLevelConfig(n).cols, `${id} at level ${n}`).toBeGreaterThanOrEqual(BIG_BOARD_SHAPES[id]);
+        expect(getLevelConfig(n).cols, `${id} at level ${n}`).toBeGreaterThanOrEqual(SHAPE_MIN_SIDE[id]);
       }
     }
   });

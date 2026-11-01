@@ -3,7 +3,7 @@ import { insideArt, SHAPE_ART } from './shapeArt.js';
 import { getShape } from './shapes/library.js';
 import { areaMask, components, insideMask, similarity } from './shapes/quality.js';
 import { SHAPE_BOARD } from '../config.js';
-import { BIG_BOARD_SHAPES } from './shapes/removed.js';
+import { SHAPE_MIN_SIDE } from './shapes/removed.js';
 
 /**
  * The game's first 20 shapes, in the order shape levels used before the shape library (3.7.0).
@@ -147,8 +147,8 @@ const minSides = new Map();
 /**
  * Smallest square board on which a shape still reads as itself: its smoothed board mask is one piece and
  * overlaps (IoU) a smooth area-average of the full-detail shape by at least SHAPE_BOARD.minSimilarity.
- * Small, detailed shapes need more cells. Capped at SHAPE_BOARD.maxSide; shapes in BIG_BOARD_SHAPES get at
- * least their listed side.
+ * Small, detailed shapes need more cells. Capped at SHAPE_BOARD.maxSide (the library resolution); shapes in
+ * SHAPE_MIN_SIDE (checked by eye) get at least their listed side.
  * @param {string} shape
  * @returns {number}
  */
@@ -161,7 +161,7 @@ export function minBoardSide(shape) {
       const board = { w: n, h: n, bits };
       if (components(board).length === 1 && similarity(board, areaMask(art, n)) >= SHAPE_BOARD.minSimilarity) break;
     }
-    minSides.set(shape, Math.max(n, BIG_BOARD_SHAPES[shape] || 0));
+    minSides.set(shape, Math.max(n, SHAPE_MIN_SIDE[shape] || 0));
   }
   return minSides.get(shape);
 }

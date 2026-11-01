@@ -9,8 +9,9 @@
  *    rendered to a filled silhouette: icons and emoji from open sets (iconify JSON packs), letters and
  *    numbers from the Inter font, and the game's 20 original shapes from src/engine/masks.js.
  *    Fallback letters come from Roboto Slab.
- * 2. The silhouette is downsampled to 32 cells on its longest side (proportions kept), small holes
- *    are filled, parts thinner than the board allows are trimmed and only the main connected area stays.
+ * 2. The silhouette is downsampled to 64 cells on its longest side (proportions kept), small holes are
+ *    filled, parts thinner than QUALITY.thinCells (legs, tails, stems, wings) are thickened instead of cut
+ *    off, edges are smoothed and only the main connected area stays.
  * 3. The first source that passes the quality filter (src/engine/shapes/quality.js) is kept;
  *    rejected ones are logged with the reason.
  * 4. Output: src/engine/shapes/library.json (lazy chunk with the masks), src/engine/shapes/index.json (category ->
@@ -29,14 +30,19 @@ import {
   emptyMask,
   encodeRle,
   fillHoles,
-  filledCount,
   largestPart,
-  openMask,
   qualityProblem,
+  smoothEdges,
+  thickenThin,
 } from '../src/engine/shapes/quality.js';
 import { CATEGORIES, CATALOG } from './shape-catalog.mjs';
+import { drawMask } from './shape-drawings.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// ids in the current library: they must stay (saved games keep collected shape ids)
+const OLD_IDS = new Set(
+  JSON.parse(readFileSync(join(ROOT, 'src/engine/shapes/library.json'), 'utf8')).shapes.map((s) => s[0]),
+);
 const SRC_DIR = join(ROOT, 'scripts/shape-sources');
 const require = createRequire(join(SRC_DIR, 'package.json'));
 let Resvg;
@@ -101,12 +107,11 @@ export const SOURCES = {
     file: '@fontsource/roboto-slab/files/roboto-slab-latin-900-normal.woff',
   },
   orig: { name: 'Arrow Escape original shapes', license: 'project', url: '', author: 'Arrow Escape' },
+  draw: { name: 'Arrow Escape hand-drawn shapes', license: 'project', url: '', author: 'Arrow Escape' },
 };
 
-const RENDER_PX = 256;
-const HOLE_MAX = 14;
-const MIN_KEEP = Number(process.env.MIN_KEEP ?? 0.88); // a trim may remove at most 12% of the silhouette, or the shape stops looking like itself // enclosed holes smaller than this (cells at 32) are filled
-const OPEN_KS = [3, 4, 5]; // trims tried in order: parts thinner than this many cells (at 32) are removed
+const RENDER_PX = 512;
+const HOLE_MAX = 56; // enclosed holes smaller than this (cells at 64) are filled; big ones (a donut's) stay
 
 const sets = {};
 function iconSet(key) {
@@ -183,11 +188,13 @@ function originalMask(name, size = QUALITY.size) {
   return crop(m);
 }
 
-/** Holes filled, parts thinner than k cells trimmed (k = 0: none), main area only, cropped. */
-function clean(m, k) {
+/** Holes filled, thin parts thickened, edges smoothed, main area only, cropped. */
+function clean(m) {
   let out = fillHoles(m, HOLE_MAX);
-  if (k > 1) out = openMask(out, k);
-  return crop(largestPart(out));
+  // twice: a 1-cell line grows to 5 cells, so it is still 2+ cells wide on a board half the size
+  out = thickenThin(thickenThin(out, QUALITY.thinCells), QUALITY.thinCells);
+  out = smoothEdges(out);
+  return crop(largestPart(fillHoles(out, HOLE_MAX)));
 }
 
 /**
@@ -197,6 +204,7 @@ function clean(m, k) {
 function sourceMask(ref) {
   const [key, name] = ref.split(':');
   if (key === 'orig') return originalMask(name);
+  if (key === 'draw') return drawMask(name);
   if (key === 'font' || key === 'font2') return rasterize(glyphSvg(key, name));
   if (!SOURCES[key]?.set) throw new Error(`unknown source ${ref}`);
   const svg = iconSvg(key, name);
@@ -216,6 +224,7 @@ function build() {
   }
   for (const entry of CATALOG) {
     let kept = null;
+    let keepOld = null;
     const why = [];
     for (const ref of entry.sources) {
       const raw = sourceMask(ref);
@@ -223,23 +232,17 @@ function build() {
         why.push(`${ref}: not found`);
         continue;
       }
-      // untouched first, then lighter to stronger trims
-      let first = null;
-      const full = filledCount(clean(raw, 0));
-      for (const k of [0, ...OPEN_KS]) {
-        const m = clean(raw, k);
-        const keep = filledCount(m) / full;
-        const problem =
-          keep < MIN_KEEP ? `trimming thin parts loses ${Math.round((1 - keep) * 100)}% of it` : qualityProblem(m);
-        first ??= problem; // the untouched shape's problem is the useful one to log
-        if (!problem) {
-          kept = { ...entry, ref, mask: m };
-          break;
-        }
+      const m = clean(raw);
+      const problem = qualityProblem(m);
+      if (!problem) {
+        kept = { ...entry, ref, mask: m };
+        break;
       }
-      if (kept) break;
-      why.push(`${ref}: ${first}`);
+      // a shape that was in the library before stays (saves may have collected it), out of play
+      keepOld ??= OLD_IDS.has(entry.id) ? { ...entry, ref, mask: m, outOfPlay: problem } : null;
+      why.push(`${ref}: ${problem}`);
     }
+    if (!kept && keepOld) kept = keepOld;
     if (kept) shapes.push(kept);
     else rejected.push({ entry, why });
   }
@@ -342,13 +345,14 @@ ${rows}
 - **Inter** by Rasmus Andersson is licensed under the [SIL Open Font License 1.1](https://openfontlicense.org).
 - **Roboto Slab** by Christian Robertson is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-The shapes are changed from the originals: filled, downsampled to a 32-cell grid and trimmed to play as boards.
+The shapes are changed from the originals: filled, downsampled to a 64-cell grid, with thin parts thickened, to play as boards.
 `;
   writeFileSync(join(ROOT, 'CREDITS.md'), md);
 }
 
 const { shapes, rejected } = build();
 for (const { entry, why } of rejected) console.log(`REJECTED ${entry.category}/${entry.name}: ${why.join('; ')}`);
+for (const s of shapes.filter((x) => x.outOfPlay)) console.log(`KEPT OUT OF PLAY ${s.id}: ${s.outOfPlay}`);
 let short = false;
 for (const c of CATEGORIES) {
   const n = shapes.filter((s) => s.category === c.id).length;

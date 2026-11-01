@@ -153,6 +153,7 @@ describe('tiers', () => {
     for (let i = 1; i < order.length; i++) {
       const [a, b] = [order[i - 1], order[i]];
       expect(b.boost).toBeGreaterThanOrEqual(a.boost);
+      expect(b.boardGrow || 0).toBeGreaterThanOrEqual(a.boardGrow || 0);
       expect(b.minLongestChain).toBeGreaterThanOrEqual(a.minLongestChain);
       expect(b.minDecoyRatio).toBeGreaterThanOrEqual(a.minDecoyRatio);
       expect(b.maxStartFree).toBeLessThanOrEqual(a.maxStartFree);

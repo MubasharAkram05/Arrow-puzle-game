@@ -3,7 +3,7 @@
  *
  * Each row is a display name, optionally followed by source references tried in order:
  *   'g:cat' game-icons, 'f:cat' Font Awesome solid, 'm:pets' Material Symbols (filled),
- *   't:paw-filled' Tabler filled, 'e:mango' Fluent Emoji (its silhouette), 'font:A' Inter Black, 'font2:I' Roboto Slab Black, 'orig:heart' the game's 20 originals.
+ *   't:paw-filled' Tabler filled, 'e:mango' Fluent Emoji (its silhouette), 'font:A' Inter Black, 'font2:I' Roboto Slab Black, 'orig:heart' the game's 20 originals, 'draw:lion' our own hand-drawn shapes (scripts/shape-drawings.mjs).
  * After the explicit references, the name itself is tried in each icon set (category order below).
  * The first source that passes the quality filter wins; the others are logged as rejected.
  *
@@ -35,7 +35,13 @@ export const slug = (name) =>
     .replace(/^-|-$/g, '');
 
 const ROWS = {
-  letters: LETTERS.map((ch) => [`Letter ${ch}`, `font:${ch}`, `font2:${ch}`, `orig:letter${ch}`]),
+  letters: LETTERS.map((ch) => [
+    `Letter ${ch}`,
+    ...(ch === 'Q' ? ['draw:letterQ'] : []), // the fonts' Q tail is too thin for a board
+    `font:${ch}`,
+    `font2:${ch}`,
+    `orig:letter${ch}`,
+  ]),
   numbers: '0123456789'.split('').map((d) => [`Number ${d}`, `font:${d}`, `font2:${d}`]),
   symbols: [
     ['Heart', 'orig:heart'],
@@ -183,7 +189,7 @@ const ROWS = {
     ['Lamp', 'g:desk-lamp', 'm:lamp'],
     ['Umbrella', 'f:umbrella', 'm:umbrella', 't:umbrella-filled'],
     ['Key', 'f:key', 'm:key', 't:key-filled'],
-    ['Clock', 'f:clock', 'm:schedule', 't:clock-filled'],
+    ['Clock', 'draw:clock', 'f:clock', 'm:schedule', 't:clock-filled'],
     ['Phone', 'f:mobile', 'm:smartphone', 't:device-mobile-filled'],
     ['Camera', 'f:camera', 'm:photo-camera', 't:camera-filled'],
     ['Cup', 'f:mug-hot', 'm:local-cafe', 't:cup-filled'],
@@ -337,11 +343,11 @@ const ROWS = {
   ],
   food: [
     ['Donut', 'orig:donut'],
-    ['Burger', 'f:burger', 'g:hamburger', 'm:lunch-dining'],
+    ['Burger', 'e:hamburger', 'f:burger', 'g:hamburger', 'm:lunch-dining'],
     ['Pizza', 'g:full-pizza', 'm:local-pizza', 't:pizza-filled'],
-    ['Pizza Slice', 'f:pizza-slice', 'g:pizza-slice'],
-    ['Ice Cream', 'f:ice-cream', 'g:ice-cream-cone', 'm:icecream'],
-    ['Cake', 'f:cake-candles', 'm:cake', 'g:cake-slice'],
+    ['Pizza Slice', 'draw:pizzaSlice', 'f:pizza-slice', 'g:pizza-slice'],
+    ['Ice Cream', 'm:icecream', 'f:ice-cream', 'g:ice-cream-cone', 'm:icecream'],
+    ['Cake', 'e:birthday-cake', 'f:cake-candles', 'm:cake', 'g:cake-slice'],
     ['Cookie', 'f:cookie', 'm:cookie', 'g:cookie'],
     ['Sandwich', 'g:sandwich', 'm:bakery-dining', 'f:burger'],
     ['Cupcake', 'g:cupcake', 'm:cake'],
@@ -381,7 +387,7 @@ const ROWS = {
     ['Tea', 'm:emoji-food-beverage', 'g:tea', 't:tea-filled'],
     ['Soda', 'g:soda-can', 'g:soda-bottle'],
     ['Milkshake', 'g:milkshake', 'm:blender'],
-    ['Ice Pop', 'g:ice-pop', 'g:popsicle', 'm:icecream'],
+    ['Ice Pop', 't:ice-cream', 'g:ice-pop', 'g:popsicle', 'm:icecream'],
     ['Carrot', 'f:carrot', 'g:carrot', 'm:carrot'],
     ['Broccoli', 'g:broccoli', 'm:eco'],
     ['Corn', 'g:corn', 'm:grass'],
@@ -447,7 +453,7 @@ const ROWS = {
     ['Apple Core', 'g:apple-core', 'g:apple-seeds'],
     ['Orange Slice', 'g:orange-slice', 'f:lemon'],
     ['Lemon Slice', 'f:lemon', 'g:lemon-slice'],
-    ['Watermelon Slice', 'g:watermelon-slice', 'g:watermelon'],
+    ['Watermelon Slice', 'e:watermelon', 'g:watermelon-slice', 'g:watermelon'],
     ['Pear Half', 'g:pear-half'],
     ['Cherries', 'e:cherries', 'g:cherries'],
     ['Fruit Bowl', 'g:fruit-bowl', 'm:nutrition'],
@@ -494,7 +500,7 @@ const ROWS = {
     ['Clover', 'f:clover', 'g:clover', 'g:three-leaves'],
     ['Four Leaf Clover', 'g:clover-2', 'g:four-leaf-clover'],
     ['Tulip', 'g:tulip', 'm:yard'],
-    ['Rose', 'g:rose', 'g:flower-twirl'],
+    ['Rose', 'e:rose', 'g:rose', 'g:flower-twirl'],
     ['Sunflower', 'g:sunflower', 'g:daisy'],
     ['Daisy', 'g:daisy', 'g:flower-emblem'],
     ['Lotus', 'g:lotus-flower', 'g:lotus', 'm:spa'],
@@ -565,12 +571,12 @@ const ROWS = {
     ['Fish', 'orig:fish'],
     ['Bird', 'orig:bird'],
     ['Elephant', 'g:elephant', 'g:elephant-head'],
-    ['Rabbit', 'g:rabbit', 'g:rabbit-head'],
+    ['Rabbit', 'g:rabbit-head', 'g:rabbit', 'g:rabbit-head'],
     ['Horse', 'f:horse', 'g:horse-head'],
     ['Turtle', 'g:turtle', 'g:sea-turtle'],
-    ['Butterfly', 'g:butterfly', 't:butterfly-filled'],
+    ['Butterfly', 'e:butterfly', 'g:butterfly', 't:butterfly-filled'],
     ['Owl', 'g:owl', 'g:barn-owl', 'm:owl'],
-    ['Lion', 'g:lion', 'g:lion-head'],
+    ['Lion', 'draw:lion', 'g:lion', 'g:lion-head'],
     ['Dinosaur', 'g:dinosaur-rex', 'g:dino-rex'],
     ['Bear', 'g:bear-head', 'g:bear-face', 'g:polar-bear'],
     ['Panda', 'g:panda'],
@@ -604,7 +610,7 @@ const ROWS = {
     ['Mouse', 'g:mouse', 'g:rat'],
     ['Squirrel', 'g:squirrel'],
     ['Hedgehog', 'g:hedgehog'],
-    ['Fox', 'g:fox', 'g:fox-head'],
+    ['Fox', 'draw:fox', 'g:fox-head', 'g:fox'],
     ['Wolf', 'g:wolf-head', 'g:wolf-howl', 'g:wolf'],
     ['Raccoon', 'g:raccoon-head', 'g:raccoon'],
     ['Beaver', 'g:beaver'],
@@ -614,7 +620,7 @@ const ROWS = {
     ['Shark', 'g:shark-jaws', 'g:shark-fin', 'g:shark'],
     ['Octopus', 'g:octopus', 'g:giant-squid'],
     ['Squid', 'g:squid', 'g:squid-head'],
-    ['Crab', 'g:crab'],
+    ['Crab', 'g:sad-crab', 'g:crab'],
     ['Lobster', 'g:lobster'],
     ['Jellyfish', 'g:jellyfish'],
     ['Starfish', 'g:starfish'],
@@ -633,6 +639,7 @@ const ROWS = {
     ['Worm', 'g:worm-mouth', 'g:earth-worm'],
     ['Caterpillar', 'g:caterpillar'],
     ['Tiger', 'g:tiger-head', 'g:tiger'],
+    ['Tiger Head', 'draw:tigerHead'],
     ['Leopard', 'g:leopard', 'g:panther'],
     ['Cheetah', 'g:cheetah'],
     ['Bison', 'g:bison', 'g:buffalo-head'],
@@ -725,9 +732,9 @@ const ROWS = {
   ],
   others: [
     ['Diamond', 'orig:diamond'],
-    ['Robot', 'f:robot', 'm:smart-toy', 'g:robot-golem'],
+    ['Robot', 'm:smart-toy', 'f:robot', 'm:smart-toy', 'g:robot-golem'],
     ['Alien', 'g:alien-stare', 'g:alien-bug'],
-    ['Ghost', 'f:ghost', 'g:ghost', 't:ghost-filled'],
+    ['Ghost', 't:ghost-filled', 'f:ghost', 'g:ghost', 't:ghost-filled'],
     ['Trophy', 'f:trophy', 'm:trophy', 't:trophy-filled'],
     ['Balloon', 'g:balloons', 'm:celebration', 't:balloon-filled'],
     ['Kite', 'g:kite'],

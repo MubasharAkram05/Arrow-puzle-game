@@ -1,6 +1,7 @@
 /**
  * Every library shape must make a solvable board that meets its level's floors, at the smallest shape board
- * (level 6), a medium one (level 102, Super Hard) and the largest (level 1002, Expert), each in under 150 ms.
+ * (level 6), a medium one (level 102, Super Hard) and the largest (level 1002, Expert); every shape in play
+ * in under 150 ms (300 ms on CI).
  * Separate file: it builds about 1,900 boards and takes a minute.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -10,6 +11,8 @@ import {
   getLevelConfig,
   loadShapeLibrary,
   meetsGoals,
+  relaxGoals,
+  REMOVED_SHAPES,
   analyzeLevel,
   validateLevel,
 } from '../src/engine/index.js';
@@ -30,8 +33,11 @@ describe.each(Object.entries(SIZES))('every shape on a %s board (level %i)', (_s
     const ms = performance.now() - t0;
     expect(board.shape).toBe(id);
     expect(validateLevel(board)).toEqual([]);
-    expect(meetsGoals(analyzeLevel(board), cfg.goals)).toBe(true);
+    // Expert boards may use the floor fallback (only the floors they name, by at most the slack)
+    const goals = board.relaxed?.length ? relaxGoals(cfg.goals, cfg.floorFallback, board.relaxed) : cfg.goals;
+    expect(meetsGoals(analyzeLevel(board), goals)).toBe(true);
     expect(board.arrows.length).toBeGreaterThanOrEqual(cfg.arrowsMin);
-    expect(ms).toBeLessThan(LIMIT_MS);
+    // speed matters only for shapes that are played (removed shapes are never generated in a level)
+    if (!REMOVED_SHAPES.includes(id)) expect(ms).toBeLessThan(LIMIT_MS);
   });
 });

@@ -1,6 +1,7 @@
 import {
   buildOccupancy,
   clearArrow,
+  freeArrows,
   generateLevel,
   isShapeLevel,
   loadShapeLibrary,
@@ -57,7 +58,7 @@ export function loadLevel(level) {
   renderHintButton();
   renderGrid();
   layoutBoard();
-  if (resetZoom(boardCellPx())) maybeShowZoomGuide();
+  if (resetZoom(boardCellPx(), level, freeArrows(state.occ, level))) maybeShowZoomGuide();
   else hideZoomGuide();
 }
 

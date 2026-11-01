@@ -2,13 +2,14 @@
  * Which shape each level shows. From level 4 every level is a shape. The library order (see buildOrder:
  * easy shapes first, categories taking turns) is cut into two halves; every cycle of (library size) levels
  * shows each shape exactly once, in a seeded shuffle of the first half followed by a seeded shuffle of the
- * second half (shapes that need a big board, BIG_BOARD_SHAPES, always in the second half). A shape stays in
+ * second half (shapes that need a board bigger than SHAPE_BOARD.lateSide always in the second half). A shape stays in
  * its half from cycle to cycle, so the same shape never comes back within
  * half a cycle, even across the end of a cycle (a fresh full shuffle could put it back a few levels later).
  * Deterministic: the same level always gets the same shape.
  */
 import { hashSeed, mulberry32 } from '../rng.js';
-import { BIG_BOARD_SHAPES } from './removed.js';
+import { SHAPE_BOARD } from '../../config.js';
+import { minBoardSide } from '../masks.js';
 
 const cycles = new Map(); // cycle number -> shape ids (for the current library order)
 let base = null;
@@ -37,8 +38,8 @@ export function cycleOrder(order, cycle) {
   }
   if (!cycles.has(cycle)) {
     // shapes that need a big board go to the second half, where boards are big anyway
-    const late = order.filter((id) => BIG_BOARD_SHAPES[id]);
-    const sorted = [...order.filter((id) => !BIG_BOARD_SHAPES[id]), ...late];
+    const big = (id) => minBoardSide(id) > SHAPE_BOARD.lateSide;
+    const sorted = [...order.filter((id) => !big(id)), ...order.filter(big)];
     const half = Math.ceil(order.length / 2);
     cycles.set(cycle, [
       ...shuffled(sorted.slice(0, half), hashSeed(0x5a1d, cycle * 2)),

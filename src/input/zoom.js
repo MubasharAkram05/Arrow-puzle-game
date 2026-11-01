@@ -7,7 +7,7 @@ import { placePointer } from '../render/pointer.js';
 import { setBoardZoom } from '../render/canvasBoard.js';
 import { $ } from '../ui/dom.js';
 import { hideZoomGuide, notePinch } from '../ui/zoomGuide.js';
-import { maxScaleFor, startScale, translateFor } from './zoomMath.js';
+import { maxScaleFor, startFocus, startScale, translateFor } from './zoomMath.js';
 
 const pointers = new Map(); // pointerId -> {x, y}
 let view = { s: 1, x: 0, y: 0 };
@@ -79,18 +79,41 @@ function clampView() {
 }
 
 /**
- * Start view for a new level: dense boards open zoomed in on the centre (see ZOOM.zoomBelowPx and
- * ZOOM.startCellPx), other boards open fully fitted.
+ * Pan a zoomed view onto the board point (fractions of the board, not the card, which has padding).
+ * @param {number} fx
+ * @param {number} fy
+ */
+function centreOnBoard(fx, fy) {
+  const card = $('board-card');
+  const board = $('board');
+  centreOn(
+    (board.offsetLeft + fx * board.offsetWidth) / card.offsetWidth,
+    (board.offsetTop + fy * board.offsetHeight) / card.offsetHeight,
+  );
+}
+
+/**
+ * Start view for a new level: dense boards open zoomed in (see ZOOM.zoomBelowPx and ZOOM.startCellPx),
+ * other boards open fully fitted. A zoomed board opens on arrows near the centre, never on an empty
+ * area such as the hole of a ring shape (see startFocus).
  * @param {number} cellPx on-screen cell size when the whole board fits
+ * @param {object} [level] the level (rows, cols, arrows)
+ * @param {number[]} [freeIds] arrows that can leave on the first move
  * @returns {boolean} true when the level starts zoomed
  */
-export function resetZoom(cellPx) {
+export function resetZoom(cellPx, level, freeIds = []) {
   maxScale = maxScaleFor(cellPx);
   view = { s: startScale(cellPx), x: 0, y: 0 };
   pointers.clear();
   gesture = null;
   apply();
   setBoardZoom(view.s, maxScale);
+  if (view.s > 1 && level) {
+    const w = $('board-wrap').getBoundingClientRect();
+    const cell = cellPx * view.s;
+    const { fx, fy } = startFocus(level, freeIds, w.width / cell, w.height / cell);
+    centreOnBoard(fx, fy);
+  }
   return view.s > 1;
 }
 

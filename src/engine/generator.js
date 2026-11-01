@@ -118,12 +118,50 @@ export function meetsGoals(report, goals) {
   );
 }
 
+/** The floors a floor fallback may relax, and which way each one is checked. */
+const RELAXABLE = { maxFreePerRound: 1, minDecoyRatio: -1, minLongestChain: -1 };
+const REPORT_KEY = { maxFreePerRound: 'freePerRound', minDecoyRatio: 'decoyRatio', minLongestChain: 'longestChain' };
+
 /**
- * Generate a verified level. Failed attempts retry with the next derived seed.
+ * Goals with some floors relaxed by a floor fallback's slack (only floors of RELAXABLE; depth and solve
+ * rounds never change).
+ * @param {object} goals
+ * @param {object} fb floorFallback ({maxFreePerRound, minDecoyRatio, minLongestChain} slacks)
+ * @param {string[]} [keys] floors to relax (default: all of RELAXABLE)
+ * @returns {object}
+ */
+export function relaxGoals(goals, fb, keys = Object.keys(RELAXABLE)) {
+  const out = { ...goals };
+  for (const k of keys) if (RELAXABLE[k] && fb[k] && out[k] !== undefined) out[k] += RELAXABLE[k] * fb[k];
+  return out;
+}
+
+/** Floors (of RELAXABLE) a report misses on the strict goals. */
+function missedFloors(report, goals) {
+  return Object.keys(RELAXABLE).filter((k) => {
+    const v = report[REPORT_KEY[k]];
+    return RELAXABLE[k] > 0 ? v > (goals[k] ?? Infinity) : v < (goals[k] || 0);
+  });
+}
+
+/**
+ * Generate a verified level. Failed attempts retry with the next derived seed. With cfg.floorFallback
+ * (Expert), once floorFallback.after attempts are done, the best attempt that met every floor except a
+ * few of RELAXABLE, each missed by at most its slack, is used: fewest missed floors, then fewest free
+ * arrows per round. It is count-based, so still deterministic; level.relaxed names the floors it missed.
  * @param {object} cfg
  * @returns {object} level with seed and attempt
  */
 export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
+  const fb = cfg.goals && cfg.floorFallback;
+  const relaxed = fb ? relaxGoals(cfg.goals, fb) : null;
+  let best = null;
+  const done = (level, report, attempt) => {
+    level.seed = cfg.seed;
+    level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
+    level.attempt = attempt;
+    return level;
+  };
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
     const level = buildLevel(cfg, rng);
@@ -131,11 +169,20 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
     let report = analyzeLevel(level);
     // a hard board just under a floor is repaired instead of thrown away
     if (cfg.deepen && !meetsGoals(report, cfg.goals)) report = repairBoard(level, report, cfg);
-    if (!meetsConstraints(level, cfg) || !meetsGoals(report, cfg.goals)) continue;
-    level.seed = cfg.seed;
-    level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
-    level.attempt = attempt;
-    return level;
+    if (!meetsConstraints(level, cfg)) continue;
+    if (meetsGoals(report, cfg.goals)) return done(level, report, attempt);
+    if (relaxed && meetsGoals(report, relaxed)) {
+      const missed = missedFloors(report, cfg.goals);
+      const better =
+        !best ||
+        missed.length < best.missed.length ||
+        (missed.length === best.missed.length && report.freePerRound < best.report.freePerRound);
+      if (better) best = { level, report, attempt, missed };
+    }
+    if (best && attempt + 1 >= fb.after) {
+      best.level.relaxed = best.missed;
+      return done(best.level, best.report, best.attempt);
+    }
   }
   throw new Error(`Could not generate level for seed ${cfg.seed}`);
 }
