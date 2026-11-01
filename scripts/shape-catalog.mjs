@@ -3,7 +3,7 @@
  *
  * Each row is a display name, optionally followed by source references tried in order:
  *   'g:cat' game-icons, 'f:cat' Font Awesome solid, 'm:pets' Material Symbols (filled),
- *   't:paw-filled' Tabler filled, 'e:mango' Fluent Emoji (its silhouette), 'font:A' Inter Black, 'font2:I' Roboto Slab Black, 'orig:heart' the game's 20 originals.
+ *   't:paw-filled' Tabler filled, 'e:mango' Fluent Emoji (its silhouette), 'font:A' Inter Black, 'font2:I' Roboto Slab Black, 'orig:heart' the game's 20 originals, 'draw:lion' our own hand-drawn shapes (scripts/shape-drawings.mjs).
  * After the explicit references, the name itself is tried in each icon set (category order below).
  * The first source that passes the quality filter wins; the others are logged as rejected.
  *
@@ -35,7 +35,13 @@ export const slug = (name) =>
     .replace(/^-|-$/g, '');
 
 const ROWS = {
-  letters: LETTERS.map((ch) => [`Letter ${ch}`, `font:${ch}`, `font2:${ch}`, `orig:letter${ch}`]),
+  letters: LETTERS.map((ch) => [
+    `Letter ${ch}`,
+    ...(ch === 'Q' ? ['draw:letterQ'] : []), // the fonts' Q tail is too thin for a board
+    `font:${ch}`,
+    `font2:${ch}`,
+    `orig:letter${ch}`,
+  ]),
   numbers: '0123456789'.split('').map((d) => [`Number ${d}`, `font:${d}`, `font2:${d}`]),
   symbols: [
     ['Heart', 'orig:heart'],
@@ -183,7 +189,7 @@ const ROWS = {
     ['Lamp', 'g:desk-lamp', 'm:lamp'],
     ['Umbrella', 'f:umbrella', 'm:umbrella', 't:umbrella-filled'],
     ['Key', 'f:key', 'm:key', 't:key-filled'],
-    ['Clock', 'f:clock', 'm:schedule', 't:clock-filled'],
+    ['Clock', 'draw:clock', 'f:clock', 'm:schedule', 't:clock-filled'],
     ['Phone', 'f:mobile', 'm:smartphone', 't:device-mobile-filled'],
     ['Camera', 'f:camera', 'm:photo-camera', 't:camera-filled'],
     ['Cup', 'f:mug-hot', 'm:local-cafe', 't:cup-filled'],
@@ -339,7 +345,7 @@ const ROWS = {
     ['Donut', 'orig:donut'],
     ['Burger', 'e:hamburger', 'f:burger', 'g:hamburger', 'm:lunch-dining'],
     ['Pizza', 'g:full-pizza', 'm:local-pizza', 't:pizza-filled'],
-    ['Pizza Slice', 'f:pizza-slice', 'g:pizza-slice'],
+    ['Pizza Slice', 'draw:pizzaSlice', 'f:pizza-slice', 'g:pizza-slice'],
     ['Ice Cream', 'm:icecream', 'f:ice-cream', 'g:ice-cream-cone', 'm:icecream'],
     ['Cake', 'e:birthday-cake', 'f:cake-candles', 'm:cake', 'g:cake-slice'],
     ['Cookie', 'f:cookie', 'm:cookie', 'g:cookie'],
@@ -570,7 +576,7 @@ const ROWS = {
     ['Turtle', 'g:turtle', 'g:sea-turtle'],
     ['Butterfly', 'e:butterfly', 'g:butterfly', 't:butterfly-filled'],
     ['Owl', 'g:owl', 'g:barn-owl', 'm:owl'],
-    ['Lion', 'g:lion', 'g:lion-head'],
+    ['Lion', 'draw:lion', 'g:lion', 'g:lion-head'],
     ['Dinosaur', 'g:dinosaur-rex', 'g:dino-rex'],
     ['Bear', 'g:bear-head', 'g:bear-face', 'g:polar-bear'],
     ['Panda', 'g:panda'],
@@ -604,7 +610,7 @@ const ROWS = {
     ['Mouse', 'g:mouse', 'g:rat'],
     ['Squirrel', 'g:squirrel'],
     ['Hedgehog', 'g:hedgehog'],
-    ['Fox', 'g:fox-head', 'g:fox', 'g:fox-head'],
+    ['Fox', 'draw:fox', 'g:fox-head', 'g:fox'],
     ['Wolf', 'g:wolf-head', 'g:wolf-howl', 'g:wolf'],
     ['Raccoon', 'g:raccoon-head', 'g:raccoon'],
     ['Beaver', 'g:beaver'],
@@ -633,6 +639,7 @@ const ROWS = {
     ['Worm', 'g:worm-mouth', 'g:earth-worm'],
     ['Caterpillar', 'g:caterpillar'],
     ['Tiger', 'g:tiger-head', 'g:tiger'],
+    ['Tiger Head', 'draw:tigerHead'],
     ['Leopard', 'g:leopard', 'g:panther'],
     ['Cheetah', 'g:cheetah'],
     ['Bison', 'g:bison', 'g:buffalo-head'],

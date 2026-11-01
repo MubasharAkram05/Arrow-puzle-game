@@ -185,21 +185,21 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 
 ### Shape library
 
-720 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing), on a 64-cell grid. 443 are in play; 277 stay out (they do not read as their name from the silhouette, or are too slow to generate; see below).
+721 shapes in 10 categories, built by a script on a 64-cell grid from open icon sets and fonts, plus 6 of our own hand-drawn shapes. 448 are in play; 273 stay out (they do not read as their name from the silhouette, or are too slow to generate; see below).
 
 | Category  |   Built | In play (3.13.0) | In play |
 | --------- | ------: | ---------------: | ------: |
-| Letters   |      26 |               26 |      25 |
+| Letters   |      26 |               26 |      26 |
 | Numbers   |      10 |               10 |      10 |
 | Symbols   |      65 |               57 |      56 |
 | Transport |      65 |               34 |      42 |
-| Objects   |     153 |              102 |     108 |
+| Objects   |     153 |              102 |     109 |
 | Food      |      70 |               32 |      39 |
 | Fruits    |      53 |               26 |      27 |
 | Nature    |      72 |               34 |      39 |
-| Animals   |     144 |               48 |      70 |
+| Animals   |     145 |               48 |      73 |
 | Others    |      62 |               30 |      27 |
-| **Total** | **720** |          **399** | **443** |
+| **Total** | **721** |          **399** | **448** |
 
 - **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 64 cells on its longest side (aspect ratio kept). Small holes are filled. Parts thinner than 4 cells (legs, tails, wings, stems) are thickened instead of cut off: a morphological dilation of the thin parts only, run twice, so a 1-cell line ends up 5 cells wide and is still 2+ cells wide on a board half the size. Then single-cell spurs and notches are smoothed and only the main connected area stays. A shape that shipped before and now misses the quality filter is kept (for old saves) but out of play. The game only reads the generated JSON.
 - **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests on every shape in play): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 32x32, one connected area, and still connected and similar (70%+ overlap) at 32x32. Every rejected source is logged with the reason; a name tries its next source until one passes.
@@ -209,9 +209,10 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 - **Clean masks at board size** (`makeMask` in `src/engine/masks.js`): after sampling the shape at cell centres, single-cell spurs and bumps (a cell with at most one filled neighbour) are removed and single-cell notches and holes (an empty cell with three or four filled neighbours) are filled, so the outline stays the same but loses its noise.
 - **Minimum board size** (`minBoardSide`): the smallest square board on which the shape is one piece and overlaps a smooth area-average of its outline by at least 88% (`SHAPE_BOARD` in `src/config.js`). A board never goes below it; small, detailed shapes get more cells.
 - **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level next to its silhouette, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.14.0 no shape was flagged.
-- **Checked by eye** (3.14.0): every built shape, including the 222 taken out in 3.13.0, was looked at as a board silhouette at 32 and 56 cells. Only shapes a kid could name stay in play. For some popular names a clearer source was picked first (Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice, Crab). 81 shapes came back, 46 new ones joined, and 83 that were in play went out. Everything out of play is in `src/engine/shapes/removed.js` with its reason; it stays in the library, so a save that collected it keeps it.
+- **Checked by eye** (3.14.0): every built shape, including the 222 taken out in 3.13.0, was looked at as a board silhouette at 32 and 56 cells. Only shapes a kid could name stay in play. For some popular names a clearer source was picked first (Butterfly, Rabbit, Ghost, Robot, Rose, Cake, Burger, Ice Cream, Ice Pop, Watermelon Slice, Crab). 83 shapes came back, 47 new ones joined, and 81 that were in play went out. Everything out of play is in `src/engine/shapes/removed.js` with its reason; it stays in the library, so a save that collected it keeps it.
 - **Big-board shapes** (`SHAPE_MIN_SIDE` in `removed.js`): 49 shapes with thin legs, wheels or many small parts only read well from about 48 cells (Bicycle, Spider, Butterfly, Helicopter, Grapes...). They get that minimum board and always come in the second half of a cycle (`SHAPE_BOARD.lateSide`), where boards are already that big, so no early level gets bigger or slower.
-- **Speed**: 12 shapes are out because they were the slowest to generate (holes and thin rims make the generator retry): Bandage, Baseball, Bush, Clock, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. Median build time on a big Expert board is about 57 ms (53 ms in 3.13.0). Every tested level is under the 300 ms CI limit; 21 of the 713 tested levels are over the 150 ms local target (9 in 3.13.0), because the 64-cell outlines have more edge detail.
+- **Hand-drawn shapes** (`scripts/shape-drawings.mjs`, source `draw:`): our own designs made from plain geometry (circles, ellipses, polygons, thick bars) on the 64-cell grid, not traced from any icon set, for names no icon read well: Lion (puffy mane, face gap, eyes), Fox (pointed ears and snout, bushy tail), Letter Q (thick tail), Clock (thick rim, thick hands touching the rim), Pizza Slice (round crust, pepperoni holes) and Tiger Head (round ears, forehead and cheek stripes, eyes). They go through the same clean-up and quality filter. Lion, Clock and Tiger Head have a 32-cell minimum board so their eyes, face gap and hands show.
+- **Speed**: 11 shapes are out because they were the slowest to generate (holes and thin rims make the generator retry): Bandage, Baseball, Bush, Cross Circle, Die, Ice Cube, Jack O Lantern, Meeple, Question, Sparkle, Squid. Median build time on a big Expert board is about 57 ms (53 ms in 3.13.0). Every tested level is under the 300 ms CI limit; 21 of the 713 tested levels are over the 150 ms local target (9 in 3.13.0), because the 64-cell outlines have more edge detail.
 - **Credits**: sources that need attribution are listed in `CREDITS.md` and in Settings > Credits.
 
 ### Shape Collection (hidden)

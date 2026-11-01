@@ -14,7 +14,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'question',
   'bandage',
   'baseball',
-  'clock',
   'meeple',
   'sparkle',
   'squid',
@@ -83,7 +82,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'ferry',
   'fish-bones',
   'flatfish',
-  'fox',
   'food-truck',
   'football',
   'fried-egg',
@@ -120,7 +118,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'lettuce',
   'lightbulb',
   'lighthouse',
-  'lion',
   'lizard',
   'magnet-toy',
   'mail-truck',
@@ -272,7 +269,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'dandelion',
   'dinosaur',
   'feline',
-  'letterQ',
   'manta-ray',
   'muffin',
   'peeled-banana',
@@ -296,6 +292,10 @@ export const REMOVED_SHAPES = Object.freeze([
  * boards are already big, so it never makes an early level bigger or slower.
  */
 export const SHAPE_MIN_SIDE = Object.freeze({
+  // hand-drawn shapes whose eyes, face gap or hands only show from 32 cells (first half of the cycle)
+  clock: 32,
+  lion: 32,
+  'tiger-head': 32,
   ant: 48,
   balloon: 48,
   'banana-bunch': 48,

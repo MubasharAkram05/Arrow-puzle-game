@@ -36,6 +36,7 @@ import {
   thickenThin,
 } from '../src/engine/shapes/quality.js';
 import { CATEGORIES, CATALOG } from './shape-catalog.mjs';
+import { drawMask } from './shape-drawings.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // ids in the current library: they must stay (saved games keep collected shape ids)
@@ -106,6 +107,7 @@ export const SOURCES = {
     file: '@fontsource/roboto-slab/files/roboto-slab-latin-900-normal.woff',
   },
   orig: { name: 'Arrow Escape original shapes', license: 'project', url: '', author: 'Arrow Escape' },
+  draw: { name: 'Arrow Escape hand-drawn shapes', license: 'project', url: '', author: 'Arrow Escape' },
 };
 
 const RENDER_PX = 512;
@@ -202,6 +204,7 @@ function clean(m) {
 function sourceMask(ref) {
   const [key, name] = ref.split(':');
   if (key === 'orig') return originalMask(name);
+  if (key === 'draw') return drawMask(name);
   if (key === 'font' || key === 'font2') return rasterize(glyphSvg(key, name));
   if (!SOURCES[key]?.set) throw new Error(`unknown source ${ref}`);
   const svg = iconSvg(key, name);

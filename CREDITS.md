@@ -8,12 +8,13 @@ credits in Settings > Credits.
 | ------------------------------------------------------------------------ | --------------------------------- | ---------- | -----: |
 | [Tabler Icons (filled)](https://tabler.io/icons)                         | Paweł Kuna                        | MIT        |      8 |
 | [Material Symbols (filled)](https://fonts.google.com/icons)              | Google                            | Apache-2.0 |     89 |
-| [Font Awesome Free 6 (solid)](https://fontawesome.com)                   | Fonticons, Inc.                   | CC-BY-4.0  |    221 |
-| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    289 |
-| [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     59 |
-| [Inter (Black 900)](https://rsms.me/inter/)                              | Rasmus Andersson                  | OFL-1.1    |     35 |
+| [Font Awesome Free 6 (solid)](https://fontawesome.com)                   | Fonticons, Inc.                   | CC-BY-4.0  |    219 |
+| [game-icons.net](https://game-icons.net)                                 | Lorc, Delapouite and contributors | CC-BY-3.0  |    288 |
+| [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     58 |
+| [Inter (Black 900)](https://rsms.me/inter/)                              | Rasmus Andersson                  | OFL-1.1    |     34 |
 | [Roboto Slab (Black 900)](https://fonts.google.com/specimen/Roboto+Slab) | Christian Robertson               | Apache-2.0 |      1 |
 | Arrow Escape original shapes                                             | Arrow Escape                      | project    |     18 |
+| Arrow Escape hand-drawn shapes                                           | Arrow Escape                      | project    |      6 |
 
 ## Attribution
 

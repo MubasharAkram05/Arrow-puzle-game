@@ -201,9 +201,10 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
   });
 
   it('Expert levels have the deepest chains', () => {
-    const expert = BIG.filter((n) => n >= 1000).slice(0, 15);
+    // every cached level of both tiers (200 Expert, 400 Super Hard): small samples swing with the shape order
+    const expert = BIG.filter((n) => n >= 1000);
     const deep = expert.reduce((a, n) => a + get(n).report.avgDepth, 0) / expert.length;
-    expect(deep).toBeGreaterThan(mean(101, 300, 9, (x) => x.report.avgDepth));
+    expect(deep).toBeGreaterThan(mean(101, 500, 1, (x) => x.report.avgDepth));
     for (const n of expert) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 
