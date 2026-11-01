@@ -1,6 +1,6 @@
 /**
  * Contact sheet of every shape as it really plays: the generated board of the shape's first level (cycle 1),
- * with the name under it. Flags shapes whose arrows cover less than 85% of the mask, whose board outline
+ * with the board's silhouette next to it and the name under it. Flags shapes whose arrows cover less than 85% of the mask, whose board outline
  * breaks apart or strays from the shape, or that needed many attempts or a fallback.
  *
  *   node scripts/shape-sheet.mjs [out.html]
@@ -41,7 +41,9 @@ function boardSvg(level) {
     const [px, py] = [-d.dr * 0.32, d.dc * 0.32];
     heads += `M${x + d.dc * 0.3} ${y + d.dr * 0.3}L${x + px} ${y + py}L${x - px} ${y - py}z`;
   }
-  return `<svg viewBox="-0.5 -0.5 ${cols + 1} ${rows + 1}"><path d="${cells}" class="m"/><g class="a">${lines}</g><path d="${heads}" class="h"/></svg>`;
+  const view = `viewBox="-0.5 -0.5 ${cols + 1} ${rows + 1}"`;
+  // the board with its arrows, and the same mask as a plain silhouette next to it
+  return `<div class="pair"><svg ${view}><path d="${cells}" class="m"/><g class="a">${lines}</g><path d="${heads}" class="h"/></svg><svg ${view}><path d="${cells}" class="s"/></svg></div>`;
 }
 
 const rows = [];
@@ -74,7 +76,8 @@ writeFileSync(
   OUT,
   `<!doctype html><meta charset="utf-8"><title>Shape sheet</title><style>
 body{font:12px system-ui,sans-serif;margin:16px;background:#f4f6fa;color:#111}
-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pair{display:flex;gap:4px}.pair svg{width:50%}.s{fill:#0b1442}
 figure{margin:0;background:#fff;border-radius:8px;padding:6px;border:2px solid transparent}
 figure.flag{border-color:#e5484d}
 svg{width:100%;aspect-ratio:1;display:block}

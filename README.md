@@ -6,7 +6,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 
 ## Features
 
-- Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board on every level from 4 (386 shapes in 10 categories, no repeats within a cycle)
+- Endless generated levels in chapters of 20, dense like the reference game (40+ arrows from level 4, 140+ from level 61), with a mix of short and long arrows, and a shape board on every level from 4 (399 shapes in 10 categories, no repeats within a cycle)
 - Pinch to zoom and drag on big boards
 - Hearts, hints, a level 1 tutorial, snake-style arrow animations
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
@@ -164,7 +164,7 @@ Two arrows pointing straight at each other on the same line can never appear: ea
 
 **Shape levels**: every level after the tutorial (from level 4) is a shape board from the shape library (see [Shape library](#shape-library)); there are no plain rectangles any more. On the Levels path, each node shows its level's exact board outline.
 
-- **Order** (`src/engine/shapes/plan.js`): every cycle of 386 levels shows each shape exactly once, in a seeded shuffle. The library order is split in two halves (easier, more compact shapes first) and each half is shuffled on its own, with a new seed per cycle; a shape stays in its half, so it never comes back within half a cycle, even across the end of a cycle. (A brand-new full shuffle each cycle could put a shape from the end of one cycle at the start of the next, a few levels apart.) Later cycles get bigger boards, as the size curve keeps growing with the level.
+- **Order** (`src/engine/shapes/plan.js`): every cycle of 399 levels shows each shape exactly once, in a seeded shuffle. The library order is split in two halves (easier, more compact shapes first) and each half is shuffled on its own, with a new seed per cycle; a shape stays in its half, so it never comes back within half a cycle, even across the end of a cycle. (A brand-new full shuffle each cycle could put a shape from the end of one cycle at the start of the next, a few levels apart.) Later cycles get bigger boards, as the size curve keeps growing with the level.
 - **Never a plain board**: a shape that misses its floors gets more seeds, then two bigger boards, then the next shapes of its cycle (logged with `console.warn`, so a shape that fails often can be removed). The tests check levels 1-500 plus 200 random ones up to 1,000,000 and none needs a fallback.
 - Every shape board is at least its shape's minimum size (`minBoardSide` in `src/engine/masks.js`) and its mask is smoothed at board size (see [Shape library](#shape-library)).
 
@@ -185,21 +185,21 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 
 ### Shape library
 
-621 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing). 386 are in play: 235 that did not read as their name on a real board were taken out in 3.13.0 (see below).
+621 shapes in 10 categories, built by a script from open icon sets and fonts (no hand drawing). 399 are in play: 222 were taken out in 3.13.0 (221 that did not read as their name even on a big board, and Asterisk, which was too slow to build; see below).
 
 | Category  |   Built | In play |
 | --------- | ------: | ------: |
 | Letters   |      26 |      26 |
 | Numbers   |      10 |      10 |
-| Symbols   |      62 |      58 |
-| Transport |      55 |      33 |
-| Objects   |     134 |     100 |
-| Food      |      65 |      31 |
-| Fruits    |      42 |      25 |
-| Nature    |      62 |      33 |
-| Animals   |     110 |      40 |
+| Symbols   |      62 |      57 |
+| Transport |      55 |      34 |
+| Objects   |     134 |     102 |
+| Food      |      65 |      32 |
+| Fruits    |      42 |      26 |
+| Nature    |      62 |      34 |
+| Animals   |     110 |      48 |
 | Others    |      55 |      30 |
-| **Total** | **621** | **386** |
+| **Total** | **621** | **399** |
 
 - **Build** (`npm run shapes:sources` once, then `npm run shapes:build`): `scripts/build-shapes.mjs` renders each entry of `scripts/shape-catalog.mjs` to a filled silhouette: letters and numbers from Inter Black (Roboto Slab as a fallback), icons from Font Awesome solid, game-icons.net, Material Symbols, Tabler filled and Fluent Emoji, and the game's 20 original shapes (same ids, so saves keep working). Each is downsampled to 32 cells on its longest side, small holes are filled, parts too thin for a board are trimmed (at most 12% of the shape) and only the main connected area stays. The game only reads the generated JSON.
 - **Quality filter** (`src/engine/shapes/quality.js`, also run by the tests): fill 25-85% of the bounding box, no longer than 2.5:1, no part thinner than 2 cells at 20x20, one connected area, and still connected and similar (70%+ overlap) on an 18x18 board, the smallest shape board. Every rejected source is logged with the reason; a name tries its next source until one passes.
@@ -208,7 +208,7 @@ On that machine 21 of the 700 levels (all Super Hard or Expert) take over 150 ms
 - **Library order**: categories take turns, first in the order of `LEVELS.shapeRotation` (animals, food, letters, transport, nature, objects, fruits, symbols, others, numbers), then in proportion to what each category has left; inside a category compact shapes come first. The levels shuffle each half of this order per cycle (see [Shape levels](#levels-and-difficulty)).
 - **Clean masks at board size** (`makeMask` in `src/engine/masks.js`): after sampling the shape at cell centres, single-cell spurs and bumps (a cell with at most one filled neighbour) are removed and single-cell notches and holes (an empty cell with three or four filled neighbours) are filled, so the outline stays the same but loses its noise.
 - **Minimum board size** (`minBoardSide`): the smallest square board on which the shape is one piece and overlaps a smooth area-average of its outline by at least 88% (`SHAPE_BOARD` in `src/config.js`). A board never goes below it; small, detailed shapes get more cells.
-- **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.13.0 no shape was flagged; the 235 removed shapes were picked by eye from the sheet (blobs that did not look like their name at board size, like Sheep, Goat, Police Car or Envelope) and are listed in `src/engine/shapes/removed.js`. They stay in the library, so a save that collected one keeps it.
+- **Contact sheet** (`npm run shapes:sheet`, `scripts/shape-sheet.mjs`): the real generated board of every shape at its first level next to its silhouette, with its name, level, size and build time. It flags shapes whose arrows cover less than 85% of the mask, whose outline breaks apart or strays from the shape (under 80% overlap), that needed more than 20 attempts or a fallback. In 3.13.0 no shape was flagged. Shapes were then checked by eye from the silhouettes: every one that looked wrong was first tried on bigger boards (40 and 72 cells). The library masks are 32 cells on their longest side with thin parts already trimmed, so a bigger board adds no detail: a shape that is a blob at 32 stays a blob. 14 read as their name on a big board and came back (Bird, Cat Head, Chick, Dinosaur, Dog Head, Frog, Kettle, Poppy, Sailboat, Shark, School, Spaghetti, Starfruit, Tiger); they have a 40-cell minimum (`BIG_BOARD_SHAPES`) and always come in the second half of a cycle, where boards are already that big, so no early level gets bigger or slower. 221 stay out because their silhouette itself does not look like the name (Sheep, Goat, Police Car, Envelope, Lion, Turtle, Strawberry...), and Asterisk because its thin arms need an 89-cell board and many retries. All are listed in `src/engine/shapes/removed.js`; they stay in the library, so a save that collected one keeps it. Bringing more back needs the library rebuilt at a higher resolution (`npm run shapes:build`).
 - **Credits**: sources that need attribution are listed in `CREDITS.md` and in Settings > Credits.
 
 ### Shape Collection (hidden)
@@ -345,7 +345,7 @@ Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. Steps are claim
 | Chapter Master | Finish chapter 1 (20 levels)                      | 2                 |
 | Arrow Hunter   | Clear 1,000 arrows                                | 5                 |
 | No Mistakes    | 5 levels in a row without losing a heart          | 3                 |
-| Shape Solver   | Finish 5 shape levels                             | 3                 |
+| Shape Solver   | Finish 25 / 100 / 250 / 500 shape levels          | 2 / 5 / 10 / 20   |
 | Big Spender    | Spend 1,000 coins                                 | 2                 |
 | Level Climber  | Reach level 25 / 50 / 100 / 250                   | 2 / 4 / 8 / 15    |
 | Brain Power    | 10 / 30 levels finished (first time) with no hint | 3 / 8             |

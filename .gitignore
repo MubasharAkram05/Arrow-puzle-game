@@ -8,3 +8,5 @@ ios/
 .vite/
 scripts/shape-sources/node_modules/
 shape-sheet.html
+shapes-preview.html
+shapes-preview-*.png

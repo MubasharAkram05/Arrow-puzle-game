@@ -12,13 +12,15 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - Shape masks are smoothed at board size and never smaller than the shape's minimum board.
 - Levels page nodes show the exact board outline of their level (same mask as the game), as crisp vector icons.
 
+- Shape Solver is tiered: Shape Solver I / II / III / IV for 25 / 100 / 250 / 500 shape levels, 2 / 5 / 10 / 20 diamonds. A save that claimed the old single step (5 levels, 3 diamonds) keeps those diamonds and has step I claimed, so nothing pays twice.
+
 ### Removed
 
-- 235 shapes that did not look like their name on a real board (list in `src/engine/shapes/removed.js`); 386 remain. Saves that collected one keep it.
+- 222 shapes (list in `src/engine/shapes/removed.js`); 399 remain. 221 did not look like their name even on a big board; Asterisk was too slow to build. 14 that only read well on a big board are kept with a 40-cell minimum and come in the second half of each cycle. Saves that collected a removed shape keep it.
 
 ### Added
 
-- `npm run shapes:sheet`: a contact sheet of every shape's real first-level board, with flags.
+- `npm run shapes:sheet`: a contact sheet of every shape's real first-level board next to its silhouette, with flags.
 
 ## [3.12.0] - 2026-10-30
 

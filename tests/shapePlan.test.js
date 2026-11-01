@@ -114,3 +114,22 @@ describe('Levels page matches the game', () => {
     }
   });
 });
+
+describe('shapes brought back on big boards', () => {
+  it('come in the second half of every cycle, on a board at least their minimum size', async () => {
+    const { BIG_BOARD_SHAPES, REMOVED_SHAPES } = await import('../src/engine/shapes/removed.js');
+    const order = shapeOrder();
+    const half = Math.ceil(order.length / 2);
+    for (const id of Object.keys(BIG_BOARD_SHAPES)) {
+      expect(REMOVED_SHAPES).not.toContain(id);
+      expect(order).toContain(id);
+      expect(minBoardSide(id)).toBeGreaterThanOrEqual(BIG_BOARD_SHAPES[id]);
+      for (const c of [0, 1, 2]) {
+        const k = cycleOrder(order, c).indexOf(id);
+        expect(k, `${id} in cycle ${c}`).toBeGreaterThanOrEqual(half);
+        const n = LEVELS.shapeFrom + c * order.length + k;
+        expect(getLevelConfig(n).cols, `${id} at level ${n}`).toBeGreaterThanOrEqual(BIG_BOARD_SHAPES[id]);
+      }
+    }
+  });
+});

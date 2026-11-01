@@ -1,9 +1,12 @@
 /**
- * Shapes taken out of the game (235 in 3.13.0): they did not read as their name on a real board (see
+ * Shapes taken out of the game (222 in 3.13.0): they did not read as their name on a real board, even on a big
+ * one (see
  * scripts/shape-sheet.mjs and README "Shape library"). The library still ships them, so old saves that
  * collected one keep it; no level uses them.
  */
 export const REMOVED_SHAPES = Object.freeze([
+  // too slow to build: its thin arms need an 89-wide board and many retries
+  'asterisk',
   'acorn',
   'acorn-squash',
   'alien',
@@ -27,7 +30,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'bicycle',
   'binoculars',
   'birch-tree',
-  'bird',
   'boar',
   'broccoli',
   'broom',
@@ -37,14 +39,12 @@ export const REMOVED_SHAPES = Object.freeze([
   'butterfly',
   'cake',
   'carrot',
-  'cat-head',
   'caterpillar',
   'chanterelles',
   'charging-bull',
   'cheese',
   'cheese-slice',
   'chess-rook',
-  'chick',
   'chicken',
   'chocolate',
   'clownfish',
@@ -63,8 +63,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'deer',
   'delivery-truck',
   'dice',
-  'dinosaur',
-  'dog-head',
   'dolphin',
   'domino',
   'donkey',
@@ -84,7 +82,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'fly',
   'fox',
   'fries',
-  'frog',
   'fruit-tree',
   'ghost',
   'goat',
@@ -106,7 +103,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'jigsaw',
   'jumping-dog',
   'kebab',
-  'kettle',
   'kite',
   'kiwi',
   'kiwi-bird',
@@ -149,7 +145,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'plum',
   'pointing-hand',
   'police-car',
-  'poppy',
   'potato',
   'pterodactyl',
   'pumpkin',
@@ -168,12 +163,10 @@ export const REMOVED_SHAPES = Object.freeze([
   'rubber-duck',
   'rubik-cube',
   'sabertooth',
-  'sailboat',
   'salad',
   'salamander',
   'salt',
   'sandwich',
-  'school',
   'scooter',
   'screwdriver',
   'scroll',
@@ -182,7 +175,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'seashell',
   'seed',
   'shapes',
-  'shark',
   'sheep',
   'shoe',
   'shovel',
@@ -192,14 +184,12 @@ export const REMOVED_SHAPES = Object.freeze([
   'sloth',
   'sniffing-dog',
   'soap',
-  'spaghetti',
   'speedboat',
   'spider',
   'spinning-top',
   'sponge',
   'spotted-bug',
   'sprout',
-  'starfruit',
   'steam-train',
   'storm-cloud',
   'strawberry',
@@ -208,7 +198,6 @@ export const REMOVED_SHAPES = Object.freeze([
   'swirl',
   'taco',
   'telescope',
-  'tiger',
   'tomato',
   'toothbrush',
   'top-hat',
@@ -240,3 +229,25 @@ export const REMOVED_SHAPES = Object.freeze([
   'windmill',
   'worm',
 ]);
+
+/**
+ * Shapes that only read as their name on a big board (3.13.0 brought them back): their minimum board side,
+ * at least. They are placed in the second half of every cycle, where boards are already this big, so they
+ * never make an early level bigger or slower.
+ */
+export const BIG_BOARD_SHAPES = Object.freeze({
+  bird: 40,
+  'cat-head': 40,
+  chick: 40,
+  dinosaur: 40,
+  'dog-head': 40,
+  frog: 40,
+  kettle: 40,
+  poppy: 40,
+  sailboat: 40,
+  shark: 40,
+  school: 40,
+  spaghetti: 40,
+  starfruit: 40,
+  tiger: 40,
+});
