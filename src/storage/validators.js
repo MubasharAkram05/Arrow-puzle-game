@@ -1,6 +1,7 @@
 /**
  * Small validators shared by the save schema: numbers, lists, cosmetics and avatars. Pure.
  */
+import { MAX_DAILY_DAYS } from '../game/trophies.js';
 import { BOOSTER_REFUND } from '../config.js';
 import { CATEGORIES, findItem, newCosmetics } from '../game/cosmetics.js';
 
@@ -99,6 +100,47 @@ export function sanitizeDaily(raw) {
     lastSeen: timestamp(d.lastSeen),
     blockedDay: day(d.blockedDay),
   };
+}
+
+/**
+ * Days the daily reward was claimed (local day numbers, oldest first), for the monthly trophies. A save from
+ * before 3.16.0 has no list: it is rebuilt from the record, since a streak is a run of consecutive claimed
+ * days ending at lastClaim. Earlier days are unknown and count as not claimed (their months start at 0).
+ * @param {unknown} raw
+ * @param {import('../game/daily.js').DailyRecord} daily already sanitized
+ * @returns {number[]}
+ */
+export function dailyDays(raw, daily) {
+  if (!Array.isArray(raw)) {
+    if (daily.lastClaim === null) return [];
+    const n = Math.max(1, Math.min(daily.streak, MAX_DAILY_DAYS));
+    return Array.from({ length: n }, (_, i) => daily.lastClaim - n + 1 + i);
+  }
+  const ok = raw.filter((v) => Number.isInteger(v) && v > 0 && v < 1e6);
+  return [...new Set(ok)].sort((a, b) => a - b).slice(-MAX_DAILY_DAYS);
+}
+
+/**
+ * Claimed achievement ids, with renamed ids mapped to their new ones.
+ * @param {unknown} raw
+ * @param {Record<string, string>} renamed
+ * @returns {string[]}
+ */
+export function claimedIds(raw, renamed) {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((x) => typeof x === 'string').map((x) => renamed[x] ?? x))];
+}
+
+/**
+ * Claimed achievement steps whose award badge has been seen on the Awards tab (no red dot). A save from
+ * before 3.16.0 has no list: everything already claimed counts as seen, so old badges don't all show a dot.
+ * @param {unknown} raw
+ * @param {string[]} claimed
+ * @returns {string[]}
+ */
+export function seenBadgeIds(raw, claimed) {
+  if (!Array.isArray(raw)) return [...claimed];
+  return [...new Set(raw.filter((x) => typeof x === 'string' && claimed.includes(x)))];
 }
 
 /**

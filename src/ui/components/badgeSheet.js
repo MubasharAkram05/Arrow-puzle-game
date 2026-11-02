@@ -1,83 +1,57 @@
 /**
- * Badge details as a bottom sheet: big badge, name, description, current step, progress, reward and a Claim
- * button when a step is ready. Claiming plays the unlock animation (scale, shine, confetti) and flies the
- * diamonds to the counter.
+ * Award details as a bottom sheet (Awards tab): the big badge, name, description and every step with its
+ * progress. For showing off only: steps are claimed in the Achievements list on the Profile tab.
  */
-import { badges } from '../../game/badges.js';
-import { achievementContext, claim } from '../../game/rewards.js';
+import { awardBadges } from '../../game/awards.js';
+import { achievementContext } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
-import { saveProgress } from '../../storage/save.js';
 import { $ } from '../dom.js';
 import { closeModals, openModal } from '../modals/modal.js';
-import { badgeSVG } from './badge.js';
-import { flyCurrency } from './currencyBar.js';
+import { clayBadgeSVG } from './clayBadge.js';
 import { icon } from './icons.js';
 
-let group = null;
-let onClaimed = () => {};
+const fmt = (n) => n.toLocaleString('en-US');
 
-const findBadge = (g) => badges(achievementContext(), state.claimed).find((b) => b.group === g);
-
-function render() {
-  const b = findBadge(group);
-  const step = b.next || null;
-  const done = !step;
-  const title = b.label ? `${b.title} ${b.label}` : b.title;
-  const desc = done ? 'All steps earned.' : step.desc;
-  const stepText = b.steps > 1 ? `Step ${done ? b.steps : step.step} of ${b.steps}` : '';
-  const pct = b.goal ? Math.min(1, b.value / b.goal) : 1;
-  $('badge-sheet-body').innerHTML = `
-    <div class="bs-art" id="bs-art">${badgeSVG(b, 'big')}<span class="burst" aria-hidden="true"></span></div>
-    <h3>${title}</h3>
-    <p class="muted">${desc}</p>
-    ${stepText ? `<small class="bs-step">${stepText}</small>` : ''}
-    ${
-      done
-        ? `<p class="bs-done">${icon('check')}Earned</p>`
-        : `<div class="bs-progress"><div class="xp-bar"><i style="transform:scaleX(${pct})"></i></div><small>${b.value.toLocaleString('en-US')} / ${b.goal.toLocaleString('en-US')}</small></div>
-    <p class="bs-reward">Reward <b><svg class="cur-icon"><use href="#i-gem" /></svg>${step.reward}</b></p>
-    ${b.state === 'ready' ? `<button class="btn primary big" id="bs-claim" data-claim="${step.id}">Claim</button>` : ''}`
-    }`;
+/** One step line: done (check), current (progress bar) or later (goal only). */
+function stepHTML(s, a, current) {
+  const state = s.claimed ? 'done' : current ? 'current' : 'later';
+  const pct = Math.min(1, a.value / s.goal);
+  const mark = s.claimed
+    ? icon('check', 'bs-check')
+    : current
+      ? `<div class="xp-bar"><i style="transform:scaleX(${pct})"></i></div><small>${fmt(a.value)} / ${fmt(s.goal)}</small>`
+      : `<small>${fmt(s.goal)}</small>`;
+  return `<li class="bs-s bs-s-${state}"><span class="bs-s-name">${a.steps.length > 1 ? `Step ${s.step}` : 'Goal'}<em>${fmt(s.goal)}</em></span>
+    <span class="bs-s-mark">${mark}</span>
+    <span class="bs-s-rew"><svg class="cur-icon"><use href="#i-gem" /></svg>${s.reward}</span></li>`;
 }
 
 /**
  * Open the sheet for a badge group.
- * @param {string} g group id
+ * @param {string} group
  */
-export function openBadgeSheet(g) {
-  group = g;
-  render();
+export function openBadgeSheet(group) {
+  const a = awardBadges(achievementContext(), state.claimed, state.seenBadges).find((x) => x.group === group);
+  if (!a) return;
+  const current = a.steps.find((s) => !s.claimed);
+  const ready = current && current.done;
+  $('badge-sheet-body').innerHTML = `
+    <div class="bs-art">${clayBadgeSVG(a, 'huge')}</div>
+    <h3>${a.title}</h3>
+    <p class="muted">${a.desc}</p>
+    <ol class="bs-steps">${a.steps.map((s) => stepHTML(s, a, s === current)).join('')}</ol>
+    <p class="bs-note">${
+      !current
+        ? `${icon('check')}Every step earned`
+        : ready
+          ? 'Ready! Claim it in the Achievements list on your Profile tab.'
+          : `${a.earned} of ${a.steps.length} earned`
+    }</p>`;
   openModal('modal-badge');
 }
 
-function onClaim(btn) {
-  const before = state.diamonds;
-  const res = claim(btn.dataset.claim);
-  if (!res.ok) return render();
-  saveProgress();
-  btn.disabled = true;
-  const art = $('bs-art');
-  art.querySelector('.bdg').outerHTML = badgeSVG(findBadge(group), 'big');
-  art.querySelector('.burst').innerHTML = '<i></i>'.repeat(10);
-  art.classList.add('unlocking');
-  flyCurrency(btn, 'diamonds', before, res.diamonds);
-  onClaimed();
-  setTimeout(() => {
-    art.classList.remove('unlocking');
-    render();
-  }, 1100);
-}
-
-/**
- * Wire the sheet once.
- * @param {() => void} claimed called after a claim (the profile refreshes its badges)
- */
-export function bindBadgeSheet(claimed) {
-  onClaimed = claimed;
-  $('badge-sheet-body').addEventListener('click', (e) => {
-    const b = e.target.closest('#bs-claim');
-    if (b) onClaim(b);
-  });
+/** Wire the sheet once (a tap on the dimmed backdrop closes it). */
+export function bindBadgeSheet() {
   $('modal-badge').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModals();
   });

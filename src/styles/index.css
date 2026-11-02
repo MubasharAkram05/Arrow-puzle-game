@@ -13,7 +13,10 @@
 @import './nav.css';
 @import './profile.css';
 @import './profileStats.css';
+@import './profileTabs.css';
+@import './achievementsList.css';
 @import './awards.css';
+@import './trophies.css';
 @import './badgeSheet.css';
 @import './collection.css';
 @import './shop.css';
@@ -22,3 +25,4 @@
 @import './shopPreviews.css';
 @import './settings.css';
 @import './daily.css';
+@import './dailyArt.css';

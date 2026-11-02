@@ -1,10 +1,9 @@
 /**
  * Shared shop actions: confirm + buy with feedback, equipping, and sale prices.
  */
-import { SHOP_STYLES, SHOP_THEMES } from '../../../config.js';
-import { findItem } from '../../../game/cosmetics.js';
 import { weeklySale } from '../../../game/offers.js';
-import { buyCosmeticItem, buyItem, equipCosmeticItem } from '../../../game/rewards.js';
+import { buyCosmeticItem, buyItem } from '../../../game/rewards.js';
+import { equipShopItem, isEquipped, ownsShopItem, shopItem } from '../../../game/shopEquip.js';
 import { state } from '../../../game/state.js';
 import { saveProgress } from '../../../storage/save.js';
 import { renderCurrency } from '../../components/currencyBar.js';
@@ -74,24 +73,19 @@ export function buyFlow(o) {
 }
 
 /**
- * Tap on a style, theme or cosmetic card: equip if owned, otherwise confirm and buy (at the sale price if any).
+ * Tap on a style, theme or cosmetic card: equip if owned (the Shop is the only place to equip), otherwise
+ * confirm and buy (at the sale price if any), then equip.
  * @param {string} cat "styles" | "themes" | cosmetic category
  * @param {string} id
  */
 export function cosmeticTap(cat, id) {
   const isStyle = cat === 'styles' || cat === 'themes';
-  const item = isStyle ? (cat === 'styles' ? SHOP_STYLES : SHOP_THEMES).find((i) => i.id === id) : findItem(cat, id);
-  const owned = isStyle
-    ? state.owned[cat].includes(id)
-    : item.price === null || state.cosmetics.owned[cat].includes(id);
+  const item = shopItem(cat, id);
   const equip = () => {
-    if (cat === 'styles') state.style = id;
-    else if (cat === 'themes') state.accent = id;
-    else if (cat !== 'avatar') equipCosmeticItem(cat, id);
+    equipShopItem(state, cat, id);
     applyTheme();
   };
-  if (owned) {
-    if (cat === 'avatar') return toast('Pick it on your Profile');
+  if (ownsShopItem(state, cat, id)) {
     equip();
     return done(cat, id, `${item.name} equipped`);
   }
@@ -105,29 +99,23 @@ export function cosmeticTap(cat, id) {
     price,
     okLabel: 'Unlock',
     buy: () => (isStyle ? buyItem(cat, { ...item, price }) : buyCosmeticItem(cat, id, price)),
-    after: () => {
-      if (cat !== 'avatar') equip();
-    },
+    after: equip,
     success: `${item.name} unlocked`,
   });
 }
 
 /**
- * Card data shared by style/theme/cosmetic cards: owned, equipped and sale.
+ * Card data shared by every equippable card: owned, equipped and sale.
  * @param {string} cat
  * @param {{id: string, price: object|null}} item
  * @returns {{owned: boolean, equipped: boolean, price: object|null, sale?: object}}
  */
 export function cardState(cat, item) {
-  const isStyle = cat === 'styles' || cat === 'themes';
-  const owned = isStyle
-    ? state.owned[cat].includes(item.id)
-    : item.price === null || state.cosmetics.owned[cat].includes(item.id);
-  const equipped =
-    cat === 'styles'
-      ? state.style === item.id
-      : cat === 'themes'
-        ? state.accent === item.id
-        : state.cosmetics.equipped[cat] === item.id;
-  return { owned, equipped, price: item.price, sale: owned ? undefined : saleFor(cat, item.id) };
+  const owned = ownsShopItem(state, cat, item.id);
+  return {
+    owned,
+    equipped: isEquipped(state, cat, item.id),
+    price: item.price,
+    sale: owned ? undefined : saleFor(cat, item.id),
+  };
 }

@@ -1,6 +1,6 @@
 /**
- * Profile: avatar, editable name, player level/XP, newest award badges, stats, (hidden) shape collection and
- * the award badges.
+ * Profile, in two tabs (profile/tabs.js). Profile: avatar, editable name, player level/XP, stats, (hidden)
+ * shape collection and the Achievements list. Awards: the award badges and the monthly trophies.
  */
 import { state } from '../../game/state.js';
 import { playerLevel, validateName } from '../../game/stats.js';
@@ -14,7 +14,17 @@ import { updateBottomNav } from '../components/bottomNav.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
-import { awardsSkeleton, bindAwards, recentSkeleton, renderAwards } from './profile/awardsView.js';
+import { achievementsSkeleton, bindAchievements, renderAchievements } from './profile/achievementsList.js';
+import {
+  awardsPageSkeleton,
+  bindAwardsPage,
+  markAwardsSeen,
+  newAwardsCount,
+  renderAwardsPage,
+} from './profile/awardsPage.js';
+import { activeTab, bindTabs, setTabDots, showTab, tabsSkeleton } from './profile/tabs.js';
+import { achievementRows, readyCount } from '../../game/achievementList.js';
+import { achievementContext } from '../../game/rewards.js';
 import { renderStatsView, statsSkeleton } from './profile/statsView.js';
 import { bindCollection, collectionSkeleton, renderCollection } from './shapeCollection.js';
 import { onReturn, openTab } from '../navigation.js';
@@ -26,7 +36,7 @@ function buildSkeleton() {
     (_, i) =>
       `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock"><svg class="cur-icon"><use href="#i-gem" /></svg>2</span></button>`,
   ).join('');
-  $('profile-body').innerHTML = `
+  const profile = `
     <div class="profile-card">
       <button class="avatar-btn" id="avatar-btn" aria-label="Change avatar" aria-expanded="false"></button>
       <div class="profile-info">
@@ -37,10 +47,10 @@ function buildSkeleton() {
       </div>
     </div>
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
-    ${recentSkeleton()}
     ${statsSkeleton()}
     ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
-    ${awardsSkeleton()}`;
+    ${achievementsSkeleton()}`;
+  $('profile-body').innerHTML = tabsSkeleton(profile, awardsPageSkeleton());
 }
 
 /** Avatar, name and XP bar. */
@@ -59,6 +69,14 @@ function renderHeader() {
   $('xp-text').textContent = `${lv.into} / ${lv.need} XP to level ${lv.level + 1}`;
 }
 
+/** Red dots: Profile when an achievement is ready to claim, Awards when a badge is newly earned. */
+function renderDots() {
+  setTabDots({
+    profile: readyCount(achievementRows(achievementContext(), state.claimed)) > 0,
+    awards: newAwardsCount() > 0,
+  });
+}
+
 /**
  * Refresh everything on the page.
  * @param {boolean} [animate] count the stat numbers up (when the page opens)
@@ -67,11 +85,16 @@ function renderProfile(animate = false) {
   renderHeader();
   renderStatsView(state, animate);
   if (SHOW_SHAPE_COLLECTION) renderCollection();
-  renderAwards();
+  renderAchievements();
+  renderAwardsPage();
+  renderDots();
+  // looking at the Awards tab counts as seeing its new badges (their dots stay until the next visit)
+  if (activeTab() === 'awards' && markAwardsSeen()) renderDots();
 }
 
 /** Open the profile tab. */
 export function openProfile() {
+  showTab(activeTab());
   renderProfile(true);
   openTab('screen-profile');
 }
@@ -134,9 +157,18 @@ export function bindProfile() {
   $('name-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') e.currentTarget.blur();
   });
-  bindAwards(() => {
+  bindAchievements(() => {
     renderStatsView(state);
+    renderAwardsPage();
+    renderDots();
     updateBottomNav('screen-profile');
+  });
+  bindAwardsPage();
+  bindTabs((id) => {
+    if (id === 'awards') {
+      renderAwardsPage();
+      if (markAwardsSeen()) renderDots();
+    }
   });
   if (SHOW_SHAPE_COLLECTION) bindCollection();
   onReturn('screen-profile', () => renderProfile());

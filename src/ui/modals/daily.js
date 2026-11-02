@@ -1,13 +1,16 @@
 /**
- * Daily Reward popup (Home): seven reward cards. Past days of the current cycle show a check, today's card glows
- * and claims, later days are dimmed. Opens by itself once per day; closing it keeps a "Daily Reward" button with a
- * dot on Home until today's reward is claimed. Rules live in src/game/daily.js.
+ * Daily Reward popup (Home), styled as a reward panel: a ribbon banner, Day 1-6 cards in a 3x2 grid and a tall
+ * Day 7 gift card on the right. Claimed cards are dimmed with a green check, today's card glows and is claimed
+ * with the big button under the panel, later cards carry a small lock. Opens by itself once per day; closing it
+ * keeps a "Daily Reward" button with a dot on Home until today's reward is claimed.
+ * Rules: src/game/daily.js; card states: src/game/dailyCards.js.
  */
-import { DAILY } from '../../config.js';
 import { dailyStatus } from '../../game/daily.js';
+import { dailyCards, mainReward } from '../../game/dailyCards.js';
 import { claimDailyReward } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
 import { saveProgress } from '../../storage/save.js';
+import { GIFT, rewardArt } from '../components/dailyArt.js';
 import { flyCurrency, renderCurrency } from '../components/currencyBar.js';
 import { icon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
@@ -17,36 +20,45 @@ import { closeModals, openModal } from './modal.js';
 let autoShownDay = null; // the popup opens by itself once per day
 let onChange = () => {};
 
-/** Reward amounts of a card, e.g. "2 💎 + 1 hint". */
-function rewardHTML(r) {
+/** Amount line: "x200", or every part with a small icon when a card gives more than one thing. */
+function amountHTML(r) {
   const parts = [];
-  if (r.coins) parts.push(`<span><svg class="cur-icon"><use href="#i-coin" /></svg>${r.coins}</span>`);
-  if (r.diamonds) parts.push(`<span><svg class="cur-icon"><use href="#i-gem" /></svg>${r.diamonds}</span>`);
-  if (r.hints) parts.push(`<span>${icon('bulb')}${r.hints}</span>`);
-  return parts.join('');
+  if (r.coins) parts.push(['coin', r.coins]);
+  if (r.diamonds) parts.push(['gem', r.diamonds]);
+  if (r.hints) parts.push(['bulb', r.hints]);
+  if (parts.length === 1) return `x${parts[0][1]}`;
+  return parts
+    .map(([k, n]) =>
+      k === 'bulb'
+        ? `<span>${icon('bulb')}x${n}</span>`
+        : `<span><svg class="cur-icon"><use href="#i-${k}" /></svg>x${n}</span>`,
+    )
+    .join('');
+}
+
+/** One card. */
+function cardHTML(c, last) {
+  const badge =
+    c.state === 'claimed'
+      ? `<span class="drc-badge ok" aria-label="Claimed">${icon('check')}</span>`
+      : c.state === 'future'
+        ? `<span class="drc-badge lock" aria-label="Locked">${icon('lock')}</span>`
+        : '';
+  const art = c.day === last ? GIFT : rewardArt(mainReward(c.reward).kind);
+  return `<li class="drc drc-${c.state}${c.day === last ? ' drc-big' : ''}" data-day="${c.day}">
+    <span class="drc-tab">Day ${c.day}</span>
+    <span class="drc-art">${art}</span>
+    <b class="drc-amt">${amountHTML(c.reward)}</b>${badge}
+  </li>`;
 }
 
 function render() {
   const s = dailyStatus(state.daily, Date.now());
-  // days of the current 7-day cycle before today's card are done
-  const doneUpTo = s.state === 'claimed' ? s.day : s.day - 1;
-  $('daily-row').innerHTML = DAILY.rewards
-    .map((r, i) => {
-      const d = i + 1;
-      const today = d === s.day && s.state === 'available';
-      const cls = d <= doneUpTo ? 'past' : today ? 'today' : 'future';
-      const inner = `<b>Day ${d}</b><span class="dr-amt">${rewardHTML(r)}</span>${
-        d <= doneUpTo ? icon('check', 'dr-check') : today ? '<span class="dr-claim">Claim</span>' : ''
-      }`;
-      return `<li class="dr ${cls}${d === DAILY.rewards.length ? ' big' : ''}">${
-        today
-          ? `<button class="dr-btn" id="btn-daily-claim" aria-label="Claim day ${d} reward">${inner}</button>`
-          : inner
-      }</li>`;
-    })
-    .join('');
+  const cards = dailyCards(s);
+  $('daily-panel').innerHTML = cards.map((c) => cardHTML(c, cards.length)).join('');
+  $('btn-daily-claim').hidden = s.state !== 'available';
   const streak = s.state === 'available' ? s.streak - 1 : s.streak;
-  $('daily-sub').textContent = `${streak} day streak · best ${state.daily.best}`;
+  $('daily-streak').textContent = `${streak} day streak · best ${state.daily.best}`;
   $('daily-note').textContent =
     s.state === 'claimed'
       ? 'Come back tomorrow for the next reward.'
@@ -72,20 +84,28 @@ export function maybeShowDaily() {
   openDaily();
 }
 
+/** Claim: today's card pops, the reward flies to its counter, then the card shows its check. */
 function onClaim(btn) {
+  const card = $('daily-panel').querySelector('.drc-today');
   const res = claimDailyReward();
   if (!res.ok) return render();
   saveProgress();
-  flyCurrency(btn, 'coins', res.before.coins, res.reward.coins || 0, 300);
-  flyCurrency(btn, 'diamonds', res.before.diamonds, res.reward.diamonds || 0, 500);
+  btn.disabled = true;
+  const from = card ? card.querySelector('.drc-art') : btn;
+  if (card) card.classList.add('pop');
+  flyCurrency(from, 'coins', res.before.coins, res.reward.coins || 0, 250);
+  flyCurrency(from, 'diamonds', res.before.diamonds, res.reward.diamonds || 0, 400);
   if (res.reward.hints) toast(`+${res.reward.hints} hint`);
-  render();
   onChange();
+  setTimeout(() => {
+    render();
+    btn.disabled = false;
+  }, 650);
   setTimeout(() => {
     closeModals();
     renderCurrency();
     onChange();
-  }, 1400);
+  }, 1600);
 }
 
 /**
@@ -94,8 +114,5 @@ function onClaim(btn) {
  */
 export function bindDaily(changed) {
   onChange = changed;
-  $('daily-row').addEventListener('click', (e) => {
-    const b = e.target.closest('#btn-daily-claim');
-    if (b) onClaim(b);
-  });
+  $('btn-daily-claim').addEventListener('click', (e) => onClaim(e.currentTarget));
 }

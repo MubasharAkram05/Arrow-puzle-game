@@ -1,4 +1,4 @@
-/* Badge sheet (src/ui/components/badgeSheet.js) and the claim burst */
+/* Badge sheet (src/ui/components/badgeSheet.js), the claim burst and pop (achievements list) */
 /* Bottom sheet */
 .modal.sheet {
   align-items: flex-end;
@@ -30,20 +30,6 @@
   right: auto;
   left: 50%;
 }
-.bs-art::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
-  opacity: 0;
-  pointer-events: none;
-}
-.bs-art.unlocking .bdg {
-  animation: badge-unlock 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both;
-}
-.bs-art.unlocking::after {
-  animation: badge-shine 0.9s ease-out both;
-}
 @keyframes badge-unlock {
   0% {
     transform: scale(0.6);
@@ -52,54 +38,11 @@
     transform: scale(1.15);
   }
 }
-@keyframes badge-shine {
-  0% {
-    opacity: 1;
-    transform: translateX(-80%);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(80%);
-  }
-}
 .badge-sheet h3 {
   margin: 4px 0 2px;
 }
-.bs-step {
-  display: block;
-  margin-top: 4px;
-  color: var(--muted);
-  font-weight: 700;
-}
-.bs-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0 6px;
-}
-.bs-progress .xp-bar {
-  flex: 1;
-}
-.bs-reward,
-.bs-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0 12px;
-  font-weight: 700;
-}
-.bs-reward b {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-.bs-done {
-  color: #16a34a;
-}
 @media (prefers-reduced-motion: reduce) {
-  .modal.sheet .card,
-  .bs-art.unlocking .bdg,
-  .bs-art.unlocking::after {
+  .modal.sheet .card {
     animation: none;
   }
 }

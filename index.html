@@ -192,18 +192,11 @@
             <svg class="icon"><use href="#i-auto" /></svg>Auto
           </button>
         </div>
-        <div class="section-label">Switch Your Style</div>
-        <div class="style-grid" id="style-grid" role="radiogroup" aria-label="Arrow style"></div>
-        <div class="section-label">Cosmetics</div>
-        <div class="cosmetic-equip" id="cosmetic-equip"></div>
         <button class="link-btn" id="btn-zoom-tips">
           <svg class="icon"><use href="#i-pinch" /></svg>Show zoom tips again
         </button>
         <button class="link-btn" id="btn-credits">
           <svg class="icon"><use href="#i-image" /></svg>Credits
-        </button>
-        <button class="link-btn more-styles" id="btn-more-styles">
-          <svg class="icon"><use href="#i-shop" /></svg>More in the Shop
         </button>
         <button class="btn danger" id="btn-reset">
           <svg class="icon"><use href="#i-trash" /></svg>Reset progress
@@ -233,14 +226,14 @@
     <!-- Daily reward (src/ui/modals/daily.js) -->
     <div class="modal" id="modal-daily">
       <div class="card center daily-card">
-        <div class="card-head">
-          <h3>Daily Reward</h3>
-          <button class="icon-btn" data-close aria-label="Close">
-            <svg class="icon"><use href="#i-close" /></svg>
-          </button>
-        </div>
-        <p class="muted daily-sub" id="daily-sub"></p>
-        <ol class="daily-row" id="daily-row"></ol>
+        <div class="daily-ribbon"><h3>Daily Reward</h3></div>
+        <button class="icon-btn daily-close" data-close aria-label="Close">
+          <svg class="icon"><use href="#i-close" /></svg>
+        </button>
+        <p class="muted daily-sub">Play every day to get bigger rewards</p>
+        <ol class="daily-panel" id="daily-panel"></ol>
+        <button class="btn primary big daily-claim" id="btn-daily-claim" hidden>Claim</button>
+        <p class="daily-streak" id="daily-streak"></p>
         <p class="buy-note daily-note" id="daily-note" role="status"></p>
       </div>
     </div>

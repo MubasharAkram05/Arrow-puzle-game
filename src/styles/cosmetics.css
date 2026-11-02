@@ -106,32 +106,3 @@ html[data-frame='diamond'] .avatar-btn,
 .avatar-opt.locked .avatar-lock {
   display: inline-flex;
 }
-
-/* Settings: equip owned cosmetics */
-.chip-row {
-  margin-bottom: 8px;
-}
-.chip-label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.chip {
-  min-height: 36px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--pill);
-  font-size: 14px;
-  font-weight: 600;
-}
-.chip[aria-checked='true'] {
-  background: var(--primary);
-  color: var(--on-primary);
-}

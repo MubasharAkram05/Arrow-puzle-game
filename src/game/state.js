@@ -47,6 +47,8 @@ export const state = {
   offers: { starterBought: false, giftLast: 0 }, // starter pack bought, free gift last claim (ms)
   seenNew: new Set(), // shop items whose "New" badge was already shown
   daily: newDaily(), // daily reward record (src/game/daily.js)
+  dailyDays: [], // local day numbers of every daily-reward claim (monthly trophies)
+  seenBadges: new Set(), // claimed achievement steps whose award badge was seen (no red dot)
   cosmetics: newCosmetics(), // owned/equipped effects, boards, heads, confetti, sounds, avatars, frames
   levelAssist: newLevelAssist(), // a hint was used in this attempt
   pendingRefund: null, // removed boosters paid back, waiting for its toast

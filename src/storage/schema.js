@@ -19,6 +19,8 @@ import {
   avatarIndex,
   bool,
   boosterRefund,
+  claimedIds,
+  dailyDays,
   count,
   level,
   levels,
@@ -28,6 +30,7 @@ import {
   pendingRefund,
   sanitizeCosmetics,
   sanitizeDaily,
+  seenBadgeIds,
   seenKeys,
   shapeIds,
   timestamp,
@@ -81,6 +84,8 @@ export function defaultSave() {
     offers: { starterBought: false, giftLast: 0 },
     seenNew: [],
     daily: newDaily(),
+    dailyDays: [],
+    seenBadges: [],
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -92,18 +97,15 @@ export function defaultSave() {
 
 export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, migrateV5, OLD_CHAPTER_SIZE, sanitizeCosmetics };
 
+/** Renamed achievement ids: the old single-step Shape Solver claim counts as Shape Solver I (never paid twice). */
+const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
+
 /**
- * Validate any parsed value into a complete v6 save. Unknown keys are dropped,
- * bad numbers become 0, and an equipped item must be owned. Saves from before the shape collection
- * (no `shapes` list) get the shapes of their finished shape levels.
+ * Validate any parsed value into a complete v6 save. Unknown keys are dropped, bad numbers become 0, an
+ * equipped item must be owned, and fields newer than the save are filled in (e.g. dailyDays, seenBadges).
  * @param {unknown} raw
  * @returns {object}
  */
-/**
- * Achievement ids that changed. A save that claimed the old single-step Shape Solver (5 levels, 3 diamonds)
- * keeps those diamonds, and that claim counts as Shape Solver I, so it is never paid twice.
- */
-const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
 
 export function sanitize(raw) {
   const d = obj(raw);
@@ -129,6 +131,8 @@ export function sanitize(raw) {
   // (v6 saves never store boosters, so this can't pay twice)
   const refund = boosterRefund(d.boosters);
   const owed = pendingRefund(d.pendingRefund) || { coins: 0, diamonds: 0 };
+  const daily = sanitizeDaily(d.daily);
+  const claimed = claimedIds(ach.claimed, RENAMED_CLAIMS);
   return {
     version: VERSION,
     progress: {
@@ -151,13 +155,13 @@ export function sanitize(raw) {
     cosmetics,
     offers: { starterBought: bool(obj(d.offers).starterBought, false), giftLast: timestamp(obj(d.offers).giftLast) },
     seenNew: seenKeys(d.seenNew),
-    daily: sanitizeDaily(d.daily),
+    daily,
+    dailyDays: dailyDays(d.dailyDays, daily),
+    seenBadges: seenBadgeIds(d.seenBadges, claimed),
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
-      claimed: Array.isArray(ach.claimed)
-        ? [...new Set(ach.claimed.filter((x) => typeof x === 'string').map((x) => RENAMED_CLAIMS[x] ?? x))]
-        : [],
+      claimed,
       progress: Object.fromEntries(Object.entries(obj(ach.progress)).map(([k, v]) => [k, count(v)])),
     },
     items: {

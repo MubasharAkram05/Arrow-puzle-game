@@ -42,6 +42,8 @@ export function applySave(raw) {
   state.offers = { ...d.offers };
   state.seenNew = new Set(d.seenNew);
   state.daily = { ...d.daily };
+  state.dailyDays = [...d.dailyDays];
+  state.seenBadges = new Set(d.seenBadges);
   state.xp = d.xp;
   state.stats = { ...newStats(), ...d.stats };
   state.claimed = new Set(d.achievements.claimed);
@@ -81,6 +83,8 @@ export function snapshot() {
     offers: { ...state.offers },
     seenNew: [...state.seenNew],
     daily: { ...state.daily },
+    dailyDays: [...state.dailyDays],
+    seenBadges: [...state.seenBadges].filter((id) => state.claimed.has(id)),
     xp: state.xp,
     stats: { ...state.stats },
     achievements: { claimed: [...state.claimed], progress },
@@ -110,8 +114,8 @@ export function saveProgress() {
 }
 
 /**
- * Clear progress, currency, items, XP, stats and achievements. Settings, avatar, name and the daily reward
- * record stay (resetting would let today's reward be claimed again).
+ * Clear progress, currency, items, XP, stats and achievements. Settings, avatar, name, the daily reward
+ * record and its claim days (monthly trophies) stay (resetting would let today's reward be claimed again).
  */
 export function resetProgress() {
   state.progress = newProgress();
@@ -124,6 +128,7 @@ export function resetProgress() {
   state.offers = { starterBought: false, giftLast: 0 };
   state.seenNew = new Set();
   state.claimed = new Set();
+  state.seenBadges = new Set();
   state.owned = { styles: ['classic'], themes: ['blue'] };
   state.style = 'classic';
   state.accent = 'blue';
