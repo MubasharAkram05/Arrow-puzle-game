@@ -84,3 +84,70 @@
 .test-badge[hidden] {
   display: none;
 }
+
+/* Daily streak chip and the Daily Reward button on Home */
+.home-daily {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--pill-text);
+  font-size: 13px;
+}
+.streak-chip .icon {
+  width: 22px;
+  height: 22px;
+  color: #ff7a1a;
+  fill: color-mix(in srgb, #ff7a1a 30%, transparent);
+}
+.streak-chip b {
+  color: var(--text);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.streak-chip.cold .icon {
+  color: var(--muted);
+  fill: none;
+}
+.daily-btn {
+  position: relative;
+  min-height: 44px;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  animation: daily-pulse 1.8s ease-in-out infinite;
+}
+.daily-btn[hidden] {
+  display: none;
+}
+.daily-dot {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--error);
+}
+@keyframes daily-pulse {
+  50% {
+    transform: scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .daily-btn {
+    animation: none;
+  }
+}

@@ -1,0 +1,67 @@
+/* ---------- Daily Reward art (src/ui/components/dailyArt.js) ---------- */
+.da {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.da-shadow {
+  fill: rgba(8, 24, 56, 0.14);
+}
+.da-coin > * {
+  fill: #e9a311;
+  stroke: #c17f05;
+  stroke-width: 1;
+}
+.da-coin .da-top {
+  fill: #ffc93c;
+}
+.da-mark {
+  stroke: #e9a311;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.da-gem-body {
+  fill: #3cc4f5;
+  stroke: #1c95cc;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.da-gem-cut {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 1.4;
+}
+.da-gem-shine,
+.da-bulb-shine {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.da-bulb-glass {
+  fill: #ffd84a;
+  stroke: #e2a500;
+  stroke-width: 1.5;
+}
+.da-bulb-base {
+  fill: #8a97a8;
+}
+.da-gift-box {
+  fill: var(--primary);
+}
+.da-gift-lid {
+  fill: color-mix(in srgb, var(--primary) 80%, #ffffff);
+}
+.da-gift-ribbon,
+.da-gift-bow,
+.da-gift-knot {
+  fill: #ffcc33;
+}
+.da-gift-bow {
+  stroke: #e2a500;
+  stroke-width: 1.5;
+}
+.da-gift-shine {
+  fill: rgba(255, 255, 255, 0.35);
+}
