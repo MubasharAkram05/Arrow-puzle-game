@@ -111,22 +111,10 @@
             <svg class="icon"><use href="#i-restart" /></svg>
           </button>
         </div>
-        <div class="title" id="game-title">Level 1</div>
-        <div class="right">
-          <button class="icon-btn" id="btn-settings" aria-label="Settings">
-            <svg class="icon"><use href="#i-gear" /></svg>
-          </button>
-        </div>
-      </header>
-      <div class="stats" id="stats">
-        <div class="pill" aria-label="Arrows left">
-          <svg class="icon solid"><use href="#i-nav" /></svg><span id="remaining">0</span>
-        </div>
         <div class="hearts" id="hearts" role="button" tabindex="0" aria-label="Hearts"></div>
-        <div class="pill diff" id="diff-badge" data-level="normal">
-          <svg class="icon solid crown"><use href="#i-crown" /></svg><span id="diff-label">Normal</span>
-        </div>
-      </div>
+        <!-- empty: keeps the hearts centred on the screen -->
+        <div class="right" aria-hidden="true"></div>
+      </header>
       <div class="progress"><div class="progress-fill" id="progress"></div></div>
       <div class="board-wrap" id="board-wrap">
         <div class="board-card" id="board-card">

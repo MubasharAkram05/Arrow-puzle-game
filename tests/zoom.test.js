@@ -101,9 +101,13 @@ describe('first view of a zoomed level', () => {
   });
 
   it('Watch, Donut, Ring and level 500 open on arrows (a 360px phone shows about 16 x 20 cells)', () => {
-    for (const n of [422, 35, 444, 500]) {
+    // the first level of each ring shape (the cycle order moves when shapes are added or removed)
+    const firstOf = (id) => {
+      for (let n = 4; n < 2000; n++) if (shapeOf(n) === id) return n;
+      throw new Error(`${id} not found`);
+    };
+    for (const n of [firstOf('watch'), firstOf('donut'), firstOf('ring'), 500]) {
       const level = generateLevel(n);
-      if (n !== 500) expect(['watch', 'donut', 'ring']).toContain(shapeOf(n));
       const free = freeArrows(buildOccupancy(level), level);
       const f = startFocus(level, free, 16, 20);
       expect(coverAt(level, f, 16, 20).share, `level ${n}`).toBeGreaterThanOrEqual(0.75);

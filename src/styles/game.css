@@ -34,11 +34,8 @@ html:not([data-style='classic']) .board-card {
   display: flex;
   justify-self: end;
 }
-.topbar .title {
-  color: var(--title);
-  font-size: 22px;
-  font-weight: 700;
-  white-space: nowrap;
+.topbar .hearts {
+  justify-self: center;
 }
 .icon-btn {
   display: inline-flex;

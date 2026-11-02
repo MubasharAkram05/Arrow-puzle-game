@@ -29,29 +29,50 @@ import { extraMetrics } from './metrics.js';
 export function analyzeLevel(level) {
   const occ = buildOccupancy(level);
   const deps = level.arrows.map((a) => rayArrows(occ, level, a));
-  const closures = new Array(level.arrows.length);
-  const visiting = new Uint8Array(level.arrows.length);
+  const count = level.arrows.length;
+  // each arrow's set of arrows that must leave before it, as a bitset (words of 32 arrows): OR-ing
+  // bitsets is much faster than merging JS Sets, and the sizes are exactly the same
+  const words = Math.ceil(count / 32) || 1;
+  const bits = new Uint32Array(count * words);
+  const done = new Uint8Array(count);
+  const visiting = new Uint8Array(count);
   let cyclic = false;
 
-  /** Set of arrows that must leave before arrow id (memoized DFS). */
+  /** Fill arrow id's bitset (memoized DFS); a cycle marks the level unsolvable. */
   function closure(id) {
-    if (closures[id]) return closures[id];
+    if (done[id]) return;
     if (visiting[id]) {
       cyclic = true;
-      return new Set();
+      return;
     }
     visiting[id] = 1;
-    const set = new Set();
+    const base = id * words;
     for (const d of deps[id]) {
-      set.add(d);
-      for (const x of closure(d)) set.add(x);
+      closure(d);
+      bits[base + (d >>> 5)] |= 1 << (d & 31);
+      const db = d * words;
+      for (let w = 0; w < words; w++) bits[base + w] |= bits[db + w];
     }
     visiting[id] = 0;
-    closures[id] = set;
-    return set;
+    done[id] = 1;
   }
 
-  const depths = level.arrows.map((a) => closure(a.id).size);
+  /** Number of set bits in arrow id's bitset. */
+  function size(id) {
+    let total = 0;
+    for (let w = id * words, end = w + words; w < end; w++) {
+      let v = bits[w];
+      v -= (v >>> 1) & 0x55555555;
+      v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+      total += (((v + (v >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24;
+    }
+    return total;
+  }
+
+  const depths = level.arrows.map((a) => {
+    closure(a.id);
+    return size(a.id);
+  });
   const n = depths.length || 1;
   const startFree = deps.filter((d) => d.length === 0).length;
   const { rounds, solvable } = solveLevel(level);

@@ -11,7 +11,15 @@ export function createGrid(rows, cols, usable) {
   const owner = new Int16Array(rows * cols).fill(-1);
   const inB = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;
   const isFree = (r, c) => inB(r, c) && free[r * cols + c] === 1;
-  const degree = (r, c) => DIRS.reduce((n, d) => n + (isFree(r + d.dr, c + d.dc) ? 1 : 0), 0);
+  // free neighbours of a cell (the four directions written out: this runs for every head candidate)
+  const degree = (r, c) => {
+    let n = 0;
+    if (r > 0 && free[(r - 1) * cols + c] === 1) n++;
+    if (r + 1 < rows && free[(r + 1) * cols + c] === 1) n++;
+    if (c > 0 && free[r * cols + c - 1] === 1) n++;
+    if (c + 1 < cols && free[r * cols + c + 1] === 1) n++;
+    return n;
+  };
   // lines whose first free cell may have moved (see bestHeads)
   const dirtyRows = new Uint8Array(rows).fill(1);
   const dirtyCols = new Uint8Array(cols).fill(1);

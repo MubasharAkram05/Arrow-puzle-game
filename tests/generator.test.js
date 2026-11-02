@@ -38,17 +38,28 @@ function replay(level) {
   return -1;
 }
 
-/** Each level is built once per file: {level, report, ms} (ms = the faster of two runs). */
+/** Median of a list of numbers. */
+const median = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+
+/**
+ * Each level is built once per file, three times: {level, again, report, ms}. ms is the median of the
+ * three build times (one slow run from a busy machine doesn't fail the test); `again` is the second
+ * build, compared with the first for determinism (the third is checked here too).
+ */
 const cache = new Map();
 function get(n) {
   if (!cache.has(n)) {
-    const t0 = performance.now();
-    const level = generateLevel(n);
-    const t1 = performance.now();
-    const again = generateLevel(n);
-    // the faster of two runs, so other test files running in parallel don't make this flaky
-    const ms = Math.min(t1 - t0, performance.now() - t1);
-    cache.set(n, { level, again, report: analyzeLevel(level), ms });
+    const builds = [];
+    const times = [];
+    for (let k = 0; k < 3; k++) {
+      const t0 = performance.now();
+      builds.push(generateLevel(n));
+      times.push(performance.now() - t0);
+    }
+    const [level, again, third] = builds;
+    if (JSON.stringify(third.arrows) !== JSON.stringify(level.arrows))
+      throw new Error(`level ${n} is not deterministic`);
+    cache.set(n, { level, again, report: analyzeLevel(level), ms: median(times) });
   }
   return cache.get(n);
 }

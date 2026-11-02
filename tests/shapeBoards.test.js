@@ -28,9 +28,15 @@ beforeAll(() => loadShapeLibrary());
 describe.each(Object.entries(SIZES))('every shape on a %s board (level %i)', (_size, level) => {
   it.each(SHAPES)('%s', (id) => {
     const cfg = getLevelConfig(level, id);
-    const t0 = performance.now();
-    const board = generateFromConfig(cfg);
-    const ms = performance.now() - t0;
+    // median of three builds, so one slow run from a busy machine doesn't fail the test
+    const times = [];
+    let board;
+    for (let k = 0; k < 3; k++) {
+      const t0 = performance.now();
+      board = generateFromConfig(cfg);
+      times.push(performance.now() - t0);
+    }
+    const ms = times.sort((a, b) => a - b)[1];
     expect(board.shape).toBe(id);
     expect(validateLevel(board)).toEqual([]);
     // Expert boards may use the floor fallback (only the floors they name, by at most the slack)

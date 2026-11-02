@@ -2,7 +2,20 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [3.14.0] - 2026-11-01
+## [3.15.0] - 2026-11-01
+
+### Changed
+
+- Cleaner game header: the top row is back, restart and the hearts, centred on the screen. The board gets the freed space (about 64 px more height; on tablets the board is up to 8% bigger). Tapping the hearts still buys one back (80 coins), and the lose and refill animations are the same. The level number stays for screen readers (the game screen's label).
+
+- Speed tests are no longer flaky: `npm test` runs `test:unit` (files in parallel) and then `test:timing` (the generator, every-shape and hit-test speed files, one at a time); CI runs them as two steps. Build time is the median of three builds instead of the faster of two.
+- Faster level generation (same levels, exactly): blocking depth is computed with bitsets instead of JS Sets, and the free-neighbour count is written out instead of a reduce over the four directions. About 30% faster on big boards; the slowest tested level (341, Hanger, 137-cell board) went from about 300-350 ms to about 250 ms.
+
+### Removed
+
+- From the game screen: the arrows-left pill, the difficulty pill, the "Level X" title and the settings button (settings stay on Home and Profile). Arrows cleared and difficulty are still tracked for stats, rewards and achievements.
+
+- 2026-11-01
 
 ### Changed
 

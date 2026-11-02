@@ -9,7 +9,6 @@ import { saveProgress } from '../../storage/save.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { $ } from '../dom.js';
 import { ask } from '../modals/ask.js';
-import { openSettings } from '../modals/settings.js';
 import { onReturn } from '../navigation.js';
 import { openLevels } from './levels.js';
 
@@ -58,7 +57,6 @@ function onHearts() {
 export function bindGameScreen() {
   $('btn-levels').addEventListener('click', () => openLevels());
   $('btn-restart').addEventListener('click', restart);
-  $('btn-settings').addEventListener('click', openSettings);
   $('btn-hint').addEventListener('click', onHint);
   $('hearts').addEventListener('click', onHearts);
   $('btn-grid').addEventListener('click', () => {
