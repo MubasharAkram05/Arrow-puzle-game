@@ -15,7 +15,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
-- Profile with 12 built-in avatars, an editable name, player level/XP, highlight stats and award badges for 12 achievement groups (some with Bronze to Diamond steps)
+- Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and the Achievements list) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies)
 - Light, dark and auto theme, 4 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
@@ -74,6 +74,11 @@ src/
     rewards.js          applies rewards and purchases to the game state
     achievements.js     achievement goals, progress and claiming (pure)
     badges.js           award badge tier and state per achievement group (pure)
+    achievementList.js  Achievements list rows and their order (pure)
+    awards.js           award badges for the Awards tab: locked, earned, new (pure)
+    trophies.js         monthly trophies from the daily-claim days, month lengths (pure)
+    dailyCards.js       Daily Reward card states (pure)
+    shopEquip.js        equipping owned items from the Shop (pure)
     stats.js            stats, streaks, XP levels, name validation (pure)
     daily.js            daily reward and streak, with clock checks (pure)
     assist.js           per-level "hint used" flag and the "perfect" rule (pure)
@@ -306,7 +311,7 @@ The Shield and Extra Heart Start boosters and the Booster Pack were removed in 3
 
 ### Cosmetics
 
-Each category has a free default. Owned items are equipped from the Shop or from Settings.
+Each category has a free default. Owned items are equipped only in the Shop: every owned card shows "Equip" (or "Equipped"), free defaults included (`src/game/shopEquip.js`). Settings keeps sound, vibration, theme, zoom tips, credits and reset.
 
 | Category         | Item                             | Price           |
 | ---------------- | -------------------------------- | --------------- |
@@ -355,7 +360,11 @@ Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two
 
 ### Achievements and award badges
 
-Each achievement group is an award badge on the Profile (`src/game/badges.js`, `src/ui/components/badge.js`): an original hexagon badge in the group's colour with its icon. Tiered groups use Bronze, Silver, Gold and Diamond for steps 1-4; single-step achievements are Gold. A badge is locked (grey silhouette with a progress ring), ready (glowing, bouncing, red dot) or earned (full colour, tier rim and step numeral). Tapping one opens a bottom sheet with the details and a Claim button; claiming plays an unlock animation and the diamonds fly to the counter. The three newest earned badges show under the player's name.
+The Profile screen has two tabs, Profile and Awards (a pill control with a sliding thumb; a red dot marks a tab with something new; the last tab is remembered on the device).
+
+- **Achievements list** (Profile tab, `src/game/achievementList.js`): one row per achievement group, full width. Each row has a small badge, the title and description, a progress bar with "7/10", the diamond reward and a Claim button when ready. Tiered groups show only their current step ("Step 2/4"). Ready rows sort to the top, then rows in progress, then completed ones (greyed, with a check). Claiming plays a burst on the badge and the diamonds fly to the counter.
+- **Award badges** (Awards tab, `src/game/awards.js`, `src/ui/components/clayBadge.js`): one original clay-style badge per group, 3 per row on a phone. Each group has its own shape (circle, shield, hexagon, rosette or gem) and colour. A badge lights up once a step is claimed and shows that step's goal (10, 25, 100...) on a ribbon in its tier colour (Bronze, Silver, Gold, Diamond; single-step achievements are Gold). Locked badges are pale grey embossed silhouettes. A red dot marks a newly earned badge until the Awards tab has been seen. Tapping a badge opens a bottom sheet with every step and its progress; the Awards tab never claims anything.
+- **Monthly trophies** (Awards tab, `src/game/trophies.js`, `src/ui/components/trophyArt.js`): twelve original trophies for the current year, one shape per month. Progress is the number of days that month the daily reward was claimed (e.g. "12 of 31", with leap years). The trophy fills with colour from the bottom; a complete month is full colour with a shine; future months are pale grey. Earlier years show in folded sections only when they have data.
 
 Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. Steps are claimed in order and each pays once. If saved progress already meets a step, it is claimable right away. Achievements removed in 3.8.0 (Collector, Alphabet, Zoo Keeper) keep the diamonds already claimed.
 
@@ -376,7 +385,7 @@ Goals and rewards live in `ACHIEVEMENT_DEFS` in `src/config.js`. Steps are claim
 
 ### Daily reward
 
-Opening the app on a new local day shows a Daily Reward popup on Home with seven cards: done days have a check, today's card glows with Claim, later days are dimmed. Closing it keeps a "Daily Reward" button with a dot on Home until it is claimed that day.
+Opening the app on a new local day shows the Daily Reward popup on Home: a ribbon banner, Day 1-6 cards in a 3x2 grid and a tall Day 7 gift card on the right (original art: coin pile, gem, hint bulb, gift box). Claimed days are dimmed with a green check, today's card glows and is claimed with the big button under the panel, later days carry a small lock. Claiming pops the card and flies the reward to its counter. Closing the popup keeps a "Daily Reward" button with a dot on Home until it is claimed that day. Card states: `src/game/dailyCards.js`.
 
 | Day    | 1        | 2        | 3        | 4        | 5         | 6        | 7                   |
 | ------ | -------- | -------- | -------- | -------- | --------- | -------- | ------------------- |
@@ -396,6 +405,7 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 ## Saves
 
 - Key `arrowEscape:v6`, plus a backup copy in `arrowEscape:v6:backup` written on every save.
+- 3.16.0 adds two fields to v6 saves, filled in on load: `dailyDays` (days the daily reward was claimed, for the monthly trophies) and `seenBadges` (award badges already seen). An older save rebuilds the claim days from its current streak (a streak is a run of consecutive claimed days); earlier days are unknown and start at 0. Badges claimed before count as seen.
 - v6 removes the Shield and Extra Heart boosters. Any owned ones are refunded once on load (60 coins per Shield, 1 diamond per Extra Heart), a toast says "Boosters removed, refunded X coins / Y diamonds" once, and the inventory is dropped. Everything else is kept. The v5 keys are removed only after v6 is written and read back.
 - v5 adds the daily reward record and two stats (clean first clears, comebacks). A v4 save (or its backup) is migrated automatically and nothing is lost: progress, coins, diamonds, hints, items, shapes and claimed achievements are kept. The v4 keys are removed only after v5 is written and read back.
 - Skip level was removed in 3.8.0; levels skipped in older saves stay completed.

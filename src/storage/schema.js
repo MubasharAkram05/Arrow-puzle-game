@@ -97,18 +97,15 @@ export function defaultSave() {
 
 export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, migrateV5, OLD_CHAPTER_SIZE, sanitizeCosmetics };
 
+/** Renamed achievement ids: the old single-step Shape Solver claim counts as Shape Solver I (never paid twice). */
+const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
+
 /**
- * Validate any parsed value into a complete v6 save. Unknown keys are dropped,
- * bad numbers become 0, and an equipped item must be owned. Saves from before the shape collection
- * (no `shapes` list) get the shapes of their finished shape levels.
+ * Validate any parsed value into a complete v6 save. Unknown keys are dropped, bad numbers become 0, an
+ * equipped item must be owned, and fields newer than the save are filled in (e.g. dailyDays, seenBadges).
  * @param {unknown} raw
  * @returns {object}
  */
-/**
- * Achievement ids that changed. A save that claimed the old single-step Shape Solver (5 levels, 3 diamonds)
- * keeps those diamonds, and that claim counts as Shape Solver I, so it is never paid twice.
- */
-const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
 
 export function sanitize(raw) {
   const d = obj(raw);

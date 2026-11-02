@@ -2,7 +2,26 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [3.15.0] - 2026-11-01
+## [3.16.0] - 2026-11-02
+
+### Added
+
+- Profile tabs: Profile and Awards (pill control, sliding thumb, red dots, the last tab remembered).
+- Awards tab: original clay-style award badges (one shape and colour per group, tier number on a ribbon, pale grey when locked, red dot until seen) with a details sheet showing every step, and 12 original monthly trophies filled by the days the daily reward was claimed (leap years counted; earlier years folded when they have data).
+- Save fields `dailyDays` and `seenBadges` (older saves rebuild the claim days from the current streak; earlier claims count as seen).
+
+### Changed
+
+- Achievements are a single-column list on the Profile tab: current step only ("Step 2/4"), progress, reward and Claim; ready first, then in progress, then completed. Claiming keeps the burst and the flying diamonds.
+- Daily Reward popup redesigned as a reward panel: ribbon banner, Day 1-6 in a 3x2 grid, a tall Day 7 gift card, claimed / today / locked states, the big Claim button under the panel. Same rewards.
+- Owned Shop items show "Equip" or "Equipped"; the Shop is the only place to equip.
+
+### Removed
+
+- From Settings: "Switch your style", the Cosmetics chips and "More in the Shop".
+- The old hexagon badges and the newest-badges row under the name.
+
+- 2026-11-01
 
 ### Changed
 
