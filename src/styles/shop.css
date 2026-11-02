@@ -98,6 +98,18 @@
 .owned-tag.on {
   color: var(--primary);
 }
+/* owned but not in use: a small button look (tap the card to equip) */
+.equip-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
 .owned-tag .icon {
   width: 16px;
   height: 16px;
@@ -134,9 +146,4 @@
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
-}
-.more-styles {
-  width: 100%;
-  min-height: 44px;
-  margin-top: 6px;
 }

@@ -77,12 +77,13 @@ export function card(o) {
   if (o.newKey && isNew(o.newKey)) tags.push('<span class="tag new">New</span>');
   let foot = o.foot;
   if (!foot) {
+    // owned items are equipped here (the only place to equip): "Equipped" or an "Equip" button look
     if (o.equipped) foot = `<span class="owned-tag on">${icon('check')}Equipped</span>`;
-    else if (o.owned) foot = `<span class="owned-tag">${icon('check')}Owned</span>`;
+    else if (o.owned) foot = '<span class="equip-tag">Equip</span>';
     else if (o.locked) foot = `<span class="locked-tag">${icon('lock')}${o.locked}</span>`;
     else if (o.sale) foot = saleHTML(o.price, o.sale);
     else if (o.price) foot = priceHTML(o.price);
-    else foot = '<span class="owned-tag">Free</span>';
+    else foot = '<span class="equip-tag">Equip</span>';
   }
   const cls = ['shop-card', o.equipped ? 'equipped' : '', o.locked ? 'is-locked' : ''].join(' ');
   return `<button class="${cls}" data-kind="${o.kind}" data-id="${o.id}">
