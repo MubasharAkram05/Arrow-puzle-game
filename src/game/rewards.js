@@ -7,6 +7,7 @@ import { claimAchievement } from './achievements.js';
 import { isShapeLevel, shapeOf } from '../engine/index.js';
 import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.js';
 import { claimDaily, touchDaily } from './daily.js';
+import { MAX_DAILY_DAYS } from './trophies.js';
 import { recordWin, xpForWin } from './stats.js';
 import { state } from './state.js';
 
@@ -227,6 +228,10 @@ export function claimDailyReward(now = Date.now()) {
   if (!res.ok) return res;
   const before = wallet();
   state.daily = res.rec;
+  // the day goes on the monthly trophy (the record itself only keeps the last claim)
+  state.dailyDays = [...state.dailyDays.filter((d) => d !== res.rec.lastClaim), res.rec.lastClaim].slice(
+    -MAX_DAILY_DAYS,
+  );
   setWallet(grant(before, res.reward, 'daily'));
   state.hints += res.reward.hints || 0;
   return { ...res, before };

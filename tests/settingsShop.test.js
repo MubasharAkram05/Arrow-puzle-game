@@ -18,8 +18,7 @@ const fresh = () => ({
 });
 
 /** Every item the Shop sells or gives, per category. */
-const itemsOf = (cat) =>
-  cat === 'styles' ? SHOP_STYLES : cat === 'themes' ? SHOP_THEMES : COSMETICS[cat];
+const itemsOf = (cat) => (cat === 'styles' ? SHOP_STYLES : cat === 'themes' ? SHOP_THEMES : COSMETICS[cat]);
 
 /** Give the player an item (as a purchase would). */
 function grant(st, cat, id) {

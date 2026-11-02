@@ -19,6 +19,8 @@ import {
   avatarIndex,
   bool,
   boosterRefund,
+  claimedIds,
+  dailyDays,
   count,
   level,
   levels,
@@ -28,6 +30,7 @@ import {
   pendingRefund,
   sanitizeCosmetics,
   sanitizeDaily,
+  seenBadgeIds,
   seenKeys,
   shapeIds,
   timestamp,
@@ -81,6 +84,8 @@ export function defaultSave() {
     offers: { starterBought: false, giftLast: 0 },
     seenNew: [],
     daily: newDaily(),
+    dailyDays: [],
+    seenBadges: [],
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -129,6 +134,8 @@ export function sanitize(raw) {
   // (v6 saves never store boosters, so this can't pay twice)
   const refund = boosterRefund(d.boosters);
   const owed = pendingRefund(d.pendingRefund) || { coins: 0, diamonds: 0 };
+  const daily = sanitizeDaily(d.daily);
+  const claimed = claimedIds(ach.claimed, RENAMED_CLAIMS);
   return {
     version: VERSION,
     progress: {
@@ -151,13 +158,13 @@ export function sanitize(raw) {
     cosmetics,
     offers: { starterBought: bool(obj(d.offers).starterBought, false), giftLast: timestamp(obj(d.offers).giftLast) },
     seenNew: seenKeys(d.seenNew),
-    daily: sanitizeDaily(d.daily),
+    daily,
+    dailyDays: dailyDays(d.dailyDays, daily),
+    seenBadges: seenBadgeIds(d.seenBadges, claimed),
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
-      claimed: Array.isArray(ach.claimed)
-        ? [...new Set(ach.claimed.filter((x) => typeof x === 'string').map((x) => RENAMED_CLAIMS[x] ?? x))]
-        : [],
+      claimed,
       progress: Object.fromEntries(Object.entries(obj(ach.progress)).map(([k, v]) => [k, count(v)])),
     },
     items: {
