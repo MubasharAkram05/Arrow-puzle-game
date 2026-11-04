@@ -64,6 +64,7 @@ src/
     deepen.js           turns arrows around so they leave later (keeps boards solvable)
     firstMoves.js       hides or removes obvious first moves on the board's edge
     reshape.js          decoy cuts and late walls (joins)
+    tidy.js             arrow shapes: short or stub arrows grow into empty cells or join a neighbour (3.17.0)
     metrics.js          free per round, longest chain, decoys, free heads on the edge
     longArrows.js       joins neighbours into long arrows without breaking solvability
     board.js            occupancy, ray checks, free arrows
@@ -141,6 +142,22 @@ All are worked out by `analyzeLevel` (`src/engine/difficulty.js`, `src/engine/me
 
 Levels 1-3 (the tutorial) are unchanged. Expert pays x2.5 coins (the cap).
 
+**Arrow shapes and blocking (3.17.0).** From level 4 arrows are longer and bend more, and block each other more (levels 1-3 are unchanged):
+
+- **Lengths:** at least 3 cells. A 2-cell arrow only appears as a last resort to fill a gap (at most 3% of a board). Normal arrows aim for 3-5 or 6-10 cells; some blocked arrows start long (11-25 cells: snakes, spirals, U-turns), and late arrows are joined into long walls. The mix is about 40% 3-5, 37% 6-10 and 21% 11-25 cells (Expert ~23%), and long arrows leave later than average in the solve.
+- **Bends:** at most 30% of arrows are straight (the tier's `maxStraight`, 24% on Expert), and a straight arrow is at least 4 cells long. Average turns per arrow: about 2.5-2.7.
+- **Tidy pass** (`src/engine/tidy.js`): an arrow under 3 cells, or a straight one under 4, first grows its tail into empty cells next to it, then takes the last cell of a neighbour's tail, then joins a neighbour end to end; a stub nothing can fix is dropped within the fill budget. Every step keeps the board solvable: an arrow never takes a cell or a neighbour it waits for (no cycle), and nothing becomes free.
+- **New metrics** (`analyzeLevel`): `blockersAhead` (arrows in the straight line in front of each head at the start), `blockedShare`, `straightShare`, `shortShare`, `straightStubs` and `avgTurns`. New floors per tier (`TIER_FLOORS[tier].arrowShape`): average blockersAhead at least 2.5 (Normal), 3 (Hard), 3.5 (Super Hard), 4 (Expert); at least 90% of arrows blocked at the start; at most 3% 2-cell arrows; no 3-cell straight arrows. The earlier floors (depth, rounds, chain, decoys, free per round) are unchanged.
+
+| Tier       | Avg length | 2-cell | Straight | Turns | blockersAhead | Blocked at start | 3-5 / 6-10 / 11+ | Depth (before) |
+| ---------- | ---------: | -----: | -------: | ----: | ------------: | ---------------: | ---------------- | -------------: |
+| Normal     |        7.8 |   0.2% |      19% |  2.47 |          4.41 |              95% | 42 / 40 / 18%    |    34.7 (32.6) |
+| Hard       |        8.0 |     0% |      19% |  2.55 |          5.60 |              97% | 43 / 38 / 20%    |    64.8 (62.5) |
+| Super Hard |        8.4 |     0% |      17% |  2.70 |          6.85 |              97% | 40 / 39 / 22%    |  107.7 (105.7) |
+| Expert     |        8.4 |     0% |      16% |  2.73 |          7.46 |              97% | 39 / 38 / 23%    |  129.5 (122.5) |
+
+Boards hold fewer, longer arrows, so the average depth (arrows that must leave first) first came out lower on Normal and Hard. The **depth aim** (`depthAim` / `depthPicks` in `TIER_FLOORS[tier].arrowShape`) brings it back: on Normal and Hard a board that meets every floor but is shallower than `depthAim` x the depth floor (1.9 Normal, 1.6 Hard) is kept, and up to 8 (Normal) or 4 (Hard) boards are tried; the first one at the aim wins, else the deepest. It is count-based, so levels stay the same for the same number. On the tested samples the average depth is now 34.7 on Normal (32.6 before 3.17.0) and 64.8 on Hard (62.5); a test keeps them at least 32.4 and 60.6. Builds stay fast (Normal and Hard under 80 ms locally). Some single levels are still shallower than before (level 30: 43.5, was 49.7): its letter shape holds 111 arrows instead of 133, and more tries do not go much further. Normal blocked arrows also start long a little more often (`nativeLong` 0.2, was 0.18), so deeper boards keep their 11+ cell arrows.
+
 **Expert is clearly harder (3.14.0).** Expert boards get 6 more cells on each side (`boardGrow`, never past 104 cells, `growUpTo`), and their depth and solve-round floors are the curve x1.6 (`boost`, Super Hard x1.4). More arrows make longer chains. Measured on the same tested levels (400 Super Hard, 200 Expert):
 
 | Metric (average)    | Super Hard (101-500) | Expert (200 random) | Expert vs Super Hard |
@@ -190,7 +207,7 @@ Two arrows pointing straight at each other on the same line can never appear: ea
 - **Never a plain board**: a shape that misses its floors gets more seeds, then two bigger boards, then the next shapes of its cycle (logged with `console.warn`, so a shape that fails often can be removed). The tests check levels 1-500 plus 200 random ones up to 1,000,000 and none needs a fallback.
 - Every shape board is at least its shape's minimum size (`minBoardSide` in `src/engine/masks.js`) and its mask is smoothed at board size (see [Shape library](#shape-library)).
 
-Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as the tier asks of any level (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 12 free arrows, or 14% of its arrows if that is more.
+Shape boards are square and grow with the level: the shape holds `shapeScale` (1.0 to 1.25) times the cells of that level's plain board (`shapeSize` in `src/engine/levels.js`, up to 90 wide), so later shapes are bigger and a small shape like the arrow gets a bigger board than a full one like the plus. Shape levels meet the same floors as the tier asks of any level (arrow count, depth, rounds, free per round, longest chain, decoys). Only the start-free cap is wider and the edge-free floor does not apply: a jagged edge lets more arrows out, and those sit on the shape's edge, so a shape board may start with the level's cap + 2 free arrows, or 10% of its arrows if that is more (3.17.0; it was + 12 or 14%). Every board from level 4 also has at least 90% of its arrows blocked on the first move.
 
 After building, extra free arrows are turned around or joined onto a neighbour (only when that can't create a cycle), so boards reach the low free-at-start caps. If a board still misses its goals, the generator retries with the next derived seed. Levels 1-500 plus 200 random levels up to 1,000,000 are tested for solvability, floors, determinism and build time (under 150 ms locally, 300 ms on CI). Build time is the median of three builds, and the speed test files (`generator`, `shapeBoards`, `hitTest`) run in their own step, one file at a time (`npm run test:timing`), so other tests running in parallel can't make them flaky. The slowest tested level is Super Hard level 341 (Hanger) at about 250 ms on the cloud test machine: Hanger is a thin shape, so its board grows to 137 cells to hold enough arrows, and it needs 6 attempts (the first misses free per round by 0.08). Every other tested level is under about 170 ms.
 

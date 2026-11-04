@@ -1,6 +1,6 @@
 import { DIRS } from './directions.js';
 import { buildOccupancy, rayArrows } from './board.js';
-import { MIN_LEN } from './levels.js';
+import { SHAPE_MIN_LEN } from './levels.js';
 import { roundsOf, waitsFor } from './deepen.js';
 
 /** Passes that cut and join arrows on a finished board: decoys and late walls. */
@@ -43,7 +43,7 @@ export function makeDecoys(level, budget, opts = {}) {
     for (const [id, cells] of hit) {
       const p = arrows[id].path;
       const k = p.findIndex((q) => cells.has(q.r * cols + q.c));
-      if (k < MIN_LEN || p.length - k > (opts.maxCut ?? cells.size)) break;
+      if (k < SHAPE_MIN_LEN || p.length - k > (opts.maxCut ?? cells.size)) break;
       cuts.push({ id, k });
     }
     const size = cuts.reduce((s, x) => s + arrows[x.id].path.length - x.k, 0);

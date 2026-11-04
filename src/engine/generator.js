@@ -1,4 +1,4 @@
-import { hashSeed, mulberry32, weightedPick } from './rng.js';
+import { hashSeed, mulberry32, randInt, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { absorbLeftovers, growArrow, pickLength } from './grow.js';
 import { LEVEL_ONE, MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig, shapeOf } from './levels.js';
@@ -8,6 +8,24 @@ import { bestHeads, createGrid } from './heads.js';
 import { carveCorridor, hardenBoard, repairBoard } from './hardBoard.js';
 
 const MAX_ATTEMPTS = 500;
+
+/**
+ * Target length and style of the next arrow. A free arrow on a hard board starts straight (hideFreeMoves can
+ * then pull its head in from the edge); a straight arrow is at least 4 cells long.
+ * @returns {[number, string]}
+ */
+function shapeFor(cfg, rng, hide, deep) {
+  // from level 4: some blocked arrows start long (11-25 cells, snakes, spirals, U-turns). They are blocked,
+  // so they leave late: walls around the arrows placed after them
+  const long = cfg.lengths.long;
+  if (cfg.shapeRules && deep && rng() < cfg.arrowShape.nativeLong)
+    return [randInt(rng, long.min, long.max), weightedPick(rng, cfg.longStyles)];
+  // length first, then style: the same random draws as before 3.17.0 (the tutorial stays identical)
+  const len = pickLength(cfg, rng);
+  const style = hide ? 'straight' : weightedPick(rng, cfg.styles);
+  // a hidden first move may lose 2 head cells later (hideFreeMoves): start it at 6 so it keeps 4
+  return [style === 'straight' && cfg.shapeRules ? Math.max(hide ? 6 : 4, len) : len, style];
+}
 
 /**
  * Build one candidate board with reverse peeling (not yet verified).
@@ -57,8 +75,7 @@ export function buildLevel(cfg, rng) {
       arrows.length,
       { r: pick.r, c: pick.c },
       pick.d,
-      hide ? Math.max(4, pickLength(cfg, rng)) : pickLength(cfg, rng),
-      hide ? 'straight' : weightedPick(rng, cfg.styles),
+      ...shapeFor(cfg, rng, hide, pick.depth > 0),
     );
     arrows.push(a);
   }
@@ -114,7 +131,13 @@ export function meetsGoals(report, goals) {
     report.freePerRound <= (goals.maxFreePerRound ?? Infinity) &&
     report.longestChain >= (goals.minLongestChain || 0) &&
     report.decoyRatio >= (goals.minDecoyRatio || 0) &&
-    report.edgeFreeRatio <= (goals.maxEdgeFreeRatio ?? Infinity)
+    report.edgeFreeRatio <= (goals.maxEdgeFreeRatio ?? Infinity) &&
+    // arrow shapes and blocking (3.17.0)
+    (goals.minBlockersAhead === undefined || report.blockersAhead >= goals.minBlockersAhead) &&
+    (goals.minBlockedShare === undefined || report.blockedShare >= goals.minBlockedShare) &&
+    (goals.maxStraightShare === undefined || report.straightShare <= goals.maxStraightShare) &&
+    (goals.maxShortShare === undefined || report.shortShare <= goals.maxShortShare) &&
+    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs)
   );
 }
 
@@ -156,6 +179,9 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
   const fb = cfg.goals && cfg.floorFallback;
   const relaxed = fb ? relaxGoals(cfg.goals, fb) : null;
   let best = null;
+  const aim = cfg.goals && cfg.depthAim ? cfg.goals.minAvgDepth * cfg.depthAim : 0;
+  let pick = null; // deepest board so far that met every floor (with a depth aim)
+  let passed = 0;
   const done = (level, report, attempt) => {
     level.seed = cfg.seed;
     level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
@@ -170,7 +196,14 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
     // a hard board just under a floor is repaired instead of thrown away
     if (cfg.deepen && !meetsGoals(report, cfg.goals)) report = repairBoard(level, report, cfg);
     if (!meetsConstraints(level, cfg)) continue;
-    if (meetsGoals(report, cfg.goals)) return done(level, report, attempt);
+    if (meetsGoals(report, cfg.goals)) {
+      // depth aim (Normal, Hard): a board that meets every floor but is shallower than the aim is kept and
+      // the next attempts are tried too; the first one at the aim wins, else the deepest of depthPicks
+      if (!aim || report.avgDepth >= aim) return done(level, report, attempt);
+      if (!pick || report.avgDepth > pick.report.avgDepth) pick = { level, report, attempt };
+      if (++passed >= cfg.depthPicks) return done(pick.level, pick.report, pick.attempt);
+      continue;
+    }
     if (relaxed && meetsGoals(report, relaxed)) {
       const missed = missedFloors(report, cfg.goals);
       const better =
@@ -184,6 +217,7 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
       return done(best.level, best.report, best.attempt);
     }
   }
+  if (pick) return done(pick.level, pick.report, pick.attempt);
   throw new Error(`Could not generate level for seed ${cfg.seed}`);
 }
 
