@@ -2,7 +2,21 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [3.16.0] - 2026-11-02
+## [3.17.0] - 2026-11-04
+
+### Changed
+
+- Longer, bending arrows from level 4 (levels 1-3 unchanged): at least 3 cells (2 only as a last resort, at most 3%), a mix of about 40% 3-5, 37% 6-10 and 21% 11-25 cells, at most 30% straight (24% on Expert) and straight arrows at least 4 cells. Bends first: L, U, zig-zags, spirals and snakes; long arrows start as late, blocked arrows and bend around others like walls.
+- More blocking: new floors per tier for `blockersAhead` (2.5 / 3 / 3.5 / 4) and at least 90% of arrows blocked at the start. Shape boards may start with the cap + 2 free arrows or 10% of their arrows (was + 12 or 14%).
+- Existing floors (depth, rounds, chain, decoys, free per round, start free) are unchanged; every level is still solvable, deterministic and within the time limits.
+
+### Added
+
+- `src/engine/tidy.js`: short or stub arrows grow into empty cells, take a neighbour's tail cell or join a neighbour, without cycles.
+- New metrics in `analyzeLevel`: blockersAhead, blockedShare, straightShare, shortShare, straightStubs, avgTurns.
+- Tests for the length mix, minimum length, straight share, bends, blockersAhead per tier, solvability, determinism and no difficulty drop.
+
+- 2026-11-02
 
 ### Added
 

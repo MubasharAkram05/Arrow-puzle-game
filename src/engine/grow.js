@@ -5,6 +5,13 @@ import { DIRS, opposite } from './directions.js';
 import { randInt } from './rng.js';
 import { makePlan } from './shapes.js';
 
+/** Does a growing body still run in one straight line? */
+function straightSoFar(path) {
+  const dr = path[1].r - path[0].r;
+  const dc = path[1].c - path[0].c;
+  return path.every((p, i) => i === 0 || (p.r - path[i - 1].r === dr && p.c - path[i - 1].c === dc));
+}
+
 /** Grow an arrow body away from its head following a shape plan. */
 export function growArrow(grid, cfg, rng, id, head, dir, targetLen, style) {
   const { isFree, degree, take } = grid;
@@ -15,7 +22,8 @@ export function growArrow(grid, cfg, rng, id, head, dir, targetLen, style) {
   const plan = makePlan(style, targetLen, rng);
   let heading = opposite(dir);
   let step = 1;
-  while (path.length < targetLen) {
+  // from level 4 a straight arrow keeps growing to 4 cells (3-cell straights look like stubs)
+  while (path.length < targetLen || (cfg.shapeRules && path.length < 4 && straightSoFar(path))) {
     const cur = path[path.length - 1];
     const opts = [];
     for (let k = 0; k < 4; k++) if (isFree(cur.r + DIRS[k].dr, cur.c + DIRS[k].dc)) opts.push(k);
@@ -28,7 +36,10 @@ export function growArrow(grid, cfg, rng, id, head, dir, targetLen, style) {
     if (orphan !== undefined && path.length >= cfg.lenMin) next = orphan;
     else if (opts.indexOf(want) !== -1) next = want;
     else {
-      if (style !== 'snake' && path.length >= Math.max(3, cfg.lenMin) && rng() < 0.3) break;
+      // stop early only once the arrow has a good shape: 3+ cells, and (from level 4) 4+ when it is still straight
+      const longEnough =
+        path.length >= Math.max(3, cfg.lenMin) && (!cfg.shapeRules || path.length >= 4 || !straightSoFar(path));
+      if (style !== 'snake' && longEnough && rng() < 0.3) break;
       let best = Infinity;
       for (const k of opts) {
         const s = degree(cur.r + DIRS[k].dr, cur.c + DIRS[k].dc) + (k === heading ? -0.4 : 0) + rng() * 0.6;

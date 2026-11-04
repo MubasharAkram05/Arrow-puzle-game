@@ -6,6 +6,7 @@ import { deepenDepth, deepenLevel, roundsOf } from './deepen.js';
 import { analyzeLevel } from './difficulty.js';
 import { hideFreeMoves } from './firstMoves.js';
 import { joinLate, makeDecoys } from './reshape.js';
+import { tidyShapes } from './tidy.js';
 
 /**
  * Hard boards (from level 4): after reverse peeling, a few passes make the structure harder without
@@ -84,6 +85,8 @@ export function hardenBoard(board, cfg, rng, total) {
     // a few more decoys than the floor asks for, then stop (each cut costs some depth)
     want: g?.minDecoyRatio ? Math.ceil((g.minDecoyRatio + 0.03) * board.arrows.length) : Infinity,
   });
+  // last: join arrows that are too short for their shape into neighbours (see tidy.js)
+  if (tidyShapes(board, cfg.lengths.long.max, Math.max(0, spare()))) compact(board);
   return true;
 }
 

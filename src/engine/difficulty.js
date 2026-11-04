@@ -17,6 +17,12 @@ import { extraMetrics } from './metrics.js';
  * @property {number} longestChain longest nearest-blocker chain, in arrows
  * @property {number} decoyRatio share of arrows blocked by exactly one arrow
  * @property {number} edgeFreeRatio share of start-free arrows with their head on the outer ring
+ * @property {number} blockersAhead mean number of arrows in the straight line in front of each head at the start
+ * @property {number} blockedShare share of arrows blocked at the start
+ * @property {number} straightShare share of arrows with no turn
+ * @property {number} shortShare share of arrows under 3 cells
+ * @property {number} straightStubs straight arrows of 3 cells (straight arrows must be 4+ cells)
+ * @property {number} avgTurns mean number of turns per arrow
  */
 
 /**
@@ -124,7 +130,7 @@ export function tierLabel(n) {
  * @returns {{gridW: number, gridH: number, targetArrows: number, maxStartFree: number,
  *   minAvgDepth: number, minSolveRounds: number, maxFreePerRound: number, minLongestChain: number,
  *   minDecoyRatio: number, maxEdgeFreeRatio: number, longArrowShare: number, shapeScale: number,
- *   depthBias: number, boardGrow: number, growUpTo: number, floorFallback: object|null, tier: string}}
+ *   depthBias: number, arrowShape: object, boardGrow: number, growUpTo: number, floorFallback: object|null, tier: string}}
  */
 export function difficultyFor(level) {
   const n = Math.max(1, Math.floor(Number(level) || 1));
@@ -146,6 +152,7 @@ export function difficultyFor(level) {
     minDecoyRatio: f.minDecoyRatio,
     maxEdgeFreeRatio: f.maxEdgeFreeRatio,
     boardGrow: f.boardGrow || 0,
+    arrowShape: f.arrowShape,
     growUpTo: f.growUpTo || Infinity,
     floorFallback: f.floorFallback || null,
     longArrowShare: Math.round(ramp(C.longArrowShare, n) * 1000) / 1000,

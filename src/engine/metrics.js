@@ -1,5 +1,6 @@
 import { DIRS } from './directions.js';
 import { rayBlocker } from './board.js';
+import { isStraight, turnCount } from './tidy.js';
 
 /**
  * Extra difficulty metrics: how a board feels while solving, not just how deep its chains are.
@@ -91,5 +92,12 @@ export function extraMetrics(level, occ, deps, rounds) {
     longestChain: longestNearestChain(nearest),
     decoyRatio: deps.filter((d) => d.length === 1).length / n,
     edgeFreeRatio: free.length ? edge / free.length : 0,
+    // arrow shapes and blocking (3.17.0)
+    blockersAhead: deps.reduce((s, d) => s + d.length, 0) / n,
+    blockedShare: 1 - free.length / n,
+    straightShare: level.arrows.filter(isStraight).length / n,
+    shortShare: level.arrows.filter((a) => a.path.length < 3).length / n,
+    straightStubs: level.arrows.filter((a) => a.path.length === 3 && isStraight(a)).length,
+    avgTurns: level.arrows.reduce((s, a) => s + turnCount(a), 0) / n,
   };
 }

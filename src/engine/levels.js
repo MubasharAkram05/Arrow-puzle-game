@@ -7,6 +7,8 @@ import { difficultyFor, tierLabel } from './difficulty.js';
 
 /** Global arrow length limits. */
 export const MIN_LEN = LEVELS.minLen;
+/** Shortest arrow a hard-board pass may leave after cutting (from level 4; 2-cell arrows only as a last resort). */
+export const SHAPE_MIN_LEN = 3;
 export const MAX_LEN = LEVELS.maxLen;
 /** Minimum share of usable cells covered by arrows. */
 export const MIN_FILL = LEVELS.minFill;
@@ -141,6 +143,12 @@ export function getLevelConfig(n, shape, grow = 0) {
     minLongestChain: d.minLongestChain,
     minDecoyRatio: d.minDecoyRatio,
     maxEdgeFreeRatio: d.maxEdgeFreeRatio,
+    // arrow shapes and blocking (3.17.0): see TIER_FLOORS arrowShape
+    minBlockersAhead: d.arrowShape.minBlockersAhead,
+    minBlockedShare: LEVELS.minBlockedShare,
+    maxStraightShare: d.arrowShape.maxStraight,
+    maxShortShare: LEVELS.maxShortShare,
+    maxStraightStubs: 0, // straight arrows are 4+ cells
   };
   // a shape's jagged edge lets more arrows out at the start, so shapes keep their extra first moves
   // (and those sit on the shape's edge); every other floor is the same as a plain level of that number
@@ -158,13 +166,17 @@ export function getLevelConfig(n, shape, grow = 0) {
     cols,
     mask,
     depthBias: d.depthBias,
-    lenMax: 12,
+    // from level 4: no arrow under 3 cells (2 only as a last resort), 3-5 / 6-10 / 11-25 cells, bends first
+    shapeRules: true,
+    lenMin: 3,
+    lenMax: 10,
     styles: LEVELS.styles,
     lengths: {
-      short: { min: 2, max: 6 },
-      medium: { min: 7, max: 12, share: LEVELS.curve.mediumShare },
-      long: { min: 13, max: 30, share: d.longArrowShare },
+      short: { min: 3, max: 5 },
+      medium: { min: 6, max: 10, share: d.arrowShape.mediumShare },
+      long: { min: 11, max: 25, share: d.arrowShape.longShare },
     },
+    arrowShape: d.arrowShape,
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare),
     goals,
     floorFallback: d.floorFallback,

@@ -1,4 +1,4 @@
-import { hashSeed, mulberry32, weightedPick } from './rng.js';
+import { hashSeed, mulberry32, randInt, weightedPick } from './rng.js';
 import { makeMask } from './masks.js';
 import { absorbLeftovers, growArrow, pickLength } from './grow.js';
 import { LEVEL_ONE, MAX_LEN, MIN_FILL, MIN_LEN, getLevelConfig, shapeOf } from './levels.js';
@@ -8,6 +8,24 @@ import { bestHeads, createGrid } from './heads.js';
 import { carveCorridor, hardenBoard, repairBoard } from './hardBoard.js';
 
 const MAX_ATTEMPTS = 500;
+
+/**
+ * Target length and style of the next arrow. A free arrow on a hard board starts straight (hideFreeMoves can
+ * then pull its head in from the edge); a straight arrow is at least 4 cells long.
+ * @returns {[number, string]}
+ */
+function shapeFor(cfg, rng, hide, deep) {
+  // from level 4: some blocked arrows start long (11-25 cells, snakes, spirals, U-turns). They are blocked,
+  // so they leave late: walls around the arrows placed after them
+  const long = cfg.lengths.long;
+  if (cfg.shapeRules && deep && rng() < cfg.arrowShape.nativeLong)
+    return [randInt(rng, long.min, long.max), weightedPick(rng, cfg.longStyles)];
+  // length first, then style: the same random draws as before 3.17.0 (the tutorial stays identical)
+  const len = pickLength(cfg, rng);
+  const style = hide ? 'straight' : weightedPick(rng, cfg.styles);
+  // a hidden first move may lose 2 head cells later (hideFreeMoves): start it at 6 so it keeps 4
+  return [style === 'straight' && cfg.shapeRules ? Math.max(hide ? 6 : 4, len) : len, style];
+}
 
 /**
  * Build one candidate board with reverse peeling (not yet verified).
@@ -57,8 +75,7 @@ export function buildLevel(cfg, rng) {
       arrows.length,
       { r: pick.r, c: pick.c },
       pick.d,
-      hide ? Math.max(4, pickLength(cfg, rng)) : pickLength(cfg, rng),
-      hide ? 'straight' : weightedPick(rng, cfg.styles),
+      ...shapeFor(cfg, rng, hide, pick.depth > 0),
     );
     arrows.push(a);
   }
@@ -114,7 +131,13 @@ export function meetsGoals(report, goals) {
     report.freePerRound <= (goals.maxFreePerRound ?? Infinity) &&
     report.longestChain >= (goals.minLongestChain || 0) &&
     report.decoyRatio >= (goals.minDecoyRatio || 0) &&
-    report.edgeFreeRatio <= (goals.maxEdgeFreeRatio ?? Infinity)
+    report.edgeFreeRatio <= (goals.maxEdgeFreeRatio ?? Infinity) &&
+    // arrow shapes and blocking (3.17.0)
+    (goals.minBlockersAhead === undefined || report.blockersAhead >= goals.minBlockersAhead) &&
+    (goals.minBlockedShare === undefined || report.blockedShare >= goals.minBlockedShare) &&
+    (goals.maxStraightShare === undefined || report.straightShare <= goals.maxStraightShare) &&
+    (goals.maxShortShare === undefined || report.shortShare <= goals.maxShortShare) &&
+    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs)
   );
 }
 

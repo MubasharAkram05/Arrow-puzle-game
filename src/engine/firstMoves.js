@@ -1,6 +1,6 @@
 import { DIRS } from './directions.js';
 import { buildOccupancy, rayArrows } from './board.js';
-import { MIN_LEN } from './levels.js';
+import { SHAPE_MIN_LEN } from './levels.js';
 import { onRing } from './metrics.js';
 import { crossesItself, turnedDir, waitsFor } from './deepen.js';
 
@@ -35,11 +35,13 @@ export function hideFreeMoves(level, rng, limit = 1, budget = 0, maxEdge = 1) {
     const h = a.path[0];
     const { dr, dc } = DIRS[a.dir];
     const straight = (k) => a.path[k] && a.path[k].r === h.r - k * dr && a.path[k].c === h.c - k * dc;
-    // trim k cells: the cells up to the new neck must run straight, and enough must be left
+    // trim k cells: the cells up to the new neck must run straight, and 4+ cells must be left (a straight
+    // arrow under 4 cells looks like a stub)
     const waiters = arrows.filter((w) => deps[w.id].includes(a.id));
     // try the longer trim first (chosen at random), then the shorter one
     for (let k = rng() < 0.5 ? 2 : 1; k > 0; k--) {
-      if (!(straight(k + 1) && a.path.length - k >= MIN_LEN && !onRing(level, a.path[k].r, a.path[k].c))) continue;
+      if (!(straight(k + 1) && a.path.length - k >= SHAPE_MIN_LEN + 1 && !onRing(level, a.path[k].r, a.path[k].c)))
+        continue;
       const cut = a.path.slice(0, k);
       for (const p of cut) occ[p.r * level.cols + p.c] = -1;
       if (waiters.some((w) => !rayArrows(occ, level, w).length)) {

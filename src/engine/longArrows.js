@@ -106,9 +106,9 @@ function growLong(occ, rows, cols, byId, deps, round, a, target, maxLen) {
       const last = b.path[b.path.length - 1];
       if (end === 'tail' && (last.r !== r || last.c !== c)) continue; // touches its middle
       if (path.length + b.path.length > maxLen || waitsFor(id)) continue;
-      // prefer keeping a straight line, then longer pieces
+      // prefer a turn (long arrows bend around other arrows like walls), then longer pieces
       const straight = tail.r - prev.r === DIRS[k].dr && tail.c - prev.c === DIRS[k].dc;
-      const score = (straight ? 100 : 0) + b.path.length;
+      const score = (straight ? 0 : 100) + b.path.length;
       if (!best || score > best.score) best = { b, end, score };
     }
     if (!best) return null;
@@ -143,10 +143,13 @@ export function joinLongArrows(level, cfg, rng) {
   const round = solveRounds(deps, arrows);
   const order = [...arrows].sort((x, y) => round.get(y.id) - round.get(x.id) + (rng() - 0.5) * 2);
   const want = Math.round(arrows.length * long.share);
+  // only arrows in the later part of the solve become long (past the 35th percentile): walls that come out late
+  const rounds = [...round.values()].sort((x, y) => x - y);
+  const lateRound = cfg.shapeRules ? rounds[Math.floor(rounds.length * 0.35)] : 0;
   let made = 0;
   for (const a of order) {
     if (made >= want) break;
-    if (!byId.has(a.id) || a.path.length >= long.min) continue;
+    if (!byId.has(a.id) || a.path.length >= long.min || round.get(a.id) < lateRound) continue;
     const res = growLong(occ, rows, cols, byId, deps, round, a, randInt(rng, long.min, long.max), long.max);
     if (!res) continue;
     a.path = res.path;
