@@ -151,12 +151,12 @@ Levels 1-3 (the tutorial) are unchanged. Expert pays x2.5 coins (the cap).
 
 | Tier       | Avg length | 2-cell | Straight | Turns | blockersAhead | Blocked at start | 3-5 / 6-10 / 11+ | Depth (before) |
 | ---------- | ---------: | -----: | -------: | ----: | ------------: | ---------------: | ---------------- | -------------: |
-| Normal     |        7.8 |   0.2% |      19% |  2.47 |          4.41 |              95% | 42 / 40 / 18%    |    29.4 (32.4) |
-| Hard       |        8.0 |     0% |      19% |  2.55 |          5.60 |              97% | 43 / 38 / 20%    |    57.1 (60.6) |
+| Normal     |        7.8 |   0.2% |      19% |  2.47 |          4.41 |              95% | 42 / 40 / 18%    |    34.7 (32.6) |
+| Hard       |        8.0 |     0% |      19% |  2.55 |          5.60 |              97% | 43 / 38 / 20%    |    64.8 (62.5) |
 | Super Hard |        8.4 |     0% |      17% |  2.70 |          6.85 |              97% | 40 / 39 / 22%    |  107.7 (105.7) |
 | Expert     |        8.4 |     0% |      16% |  2.73 |          7.46 |              97% | 39 / 38 / 23%    |  129.5 (122.5) |
 
-Boards hold fewer, longer arrows, so the average depth (arrows that must leave first) is a little lower on Normal and Hard and higher on Super Hard and Expert; every level still meets its depth and rounds floors.
+Boards hold fewer, longer arrows, so the average depth (arrows that must leave first) first came out lower on Normal and Hard. The **depth aim** (`depthAim` / `depthPicks` in `TIER_FLOORS[tier].arrowShape`) brings it back: on Normal and Hard a board that meets every floor but is shallower than `depthAim` x the depth floor (1.9 Normal, 1.6 Hard) is kept, and up to 8 (Normal) or 4 (Hard) boards are tried; the first one at the aim wins, else the deepest. It is count-based, so levels stay the same for the same number. On the tested samples the average depth is now 34.7 on Normal (32.6 before 3.17.0) and 64.8 on Hard (62.5); a test keeps them at least 32.4 and 60.6. Builds stay fast (Normal and Hard under 80 ms locally). Some single levels are still shallower than before (level 30: 43.5, was 49.7): its letter shape holds 111 arrows instead of 133, and more tries do not go much further. Normal blocked arrows also start long a little more often (`nativeLong` 0.2, was 0.18), so deeper boards keep their 11+ cell arrows.
 
 **Expert is clearly harder (3.14.0).** Expert boards get 6 more cells on each side (`boardGrow`, never past 104 cells, `growUpTo`), and their depth and solve-round floors are the curve x1.6 (`boost`, Super Hard x1.4). More arrows make longer chains. Measured on the same tested levels (400 Super Hard, 200 Expert):
 

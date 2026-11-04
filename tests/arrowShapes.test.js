@@ -64,6 +64,13 @@ describe('arrow shapes from level 4', () => {
     expect(arrows.reduce((s, a) => s + turnCount(a), 0) / arrows.length).toBeGreaterThan(2);
   });
 
+  it('Normal and Hard are as deep as before the shape rules (depth aim)', () => {
+    // averages on these samples before 3.17.0 (fewer, longer arrows made boards shallower until the depth aim)
+    const depth = (tier) => SAMPLES[tier].reduce((s, n) => s + analyzeLevel(get(n)).avgDepth, 0) / SAMPLES[tier].length;
+    expect(depth('Normal')).toBeGreaterThanOrEqual(32.4);
+    expect(depth('Hard')).toBeGreaterThanOrEqual(60.6);
+  });
+
   it('harder tiers push further: more long arrows, more turns, more arrows ahead', () => {
     const avg = (tier, f) => SAMPLES[tier].reduce((s, n) => s + f(get(n)), 0) / SAMPLES[tier].length;
     const long = (lv) => share(lv.arrows, (a) => a.path.length >= 11);

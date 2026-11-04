@@ -177,6 +177,9 @@ export function getLevelConfig(n, shape, grow = 0) {
       long: { min: 11, max: 25, share: d.arrowShape.longShare },
     },
     arrowShape: d.arrowShape,
+    // depth aim (Normal, Hard): try a few more boards until one is depthAim x the depth floor (see generator)
+    depthAim: d.arrowShape.depthAim || 0,
+    depthPicks: d.arrowShape.depthPicks || 1,
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare),
     goals,
     floorFallback: d.floorFallback,

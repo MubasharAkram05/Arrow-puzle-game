@@ -388,11 +388,15 @@ export const TIER_FLOORS = Object.freeze({
   Normal: Object.freeze({
     // arrow shapes (3.17.0): share of normal arrows aiming for 6-10 cells, share of arrows joined into long
     // ones (11-25 cells), chance a blocked arrow starts long, most share of straight arrows, and the least
-    // average arrows ahead of each head
+    // average arrows ahead of each head. depthAim / depthPicks (Normal, Hard): a board that meets every floor
+    // but is shallower than depthAim x the depth floor is kept, and up to depthPicks boards are tried; the
+    // first one at the aim wins, else the deepest (longer arrows mean fewer arrows, so shallower boards)
     arrowShape: Object.freeze({
       mediumShare: 0.55,
+      depthAim: 1.9,
+      depthPicks: 8,
       longShare: 0.42,
-      nativeLong: 0.18,
+      nativeLong: 0.2,
       maxStraight: 0.3,
       minBlockersAhead: 2.5,
     }),
@@ -406,6 +410,8 @@ export const TIER_FLOORS = Object.freeze({
   Hard: Object.freeze({
     arrowShape: Object.freeze({
       mediumShare: 0.56,
+      depthAim: 1.6,
+      depthPicks: 4,
       longShare: 0.45,
       nativeLong: 0.2,
       maxStraight: 0.28,

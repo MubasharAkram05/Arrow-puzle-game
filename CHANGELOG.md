@@ -9,6 +9,7 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - Longer, bending arrows from level 4 (levels 1-3 unchanged): at least 3 cells (2 only as a last resort, at most 3%), a mix of about 40% 3-5, 37% 6-10 and 21% 11-25 cells, at most 30% straight (24% on Expert) and straight arrows at least 4 cells. Bends first: L, U, zig-zags, spirals and snakes; long arrows start as late, blocked arrows and bend around others like walls.
 - More blocking: new floors per tier for `blockersAhead` (2.5 / 3 / 3.5 / 4) and at least 90% of arrows blocked at the start. Shape boards may start with the cap + 2 free arrows or 10% of their arrows (was + 12 or 14%).
 - Existing floors (depth, rounds, chain, decoys, free per round, start free) are unchanged; every level is still solvable, deterministic and within the time limits.
+- Depth aim on Normal and Hard (`depthAim` / `depthPicks`): a board shallower than the aim is kept and a few more are tried (up to 8 on Normal, 4 on Hard), taking the first at the aim or the deepest. Average depth on the tested samples: Normal 34.7 (was 32.6 before the shape rules), Hard 64.8 (was 62.5).
 
 ### Added
 
