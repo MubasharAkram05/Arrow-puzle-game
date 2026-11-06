@@ -7,6 +7,7 @@ import { analyzeLevel } from './difficulty.js';
 import { hideFreeMoves } from './firstMoves.js';
 import { joinLate, makeDecoys } from './reshape.js';
 import { tidyShapes } from './tidy.js';
+import { fillGaps } from './fill.js';
 
 /**
  * Hard boards (from level 4): after reverse peeling, a few passes make the structure harder without
@@ -59,7 +60,7 @@ function compact(board) {
  */
 export function hardenBoard(board, cfg, rng, total) {
   const g = cfg.goals;
-  // spare cells above the fill floor, shared by the passes that empty cells
+  // spare cells above the old fill floor: snake boards refill the cut cells at the end (fillGaps)
   const spare = () => Math.floor(board.arrows.reduce((n, a) => n + a.path.length, 0) - MIN_FILL * total);
   hideFreeMoves(board, rng, g ? g.maxStartFree : Infinity, Math.floor(spare() / 2), g?.maxEdgeFreeRatio ?? 1);
   compact(board);
@@ -86,7 +87,10 @@ export function hardenBoard(board, cfg, rng, total) {
     want: g?.minDecoyRatio ? Math.ceil((g.minDecoyRatio + 0.03) * board.arrows.length) : Infinity,
   });
   // last: join arrows that are too short for their shape into neighbours (see tidy.js)
+  // snake boards (3.18.0): tails grow into the gaps the passes left (decoys keep their way out)
+  if (cfg.snake) fillGaps(board, cfg.lengths.long.max);
   if (tidyShapes(board, cfg.lengths.long.max, Math.max(0, spare()))) compact(board);
+  if (cfg.snake) fillGaps(board, cfg.lengths.long.max);
   return true;
 }
 
@@ -120,12 +124,13 @@ function repairFreePerRound(level, rounds, maxFreePerRound, arrowsMin) {
  * @param {{rows: number, cols: number, arrows: object[], fill: number}} level
  * @param {number} minDecoyRatio
  * @param {number} maxCut
+ * @param {number} [minFill] fill floor (the cut keeps the board at least this full)
  * @returns {boolean} true when any cell was cut
  */
-function repairDecoys(level, minDecoyRatio, maxCut) {
+function repairDecoys(level, minDecoyRatio, maxCut, minFill = MIN_FILL) {
   const used = level.arrows.reduce((n, a) => n + a.path.length, 0);
   const total = used / level.fill;
-  const cut = makeDecoys(level, Math.floor(used - MIN_FILL * total), {
+  const cut = makeDecoys(level, Math.floor(used - minFill * total), {
     maxCut,
     want: Math.ceil((minDecoyRatio + 0.02) * level.arrows.length),
   });
@@ -149,7 +154,7 @@ export function repairBoard(level, report, cfg) {
     repairFreePerRound(level, report.rounds, g.maxFreePerRound, cfg.arrowsMin)
   )
     report = analyzeLevel(level);
-  if (report.decoyRatio < g.minDecoyRatio && repairDecoys(level, g.minDecoyRatio, cfg.deepen.maxCut))
+  if (report.decoyRatio < g.minDecoyRatio && repairDecoys(level, g.minDecoyRatio, cfg.deepen.maxCut, cfg.minFill))
     report = analyzeLevel(level);
   return report;
 }

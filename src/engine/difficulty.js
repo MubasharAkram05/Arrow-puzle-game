@@ -23,6 +23,19 @@ import { extraMetrics } from './metrics.js';
  * @property {number} shortShare share of arrows under 3 cells
  * @property {number} straightStubs straight arrows of 3 cells (straight arrows must be 4+ cells)
  * @property {number} avgTurns mean number of turns per arrow
+ * @property {number} avgLength mean arrow length in cells (3.18.0, see styleMetrics.js)
+ * @property {number} longShare15 share of arrows with 15+ cells
+ * @property {number} turns3Share share of arrows with 3+ turns
+ * @property {number} wrapRatio share of arrows that wrap part of another arrow (a U or spiral round it)
+ * @property {number} hugRatio share of arrow cells with a parallel neighbour arrow
+ * @property {number} fill share of usable cells covered by arrows
+ * @property {number} sameDirBlock share of blocked arrows whose blocker right in front points the same way (3.19.0)
+ * @property {number} crossBlock share of those blockers pointing across or against
+ * @property {number} sameDirBlockAll same as sameDirBlock over every arrow in the way out
+ * @property {number} crossBlockAll same as crossBlock over every arrow in the way out
+ * @property {number} queueMoves share of one-at-a-time moves that free the next arrow in a same-way line
+ * @property {number} localDirMix mean share of the most common head direction in 12 x 12 windows
+ * @property {number} localDirMixWorst the highest window
  */
 
 /**

@@ -65,6 +65,9 @@ src/
     firstMoves.js       hides or removes obvious first moves on the board's edge
     reshape.js          decoy cuts and late walls (joins)
     tidy.js             arrow shapes: short or stub arrows grow into empty cells or join a neighbour (3.17.0)
+    fill.js             fill pass: tails, heads, bumps and pocket arrows fill the gaps (3.18.0)
+    styleMetrics.js     snake metrics: length, 15+ cells, turns, straight, wrap, hug, fill (3.18.0)
+    dirMetrics.js       direction mix: same-way blockers, queue moves, local mix, cross blocking (3.19.0)
     metrics.js          free per round, longest chain, decoys, free heads on the edge
     longArrows.js       joins neighbours into long arrows without breaking solvability
     board.js            occupancy, ray checks, free arrows
@@ -157,6 +160,73 @@ Levels 1-3 (the tutorial) are unchanged. Expert pays x2.5 coins (the cap).
 | Expert     |        8.4 |     0% |      16% |  2.73 |          7.46 |              97% | 39 / 38 / 23%    |  129.5 (122.5) |
 
 Boards hold fewer, longer arrows, so the average depth (arrows that must leave first) first came out lower on Normal and Hard. The **depth aim** (`depthAim` / `depthPicks` in `TIER_FLOORS[tier].arrowShape`) brings it back: on Normal and Hard a board that meets every floor but is shallower than `depthAim` x the depth floor (1.9 Normal, 1.6 Hard) is kept, and up to 8 (Normal) or 4 (Hard) boards are tried; the first one at the aim wins, else the deepest. It is count-based, so levels stay the same for the same number. On the tested samples the average depth is now 34.7 on Normal (32.6 before 3.17.0) and 64.8 on Hard (62.5); a test keeps them at least 32.4 and 60.6. Builds stay fast (Normal and Hard under 80 ms locally). Some single levels are still shallower than before (level 30: 43.5, was 49.7): its letter shape holds 111 arrows instead of 133, and more tries do not go much further. Normal blocked arrows also start long a little more often (`nativeLong` 0.2, was 0.18), so deeper boards keep their 11+ cell arrows.
+
+**Snake arrows (3.18.0).** From level 4 boards look like the reference puzzles: long arrows that turn often, run in lanes next to each other, wrap round other arrows, and fill almost the whole board (levels 1-3 are unchanged). Targets per tier are in `TIER_FLOORS[tier].arrowShape`:
+
+| Target                | Normal | Hard | Super Hard | Expert | Checked              |
+| --------------------- | -----: | ---: | ---------: | -----: | -------------------- |
+| Avg arrow length      |     9+ |  10+ |        11+ |    12+ | tier average (tests) |
+| Arrows with 15+ cells |   15%+ | 20%+ |       25%+ |   30%+ | tier average (tests) |
+| Avg turns per arrow   |   3.5+ |   4+ |       4.5+ |     5+ | every level (floor)  |
+| Arrows with 3+ turns  |   45%+ | 50%+ |       55%+ |   60%+ | tier average (tests) |
+| Straight arrows       |   12%- | 10%- |        8%- |    6%- | every level (floor)  |
+| Wrap ratio            |   20%+ | 25%+ |       30%+ |   35%+ | tier average (tests) |
+| Hug ratio             |   50%+ | 55%+ |       60%+ |   65%+ | every level (floor)  |
+| Board fill            |   97%+ | 97%+ |       98%+ |   98%+ | every level (floor)  |
+
+Metrics (`src/engine/styleMetrics.js`, also in `analyzeLevel`): **wrap ratio** is the share of arrows with a cell of another arrow inside them, on 3 of its 4 sides within 6 cells (a U, hook or spiral round it; a line or an L can't). **Hug ratio** is the share of arrow cells with a neighbour across their run that belongs to another arrow running the same way (lanes side by side). **Fill** is the share of usable cells covered.
+
+How boards are built:
+
+- **Snake growth** (`grow.js` growSnake): each step turns with the tier's chance `turn` (0.6-0.68, Expert 0.66 since 3.19.0; more after a straight run), prefers cells with few free neighbours (hugging walls and arrows), and keeps touching the arrow it follows, also at a corner, so it goes round that arrow's end (`follow`). Body cells are always free cells that no placed arrow's way out crosses, so the body shape never affects solvability.
+- **Lengths:** 3-5, 6-14 (`mediumShare`) and long 15-40 cells (`nativeLong`, drawn more often as the board fills, so long arrows leave later than average). No arrow is longer than 40 cells.
+- **Fill pass** (`fill.js`, after the hard-board passes): tails grow into empty cells, heads move forward into the empty cells in front of them, bodies step out into 2-cell gaps (battlement bumps), and new arrows grow through empty pockets of 3+ cells with an arrow in front. A cell is only taken when its arrow waits for none of the arrows whose way out crosses it (no cycle), never in its own way out, never in a free arrow's way out (the first moves stay as they were), and in a decoy's way out only by that decoy's one blocker (decoys stay decoys).
+- **Bigger boards** (`boardScale` 1.25 / 1.3 / 1.4 / 1.55 x the cells; 1.25 / 1.4 / 1.65 / 1.8 since 3.19.0): longer arrows mean fewer arrows on the same board, and depth follows the arrow count. With bigger boards every tier is at least as deep as before. Snake boards need at least 60% of the old minimum arrow count (`SNAKE.arrowsShare`). The depth and rounds floors are absolute, so they did not change.
+- **Decoys:** heads with exactly one arrow in front are preferred more while peeling (`decoyBias` 30, was 10), because long snakes cross more rays and cutting decoys out of them would leave gaps.
+
+Measured on the tested samples (10 Normal, 8 Hard, 10 Super Hard, 8 Expert levels; before = 3.17.0):
+
+| Tier       | Avg length | 15+ cells | Turns | 3+ turns | Straight | Wrap | Hug | Fill | Depth (before) | blockersAhead (before) |
+| ---------- | ---------: | --------: | ----: | -------: | -------: | ---: | --: | ---: | -------------: | ---------------------: |
+| Normal     |  7.5 → 9.9 |  11 → 16% |  4.48 |      55% |  22 → 4% |  24% | 81% |  99% |    35.6 (34.7) |              5.2 (4.4) |
+| Hard       | 7.6 → 11.5 |  12 → 24% |  5.00 |      59% |  19 → 4% |  28% | 85% |  99% |    65.0 (64.8) |              7.4 (5.7) |
+| Super Hard | 8.3 → 12.9 |  15 → 32% |  5.88 |      64% |  17 → 3% |  31% | 85% |  99% |  112.6 (106.9) |             10.5 (6.8) |
+| Expert     | 8.4 → 13.7 |  14 → 36% |  6.47 |      66% |  16 → 3% |  34% | 84% | 100% |  144.5 (132.5) |             11.4 (7.4) |
+
+Every target is met on average except **Expert wrap: 34% (target 35%)**. Stronger wall-following stops helping past `follow` 6, and joining short arrows into neighbours added about one point but lowered Expert depth below 3.17.0, so it was left out. Turns per arrow were 2.3-2.7 before; wrap was 10-12%. Some single levels are a little shallower than before (level 10: 31.7, was 34.2; level 1000: 125.9, was 130.9) while their tiers are deeper on average; every level meets its depth floor.
+
+**Direction mix (3.19.0).** Arrows in one area used to point the same way: when the front arrow left, the arrows behind it became free one after another, like a queue. Depth looked high but the level was easy. New metrics (`src/engine/dirMetrics.js`, also in `analyzeLevel`):
+
+- **sameDirBlock:** share of blocked arrows whose blocker right in front points the same way. **crossBlock:** share of those blockers pointing across or against (the rest). Two heads facing each other on one line can't happen on a solvable board (each would wait for the other), so "against" means the blocker's body crosses the line. `sameDirBlockAll` / `crossBlockAll` count every arrow in the way out (reported, not targeted).
+- **queueMoves:** a player removes one arrow per move (the one free the longest); a move counts when an arrow it frees points the same way and had the removed arrow right in front of it.
+- **localDirMix:** the share of the most common head direction in 12 x 12 windows with 6+ heads (mean over windows; `localDirMixWorst` is the highest). 25% is perfectly mixed, random is about 40%. (6 x 6 windows hold only 1-2 heads with long arrows, too few to measure.)
+
+| Target (`TIER_FLOORS[tier].arrowShape`) |     Normal |       Hard | Super Hard |     Expert |
+| --------------------------------------- | ---------: | ---------: | ---------: | ---------: |
+| sameDirBlock                            |      ≤ 30% |      ≤ 25% |      ≤ 20% |      ≤ 15% |
+| queueMoves                              |      ≤ 20% |      ≤ 15% |      ≤ 12% |      ≤ 10% |
+| localDirMix (mean / worst window)       | ≤ 55 / 75% | ≤ 50 / 70% | ≤ 45 / 65% | ≤ 45 / 65% |
+| crossBlock                              |      ≥ 60% |      ≥ 65% |      ≥ 70% |      ≥ 75% |
+
+How:
+
+- **Head choice** (`heads.js` dirScore): while peeling, a head whose arrow right in front points the same way costs a lot (`queue`), one pointing across or against gets a bonus, and heads pointing the same way as nearby heads (4 cells) or as too many arrows on the board cost more (`near`, `balance`: a fill front sweeping one way used to point most heads one way, e.g. 1 of 107 arrows pointed down on level 30).
+- **Plugging** (`grow.js` queueRisk): a growing body prefers cells where a head would line up right behind a same-way arrow, so fewer such heads are left.
+- **More rounds on purpose:** queues made many solve rounds cheaply, so without them arrows per round rose over the floor (3). Heads behind the latest arrows are preferred more (`roundBias` 1.2, was 0.3), which builds longer chains instead.
+- **Picks:** up to `dirPicks` boards that meet every floor are tried (3, Expert 2) for one under both direction targets; else the closest is used. Without a depth aim the extra boards stop at that attempt number, so slow levels pay nothing more. Plain boards (engine tests only) have no direction targets: a rectangle fills as one front.
+
+Measured on the tested samples (before = 3.18.0):
+
+| Tier       | sameDirBlock | queueMoves | crossBlock | localDirMix mean / worst | sameDirBlockAll |         Depth |        Rounds |
+| ---------- | -----------: | ---------: | ---------: | -----------------------: | --------------: | ------------: | ------------: |
+| Normal     |     48 → 13% |    33 → 8% |   52 → 87% |       54 / 70 → 48 / 65% |        41 → 33% |   35.6 → 34.3 |   51.5 → 43.5 |
+| Hard       |     49 → 12% |    36 → 8% |   51 → 88% |       55 / 80 → 51 / 73% |        38 → 37% |   65.0 → 61.6 |   86.6 → 66.0 |
+| Super Hard |     57 → 16% |   43 → 11% |   43 → 84% |       62 / 92 → 53 / 83% |        44 → 41% | 112.6 → 114.7 | 134.2 → 113.0 |
+| Expert     |     60 → 14% |    46 → 9% |   40 → 86% |       60 / 96 → 56 / 88% |        43 → 41% | 137.5 → 137.8 | 156.6 → 135.1 |
+
+- sameDirBlock, queueMoves and crossBlock meet the targets on average in every tier. Every Normal and Hard level meets both direction targets; 6 of 10 Super Hard and 5 of 8 Expert sample levels do, the rest are the closest board and never over twice a target.
+- localDirMix meets the target on Normal only (Hard 51%, Super Hard 53%, Expert 56% against 50 / 45 / 45%; worst windows 73-88% against 70 / 65 / 65%). It gave way to the queue targets.
+- Rounds are 14-24% lower and depth on Normal and Hard is 3-5% lower: queues made both look higher than the play was. Every level still meets its depth, rounds and free-per-round floors, and the tier averages stay above the depth floors the tests keep (32.4 / 60.6 / 106.9 / 127.3). The snake targets (length, turns, wrap, hug, fill) still hold.
 
 **Expert is clearly harder (3.14.0).** Expert boards get 6 more cells on each side (`boardGrow`, never past 104 cells, `growUpTo`), and their depth and solve-round floors are the curve x1.6 (`boost`, Super Hard x1.4). More arrows make longer chains. Measured on the same tested levels (400 Super Hard, 200 Expert):
 

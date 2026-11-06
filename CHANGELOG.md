@@ -2,6 +2,43 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.19.0] - 2026-11-06
+
+### Changed
+
+- Direction mix from level 4 (tutorial unchanged): arrows no longer line up in same-way queues where freeing the front arrow frees the next. Tier averages on the tested samples: arrows blocked right in front by a same-way arrow 13 / 12 / 16 / 14% (was 48 / 49 / 57 / 60%), queue moves 8 / 8 / 11 / 9% (was 33-46%), cross blocking 84-88% (was 40-52%).
+- Peeling picks heads whose arrow in front points across or against, avoids same-way heads nearby and over-used directions; growing bodies plug cells where a head would line up behind a same-way arrow. Heads behind the latest arrows are preferred more (`roundBias` 1.2, was 0.3) to keep the solve rounds over the free-per-round floor.
+- Up to `dirPicks` boards that meet every floor are tried for one under the direction targets (3, Expert 2), else the closest. Boards: `boardScale` 1.25 / 1.4 / 1.65 / 1.8; Expert turns a little less (`turn` 0.66) to break same-way lanes.
+- Rounds are 14-24% lower and Normal / Hard depth 3-5% lower on average: queues inflated both. Every floor still holds; no floor was lowered.
+
+### Added
+
+- `src/engine/dirMetrics.js`: sameDirBlock, crossBlock (direct blocker), their all-pairs versions, queueMoves, localDirMix (12 x 12 windows, mean and worst), in `analyzeLevel`.
+- Per-tier targets in `TIER_FLOORS[tier].arrowShape` and `tests/dirMix.test.js`.
+
+### Known gaps
+
+- localDirMix meets its target on Normal only (Hard 51%, Super Hard 53%, Expert 56% against 50 / 45 / 45%).
+
+## [3.18.0] - 2026-11-06
+
+### Changed
+
+- Snake arrows from level 4 (levels 1-3 unchanged), like the reference boards: arrows turn often (staircases, battlements, hooks, U-turns, spirals), run in lanes side by side, wrap round other arrows and fill almost the whole board. Tier averages on the tested samples: length 9.9 / 11.5 / 12.9 / 13.7, 15+ cell arrows 16 / 24 / 32 / 36%, turns 4.5 / 5.0 / 5.9 / 6.5, straight 4 / 4 / 3 / 3%, wrap 24 / 28 / 31 / 34%, hug 81-85%, fill 99-100%.
+- New per-tier targets in `TIER_FLOORS[tier].arrowShape`. Every level must meet the straight, turns, hug and fill targets; avg length, 15+ cells, 3+ turns and wrap are tier averages. Expert wrap reaches 34% of the 35% target.
+- Boards hold 1.25-1.55x the cells (`boardScale`) so the depth stays: average depth 35.6 / 65.0 / 112.6 / 144.5 (was 34.7 / 64.8 / 106.9 / 132.5). No floor was lowered. Arrows are at most 40 cells (was 30).
+- Heads with exactly one arrow in front are preferred more while peeling (`decoyBias` 30, was 10).
+
+### Added
+
+- `src/engine/fill.js`: tails, heads, battlement bumps and pocket arrows fill the gaps left by the hard-board passes, without cycles, new free arrows or lost decoys.
+- `src/engine/styleMetrics.js`: avgLength, longShare15, turns3Share, wrapRatio, hugRatio and fill (also in `analyzeLevel`).
+- Tests for every new metric per tier, the fill pass, and no goal drop from level N to N+10.
+
+### Fixed
+
+- A fill bump could put body cells in the arrow's own way out (unsolvable boards were already thrown away, but cost retries).
+
 ## [3.17.0] - 2026-11-04
 
 ### Changed

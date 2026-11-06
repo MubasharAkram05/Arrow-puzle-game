@@ -14,11 +14,13 @@ const MAX_ATTEMPTS = 500;
  * then pull its head in from the edge); a straight arrow is at least 4 cells long.
  * @returns {[number, string]}
  */
-function shapeFor(cfg, rng, hide, deep) {
-  // from level 4: some blocked arrows start long (11-25 cells, snakes, spirals, U-turns). They are blocked,
-  // so they leave late: walls around the arrows placed after them
+function shapeFor(cfg, rng, hide, deep, done = 0.5) {
+  // from level 4: some blocked arrows start long (snakes, spirals, U-turns). They are blocked, so they leave
+  // late: walls around the arrows placed after them. Snake boards (3.18.0) draw them more often as the board
+  // fills (same chance on average), so long arrows leave later than average
   const long = cfg.lengths.long;
-  if (cfg.shapeRules && deep && rng() < cfg.arrowShape.nativeLong)
+  const chance = cfg.snake ? cfg.arrowShape.nativeLong * (0.2 + 1.6 * done) : cfg.arrowShape?.nativeLong;
+  if (cfg.shapeRules && deep && rng() < chance)
     return [randInt(rng, long.min, long.max), weightedPick(rng, cfg.longStyles)];
   // length first, then style: the same random draws as before 3.17.0 (the tutorial stays identical)
   const len = pickLength(cfg, rng);
@@ -56,7 +58,13 @@ export function buildLevel(cfg, rng) {
     if (!any.length) break;
     // hard boards leave the last few pockets to neighbouring tails (or empty) instead of adding free
     // arrows there: no arrow's way out crosses a cell that is still free, so no arrow gets freed by it
-    if (cfg.deepen && startFree >= freeLimit && !deep.length && grid.left <= (1 - MIN_FILL) * total * 0.5) break;
+    if (
+      cfg.deepen &&
+      startFree >= freeLimit &&
+      !deep.length &&
+      grid.left <= (1 - (cfg.minFill ?? MIN_FILL)) * total * 0.5
+    )
+      break;
     // a head with nothing in front stays free at the start: once the tier's limit is used up,
     // only take one when nothing else can be placed
     const top3 = startFree >= freeLimit && deep.length ? deep : any;
@@ -75,9 +83,12 @@ export function buildLevel(cfg, rng) {
       arrows.length,
       { r: pick.r, c: pick.c },
       pick.d,
-      ...shapeFor(cfg, rng, hide, pick.depth > 0),
+      ...shapeFor(cfg, rng, hide, pick.depth > 0, 1 - grid.left / total),
     );
     arrows.push(a);
+    grid.dirOf[a.id] = a.dir;
+    grid.dirCount[a.dir]++;
+    grid.headDir[pick.r * cols + pick.c] = a.dir;
   }
   absorbLeftovers(grid, cfg, arrows);
   let joined = joinLongArrows({ rows, cols, arrows }, { ...cfg, freeLimit }, rng);
@@ -106,7 +117,7 @@ export function buildLevel(cfg, rng) {
  * @returns {boolean}
  */
 export function meetsConstraints(level, cfg) {
-  if (level.fill < MIN_FILL) return false;
+  if (level.fill < (cfg.minFill ?? MIN_FILL)) return false;
   if (cfg.arrowsMin && level.arrows.length < cfg.arrowsMin) return false;
   if (cfg.arrowsMax && level.arrows.length > cfg.arrowsMax) return false;
   return level.arrows.every((a) => a.path.length >= MIN_LEN && a.path.length <= MAX_LEN);
@@ -137,8 +148,24 @@ export function meetsGoals(report, goals) {
     (goals.minBlockedShare === undefined || report.blockedShare >= goals.minBlockedShare) &&
     (goals.maxStraightShare === undefined || report.straightShare <= goals.maxStraightShare) &&
     (goals.maxShortShare === undefined || report.shortShare <= goals.maxShortShare) &&
-    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs)
+    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs) &&
+    // snake arrows (3.18.0)
+    (goals.minAvgTurns === undefined || report.avgTurns >= goals.minAvgTurns) &&
+    (goals.minHugRatio === undefined || report.hugRatio >= goals.minHugRatio)
   );
+}
+
+/**
+ * How far a report is over the direction mix targets (3.19.0): 0 when it meets them, else the overshoot of
+ * sameDirBlock and queueMoves, each as a share of its target.
+ * @param {import('./difficulty.js').DifficultyReport} report
+ * @param {{maxSameDirBlock: number, maxQueueMoves: number}|null|undefined} dirGoals
+ * @returns {number}
+ */
+export function dirExcess(report, dirGoals) {
+  if (!dirGoals) return 0;
+  const over = (v, max) => Math.max(0, v - max) / max;
+  return over(report.sameDirBlock, dirGoals.maxSameDirBlock) + over(report.queueMoves, dirGoals.maxQueueMoves);
 }
 
 /** The floors a floor fallback may relax, and which way each one is checked. */
@@ -180,8 +207,14 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
   const relaxed = fb ? relaxGoals(cfg.goals, fb) : null;
   let best = null;
   const aim = cfg.goals && cfg.depthAim ? cfg.goals.minAvgDepth * cfg.depthAim : 0;
-  let pick = null; // deepest board so far that met every floor (with a depth aim)
+  // boards that meet every floor are compared: closest to the direction mix targets first, then deepest
+  let pick = null;
   let passed = 0;
+  const picks = Math.max(cfg.depthPicks || 1, cfg.dirGoals ? cfg.dirPicks || 1 : 1);
+  const better = (r, than) => {
+    const [a, b] = [dirExcess(r, cfg.dirGoals), dirExcess(than, cfg.dirGoals)];
+    return a !== b ? a < b : r.avgDepth > than.avgDepth;
+  };
   const done = (level, report, attempt) => {
     level.seed = cfg.seed;
     level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
@@ -197,11 +230,14 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
     if (cfg.deepen && !meetsGoals(report, cfg.goals)) report = repairBoard(level, report, cfg);
     if (!meetsConstraints(level, cfg)) continue;
     if (meetsGoals(report, cfg.goals)) {
-      // depth aim (Normal, Hard): a board that meets every floor but is shallower than the aim is kept and
-      // the next attempts are tried too; the first one at the aim wins, else the deepest of depthPicks
-      if (!aim || report.avgDepth >= aim) return done(level, report, attempt);
-      if (!pick || report.avgDepth > pick.report.avgDepth) pick = { level, report, attempt };
-      if (++passed >= cfg.depthPicks) return done(pick.level, pick.report, pick.attempt);
+      // a board that meets every floor but is shallower than the depth aim (Normal, Hard) or over the
+      // direction mix targets (3.19.0) is kept and the next attempts are tried too: the first one at both
+      // wins, else the best of `picks` boards (closest to the direction targets, then deepest)
+      if ((!aim || report.avgDepth >= aim) && !dirExcess(report, cfg.dirGoals)) return done(level, report, attempt);
+      if (!pick || better(report, pick.report)) pick = { level, report, attempt };
+      // without a depth aim the extra boards stop at attempt `picks` (a level that needed many attempts for
+      // its floors pays nothing more for the direction targets)
+      if (++passed >= picks || (!aim && attempt + 1 >= picks)) return done(pick.level, pick.report, pick.attempt);
       continue;
     }
     if (relaxed && meetsGoals(report, relaxed)) {
@@ -212,6 +248,10 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
         (missed.length === best.missed.length && report.freePerRound < best.report.freePerRound);
       if (better) best = { level, report, attempt, missed };
     }
+    // a board that met every floor is kept once `picks` attempts are done (failed attempts count too)
+    if (pick && !aim && attempt + 1 >= picks) return done(pick.level, pick.report, pick.attempt);
+    // a board that met every floor (only short of the aims above) beats one that missed a floor
+    if (pick && fb && attempt + 1 >= fb.after) return done(pick.level, pick.report, pick.attempt);
     if (best && attempt + 1 >= fb.after) {
       best.level.relaxed = best.missed;
       return done(best.level, best.report, best.attempt);

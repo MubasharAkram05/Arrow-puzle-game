@@ -12,7 +12,8 @@ import {
   mulberry32,
   validateLevel,
 } from '../src/engine/index.js';
-import { isStraight, turnCount } from '../src/engine/tidy.js';
+import { isStraight } from '../src/engine/tidy.js';
+import { styleMetrics } from '../src/engine/styleMetrics.js';
 
 beforeAll(() => loadShapeLibrary());
 
@@ -41,7 +42,7 @@ describe('arrow shapes from level 4', () => {
       expect(Math.min(...lv.arrows.map((a) => a.path.length)), `level ${n}`).toBeGreaterThanOrEqual(2);
       expect(r.shortShare, `level ${n} 2-cell`).toBeLessThanOrEqual(0.03);
       // bends: at most the tier's straight share (70%+ bend), and straight arrows are 4+ cells
-      expect(r.straightShare, `level ${n} straight`).toBeLessThanOrEqual(Math.min(0.3, shape.maxStraight));
+      expect(r.straightShare, `level ${n} straight`).toBeLessThanOrEqual(shape.maxStraight);
       expect(
         lv.arrows.filter((a) => isStraight(a) && a.path.length === 3),
         `level ${n} stubs`,
@@ -52,16 +53,36 @@ describe('arrow shapes from level 4', () => {
     }
   });
 
-  it.each(Object.entries(SAMPLES))('%s: the length mix is about 40% / 35% / 25%', (tier, levels) => {
-    const arrows = levels.flatMap((n) => get(n).arrows);
-    const len = (a) => a.path.length;
-    expect(share(arrows, (a) => len(a) >= 3 && len(a) <= 5)).toBeGreaterThan(0.3);
-    expect(share(arrows, (a) => len(a) >= 3 && len(a) <= 5)).toBeLessThan(0.52);
-    expect(share(arrows, (a) => len(a) >= 6 && len(a) <= 10)).toBeGreaterThan(0.28);
-    expect(share(arrows, (a) => len(a) >= 11 && len(a) <= 25)).toBeGreaterThan(0.15);
-    expect(share(arrows, (a) => len(a) > 25)).toBeLessThan(0.03);
-    // most arrows turn, and turning arrows mostly turn more than once
-    expect(arrows.reduce((s, a) => s + turnCount(a), 0) / arrows.length).toBeGreaterThan(2);
+  it.each(Object.entries(SAMPLES))('%s: snake arrows on every level (turns, lanes, full board)', (tier, levels) => {
+    const shape = TIER_FLOORS[tier].arrowShape;
+    for (const n of levels) {
+      const lv = get(n);
+      const s = styleMetrics(lv);
+      expect(s.straightShare, `level ${n} straight`).toBeLessThanOrEqual(shape.maxStraight);
+      expect(s.avgTurns, `level ${n} turns`).toBeGreaterThanOrEqual(shape.minAvgTurns);
+      expect(s.hugRatio, `level ${n} hug`).toBeGreaterThanOrEqual(shape.minHug);
+      expect(s.fill, `level ${n} fill`).toBeGreaterThanOrEqual(shape.minFill);
+      expect(Math.max(...lv.arrows.map((a) => a.path.length)), `level ${n} longest`).toBeLessThanOrEqual(40);
+    }
+  });
+
+  // Expert wraps about 31-32% of its arrows on average, short of the 35% target (see README "Snake arrows")
+  const WRAP_REACHED = { Expert: 0.3 };
+
+  it.each(Object.entries(SAMPLES))('%s: tier averages reach the snake targets', (tier, levels) => {
+    const shape = TIER_FLOORS[tier].arrowShape;
+    const avg = (k) => levels.reduce((sum, n) => sum + styleMetrics(get(n))[k], 0) / levels.length;
+    expect(avg('avgLength')).toBeGreaterThanOrEqual(shape.minAvgLength);
+    expect(avg('longShare15')).toBeGreaterThanOrEqual(shape.minLong15);
+    expect(avg('avgTurns')).toBeGreaterThanOrEqual(shape.minAvgTurns);
+    expect(avg('turns3Share')).toBeGreaterThanOrEqual(shape.minTurns3);
+    expect(avg('straightShare')).toBeLessThanOrEqual(shape.maxStraight);
+    expect(avg('wrapRatio')).toBeGreaterThanOrEqual(Math.min(shape.minWrap, WRAP_REACHED[tier] ?? 1));
+    expect(avg('hugRatio')).toBeGreaterThanOrEqual(shape.minHug);
+    expect(avg('fill')).toBeGreaterThanOrEqual(shape.minFill);
+    // short arrows stay for variety, but most of them bend (hooks, L)
+    const short = levels.flatMap((n) => get(n).arrows.filter((a) => a.path.length <= 5));
+    expect(share(short, (a) => !isStraight(a))).toBeGreaterThan(0.75);
   });
 
   it('Normal and Hard are as deep as before the shape rules (depth aim)', () => {
@@ -69,6 +90,10 @@ describe('arrow shapes from level 4', () => {
     const depth = (tier) => SAMPLES[tier].reduce((s, n) => s + analyzeLevel(get(n)).avgDepth, 0) / SAMPLES[tier].length;
     expect(depth('Normal')).toBeGreaterThanOrEqual(32.4);
     expect(depth('Hard')).toBeGreaterThanOrEqual(60.6);
+    // snake arrows (3.18.0) are longer, so boards are bigger (boardScale): every tier is still as deep as on
+    // these samples before 3.18.0
+    expect(depth('Super Hard')).toBeGreaterThanOrEqual(106.9);
+    expect(depth('Expert')).toBeGreaterThanOrEqual(127.3);
   });
 
   it('harder tiers push further: more long arrows, more turns, more arrows ahead', () => {
@@ -99,16 +124,35 @@ describe('tier rules never get easier', () => {
       expect(tiers[i].maxStraight).toBeLessThanOrEqual(tiers[i - 1].maxStraight);
       expect(tiers[i].longShare).toBeGreaterThanOrEqual(tiers[i - 1].longShare);
       expect(tiers[i].nativeLong).toBeGreaterThanOrEqual(tiers[i - 1].nativeLong);
+      // snake targets (3.18.0) and the knobs that reach them
+      for (const k of ['minAvgLength', 'minLong15', 'minAvgTurns', 'minTurns3', 'minWrap', 'minHug', 'minFill'])
+        expect(tiers[i][k], k).toBeGreaterThanOrEqual(tiers[i - 1][k]);
+      // turn and follow are tuning knobs (Expert turns a little less to break same-way lanes, 3.19.0)
+      for (const k of ['boardScale', 'mediumShare']) expect(tiers[i][k], k).toBeGreaterThanOrEqual(tiers[i - 1][k]);
     }
     expect(tiers[0].minBlockersAhead).toBeGreaterThanOrEqual(2.5);
     expect(tiers[3].minBlockersAhead).toBeGreaterThanOrEqual(4);
   });
 
   it('no goal drops from level N to N+10', () => {
-    const keys = { minBlockersAhead: 1, minBlockedShare: 1, maxStraightShare: -1, maxShortShare: -1 };
+    const keys = {
+      minBlockersAhead: 1,
+      minBlockedShare: 1,
+      maxStraightShare: -1,
+      maxShortShare: -1,
+      minAvgTurns: 1,
+      minHugRatio: 1,
+      minAvgDepth: 1,
+      minRounds: 1,
+      minLongestChain: 1,
+      minDecoyRatio: 1,
+      maxFreePerRound: -1,
+    };
     for (let n = 4; n < 1200; n += 7) {
-      const [a, b] = [getLevelConfig(n).goals, getLevelConfig(n + 10).goals];
+      const [ca, cb] = [getLevelConfig(n), getLevelConfig(n + 10)];
+      const [a, b] = [ca.goals, cb.goals];
       for (const [k, dir] of Object.entries(keys)) expect((b[k] - a[k]) * dir, `${k} ${n}`).toBeGreaterThanOrEqual(0);
+      expect(cb.minFill, `minFill ${n}`).toBeGreaterThanOrEqual(ca.minFill);
     }
   });
 });

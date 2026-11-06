@@ -22,7 +22,7 @@ import {
   solveLevel,
   validateLevel,
 } from '../src/engine/index.js';
-import { LEVELS as LEVEL_CFG } from '../src/config.js';
+import { LEVELS as LEVEL_CFG, TIER_FLOORS } from '../src/config.js';
 
 // shape levels use the shape library chunk
 beforeAll(() => loadShapeLibrary());
@@ -209,15 +209,16 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
     for (let n = 101; n <= 500; n += 7) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 
-  it('Super Hard has 15-20% long blocking arrows', () => {
+  it('Super Hard has 25%+ long snake arrows (15+ cells), none over 40 cells', () => {
+    // snake arrows (3.18.0): was 15-22% of arrows with 13+ cells before
     const share = mean(
       101,
       500,
       7,
-      (x) => x.level.arrows.filter((a) => a.path.length >= 13).length / x.level.arrows.length,
+      (x) => x.level.arrows.filter((a) => a.path.length >= 15).length / x.level.arrows.length,
     );
-    expect(share).toBeGreaterThanOrEqual(0.15);
-    expect(share).toBeLessThanOrEqual(0.22);
+    expect(share).toBeGreaterThanOrEqual(TIER_FLOORS['Super Hard'].arrowShape.minLong15);
+    expect(mean(101, 500, 7, (x) => Math.max(...x.level.arrows.map((a) => a.path.length)))).toBeLessThanOrEqual(40);
   });
 
   it('Expert levels block at least 14% deeper than Super Hard', () => {

@@ -9,6 +9,8 @@ import { DIRS } from './directions.js';
 export function createGrid(rows, cols, usable) {
   const free = Uint8Array.from(usable);
   const owner = new Int16Array(rows * cols).fill(-1);
+  // head and tail cells of the arrows placed so far (snake growth wraps round them)
+  const ends = new Uint8Array(rows * cols);
   const inB = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;
   const isFree = (r, c) => inB(r, c) && free[r * cols + c] === 1;
   // free neighbours of a cell (the four directions written out: this runs for every head candidate)
@@ -49,6 +51,12 @@ export function createGrid(rows, cols, usable) {
   // per direction and line: latest solve round among the arrows in front, and whether only one arrow is there
   const top = DIRS.map(({ dc }) => new Int32Array(dc ? rows : cols));
   const solo = DIRS.map(({ dc }) => new Uint8Array(dc ? rows : cols));
+  // direction mix (3.19.0): per direction and line, the arrow right in front; the direction of every placed
+  // arrow and of every head cell (-1 = none)
+  const near = DIRS.map(({ dc }) => new Int32Array(dc ? rows : cols));
+  const dirOf = [];
+  const dirCount = new Int32Array(4); // placed arrows per head direction
+  const headDir = new Int8Array(rows * cols).fill(-1);
   // solve round of every placed arrow (1 = free at the start), and the latest so far
   const round = [];
   const grid = {
@@ -57,6 +65,7 @@ export function createGrid(rows, cols, usable) {
     cols,
     free,
     owner,
+    ends,
     inB,
     isFree,
     degree,
@@ -66,6 +75,10 @@ export function createGrid(rows, cols, usable) {
     ahead,
     top,
     solo,
+    near,
+    dirOf,
+    dirCount,
+    headDir,
     round,
     maxRound: 0,
     dirtyRows,
@@ -98,6 +111,7 @@ function scanLine(grid, d, line) {
   let top = 0;
   let one = -1;
   let multi = 0;
+  let near = -1; // the arrow right in front (the last one met walking toward the free cell, 3.19.0)
   // cells outside a shape at the start of the line can never matter: skip them
   for (let k = skip[d][line]; k < len; k++) {
     // walk against the direction, starting at the far edge the arrow would leave through
@@ -108,17 +122,47 @@ function scanLine(grid, d, line) {
       ahead[d][line] = depth;
       grid.top[d][line] = top;
       grid.solo[d][line] = one !== -1 && !multi ? 1 : 0;
+      grid.near[d][line] = near;
       return;
     }
     const o = owner[i];
     if (o !== -1) {
       depth++;
+      near = o;
       if (round[o] > top) top = round[o];
       if (one === -1) one = o;
       else if (one !== o) multi = 1;
     }
   }
   first[d][line] = -1;
+}
+
+/**
+ * Direction mix (3.19.0): extra score (lower = better) for a head at (r, c) pointing d. The arrows in front
+ * should point across or against it, not the same way (or the one right in front leaves and frees this one,
+ * like a queue), and heads close by should point other ways.
+ */
+function dirScore(grid, w, r, c, d, line) {
+  const { rows, cols, headDir, dirOf } = grid;
+  const n = grid.near[d][line];
+  const nd = n >= 0 ? dirOf[n] : -1;
+  let s = 0;
+  if (nd === d) s += w.queue;
+  else if (nd >= 0) s -= w.cross;
+  // heads within w.radius cells pointing the same way
+  let alike = 0;
+  let all = 0;
+  for (let rr = Math.max(0, r - w.radius); rr <= Math.min(rows - 1, r + w.radius); rr++)
+    for (let cc = Math.max(0, c - w.radius); cc <= Math.min(cols - 1, c + w.radius); cc++) {
+      const h = headDir[rr * cols + cc];
+      if (h < 0) continue;
+      all++;
+      if (h === d) alike++;
+    }
+  // the whole board: directions already over-used (a fill front sweeping one way points every head one way)
+  const placed = dirOf.length;
+  if (placed >= 8) s += w.balance * (grid.dirCount[d] / placed - 0.25);
+  return s + (all ? (w.near * alike) / all : 0);
 }
 
 /**
@@ -155,6 +199,7 @@ export function bestHeads(grid, cfg, rng, sidePenalty) {
       const t = top[d][line];
       let score = degree(r, c) - depth * cfg.depthBias + rng() * 1.2;
       if (depth) score += (maxRound - t) * (cfg.roundBias || 0) - (solo[d][line] ? cfg.decoyBias || 0 : 0);
+      if (depth && cfg.dirMix) score += dirScore(grid, cfg.dirMix, r, c, d, line);
       // a free head next to a side can't be hidden later (see hideFreeMoves): keep chosen free heads off the sides
       else if (grid.hidden === r * cols + c)
         score -= 1000; // the corridor's end: the hidden first move
