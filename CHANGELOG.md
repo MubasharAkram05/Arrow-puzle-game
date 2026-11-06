@@ -2,6 +2,24 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.19.0] - 2026-11-06
+
+### Changed
+
+- Direction mix from level 4 (tutorial unchanged): arrows no longer line up in same-way queues where freeing the front arrow frees the next. Tier averages on the tested samples: arrows blocked right in front by a same-way arrow 13 / 12 / 16 / 14% (was 48 / 49 / 57 / 60%), queue moves 8 / 8 / 11 / 9% (was 33-46%), cross blocking 84-88% (was 40-52%).
+- Peeling picks heads whose arrow in front points across or against, avoids same-way heads nearby and over-used directions; growing bodies plug cells where a head would line up behind a same-way arrow. Heads behind the latest arrows are preferred more (`roundBias` 1.2, was 0.3) to keep the solve rounds over the free-per-round floor.
+- Up to `dirPicks` boards that meet every floor are tried for one under the direction targets (3, Expert 2), else the closest. Boards: `boardScale` 1.25 / 1.4 / 1.65 / 1.8; Expert turns a little less (`turn` 0.66) to break same-way lanes.
+- Rounds are 14-24% lower and Normal / Hard depth 3-5% lower on average: queues inflated both. Every floor still holds; no floor was lowered.
+
+### Added
+
+- `src/engine/dirMetrics.js`: sameDirBlock, crossBlock (direct blocker), their all-pairs versions, queueMoves, localDirMix (12 x 12 windows, mean and worst), in `analyzeLevel`.
+- Per-tier targets in `TIER_FLOORS[tier].arrowShape` and `tests/dirMix.test.js`.
+
+### Known gaps
+
+- localDirMix meets its target on Normal only (Hard 51%, Super Hard 53%, Expert 56% against 50 / 45 / 45%).
+
 ## [3.18.0] - 2026-11-06
 
 ### Changed

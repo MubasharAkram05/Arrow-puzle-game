@@ -17,6 +17,23 @@ const AROUND = [
   [1, 1],
 ];
 
+/**
+ * Queue risk (3.19.0): would a head on free cell (r, c) line up right behind an arrow pointing the same way?
+ * That is true when a neighbour cell belongs to an arrow whose head points from (r, c) toward it. Bodies
+ * prefer such cells (cfg.snake.plug), so fewer heads are left with only a same-way arrow in front.
+ */
+function queueRisk(grid, r, c) {
+  const { owner, dirOf, rows, cols } = grid;
+  for (let d = 0; d < 4; d++) {
+    const rr = r + DIRS[d].dr;
+    const cc = c + DIRS[d].dc;
+    if (rr < 0 || rr >= rows || cc < 0 || cc >= cols) continue;
+    const o = owner[rr * cols + cc];
+    if (o >= 0 && dirOf[o] === d) return true;
+  }
+  return false;
+}
+
 /** Does a growing body still run in one straight line? */
 function straightSoFar(path) {
   const dr = path[1].r - path[0].r;
@@ -87,6 +104,7 @@ function growSnake(grid, cfg, rng, id, head, dir, targetLen) {
       }
       let s = deg * sn.hug + rng() * sn.noise;
       if (wall >= 0 && touches(nr, nc, wall)) s -= sn.follow;
+      if (sn.plug && queueRisk(grid, nr, nc)) s -= sn.plug;
       if ((k === heading) === turn) s += sn.wrongWay;
       if (s < best) {
         best = s;

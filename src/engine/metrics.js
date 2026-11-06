@@ -2,6 +2,7 @@ import { DIRS } from './directions.js';
 import { rayBlocker } from './board.js';
 import { isStraight } from './tidy.js';
 import { styleMetrics } from './styleMetrics.js';
+import { dirMetrics } from './dirMetrics.js';
 
 /**
  * Extra difficulty metrics: how a board feels while solving, not just how deep its chains are.
@@ -100,5 +101,7 @@ export function extraMetrics(level, occ, deps, rounds) {
     straightStubs: level.arrows.filter((a) => a.path.length === 3 && isStraight(a)).length,
     // snake arrows (3.18.0): avgLength, longShare15, avgTurns, turns3Share, wrapRatio, hugRatio, fill
     ...styleMetrics(level),
+    // direction mix (3.19.0): sameDirBlock, crossBlock (+ All), queueMoves, localDirMix (+ Worst)
+    ...dirMetrics(level, deps, nearest),
   };
 }

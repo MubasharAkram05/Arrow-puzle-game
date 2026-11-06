@@ -86,6 +86,9 @@ export function buildLevel(cfg, rng) {
       ...shapeFor(cfg, rng, hide, pick.depth > 0, 1 - grid.left / total),
     );
     arrows.push(a);
+    grid.dirOf[a.id] = a.dir;
+    grid.dirCount[a.dir]++;
+    grid.headDir[pick.r * cols + pick.c] = a.dir;
   }
   absorbLeftovers(grid, cfg, arrows);
   let joined = joinLongArrows({ rows, cols, arrows }, { ...cfg, freeLimit }, rng);
@@ -152,6 +155,19 @@ export function meetsGoals(report, goals) {
   );
 }
 
+/**
+ * How far a report is over the direction mix targets (3.19.0): 0 when it meets them, else the overshoot of
+ * sameDirBlock and queueMoves, each as a share of its target.
+ * @param {import('./difficulty.js').DifficultyReport} report
+ * @param {{maxSameDirBlock: number, maxQueueMoves: number}|null|undefined} dirGoals
+ * @returns {number}
+ */
+export function dirExcess(report, dirGoals) {
+  if (!dirGoals) return 0;
+  const over = (v, max) => Math.max(0, v - max) / max;
+  return over(report.sameDirBlock, dirGoals.maxSameDirBlock) + over(report.queueMoves, dirGoals.maxQueueMoves);
+}
+
 /** The floors a floor fallback may relax, and which way each one is checked. */
 const RELAXABLE = { maxFreePerRound: 1, minDecoyRatio: -1, minLongestChain: -1 };
 const REPORT_KEY = { maxFreePerRound: 'freePerRound', minDecoyRatio: 'decoyRatio', minLongestChain: 'longestChain' };
@@ -191,8 +207,14 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
   const relaxed = fb ? relaxGoals(cfg.goals, fb) : null;
   let best = null;
   const aim = cfg.goals && cfg.depthAim ? cfg.goals.minAvgDepth * cfg.depthAim : 0;
-  let pick = null; // deepest board so far that met every floor (with a depth aim)
+  // boards that meet every floor are compared: closest to the direction mix targets first, then deepest
+  let pick = null;
   let passed = 0;
+  const picks = Math.max(cfg.depthPicks || 1, cfg.dirGoals ? cfg.dirPicks || 1 : 1);
+  const better = (r, than) => {
+    const [a, b] = [dirExcess(r, cfg.dirGoals), dirExcess(than, cfg.dirGoals)];
+    return a !== b ? a < b : r.avgDepth > than.avgDepth;
+  };
   const done = (level, report, attempt) => {
     level.seed = cfg.seed;
     level.stats = { startFree: report.startFree, avgDepth: report.avgDepth, rounds: report.rounds };
@@ -208,11 +230,14 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
     if (cfg.deepen && !meetsGoals(report, cfg.goals)) report = repairBoard(level, report, cfg);
     if (!meetsConstraints(level, cfg)) continue;
     if (meetsGoals(report, cfg.goals)) {
-      // depth aim (Normal, Hard): a board that meets every floor but is shallower than the aim is kept and
-      // the next attempts are tried too; the first one at the aim wins, else the deepest of depthPicks
-      if (!aim || report.avgDepth >= aim) return done(level, report, attempt);
-      if (!pick || report.avgDepth > pick.report.avgDepth) pick = { level, report, attempt };
-      if (++passed >= cfg.depthPicks) return done(pick.level, pick.report, pick.attempt);
+      // a board that meets every floor but is shallower than the depth aim (Normal, Hard) or over the
+      // direction mix targets (3.19.0) is kept and the next attempts are tried too: the first one at both
+      // wins, else the best of `picks` boards (closest to the direction targets, then deepest)
+      if ((!aim || report.avgDepth >= aim) && !dirExcess(report, cfg.dirGoals)) return done(level, report, attempt);
+      if (!pick || better(report, pick.report)) pick = { level, report, attempt };
+      // without a depth aim the extra boards stop at attempt `picks` (a level that needed many attempts for
+      // its floors pays nothing more for the direction targets)
+      if (++passed >= picks || (!aim && attempt + 1 >= picks)) return done(pick.level, pick.report, pick.attempt);
       continue;
     }
     if (relaxed && meetsGoals(report, relaxed)) {
@@ -223,6 +248,10 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
         (missed.length === best.missed.length && report.freePerRound < best.report.freePerRound);
       if (better) best = { level, report, attempt, missed };
     }
+    // a board that met every floor is kept once `picks` attempts are done (failed attempts count too)
+    if (pick && !aim && attempt + 1 >= picks) return done(pick.level, pick.report, pick.attempt);
+    // a board that met every floor (only short of the aims above) beats one that missed a floor
+    if (pick && fb && attempt + 1 >= fb.after) return done(pick.level, pick.report, pick.attempt);
     if (best && attempt + 1 >= fb.after) {
       best.level.relaxed = best.missed;
       return done(best.level, best.report, best.attempt);

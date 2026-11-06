@@ -163,6 +163,12 @@ export function getLevelConfig(n, shape, grow = 0) {
       maxStartFreeShare: LEVELS.maskFreeShare,
       maxEdgeFreeRatio: 1,
     });
+  // direction mix targets (3.19.0): no same-way queues. Up to the tier's dirPicks boards that meet every floor
+  // are tried for one under both targets (see generator.js). Every level is a shape board; plain boards
+  // (engine tests only) fill as one front across a rectangle and can't mix their directions this well
+  const dirGoals = mask
+    ? { maxSameDirBlock: d.arrowShape.maxSameDirBlock, maxQueueMoves: d.arrowShape.maxQueueMoves }
+    : null;
   return {
     ...base,
     tier: d.tier,
@@ -177,7 +183,8 @@ export function getLevelConfig(n, shape, grow = 0) {
     lenMax: SNAKE.mediumMax,
     styles: LEVELS.styles,
     // snake growth (3.18.0): turn often, follow the arrows already placed (see grow.js growSnake)
-    snake: { ...SNAKE.grow, turn: d.arrowShape.turn, follow: d.arrowShape.follow },
+    snake: { ...SNAKE.grow, turn: d.arrowShape.turn, follow: d.arrowShape.follow, plug: SNAKE.dirMix.plug },
+    dirMix: SNAKE.dirMix, // direction mix while peeling (3.19.0, see heads.js dirScore)
     minFill: d.arrowShape.minFill, // share of usable cells covered by arrows (3.18.0: boards almost full)
     lengths: {
       short: { min: 3, max: 5 },
@@ -191,6 +198,8 @@ export function getLevelConfig(n, shape, grow = 0) {
     // snake arrows are longer, so a board holds fewer of them (the depth floors stay the same)
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare * SNAKE.arrowsShare),
     goals,
+    dirGoals,
+    dirPicks: d.arrowShape.dirPicks,
     floorFallback: d.floorFallback,
     ...LEVELS.curve.hardness,
     // snake boards refill cut cells (fill.js), so a decoy cut may take a whole long tail

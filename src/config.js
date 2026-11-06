@@ -333,7 +333,7 @@ export const LEVELS = Object.freeze({
     ]),
     // how the generator pushes boards toward hard structure (src/engine/generator.js, deepen.js)
     hardness: Object.freeze({
-      roundBias: 0.3, // prefer heads behind the latest arrows (long chains)
+      roundBias: 1.2, // prefer heads behind the latest arrows (long chains)
       decoyBias: 30, // prefer heads with exactly one arrow in front
       sidePenalty: 6, // keep the first free arrow off the sides, so it can be hidden inside the board
       pickWindow: 2, // pick among heads scoring within this of the best
@@ -387,6 +387,14 @@ export const SNAKE = Object.freeze({
   longMin: 15, // long arrows: 15-40 cells
   longMax: 40,
   arrowsShare: 0.6, // a board needs at least this share of the old minimum arrow count (arrows are longer)
+  // direction mix while peeling (3.19.0, heads.js dirScore): cost when the arrow right in front points the
+  // same way (a queue), bonus when it points across or against, cost per share of same-way heads within
+  // `radius` cells, cost per share above 25% of the whole board's arrows pointing that way (a fill front
+  // sweeping one way points every head one way); plug = bonus for a growing body to take a cell where a
+  // head would line up behind a same-way arrow (grow.js queueRisk).
+  // Per tier: dirPicks = boards (each meeting every floor) tried for one under the direction targets, else
+  // the closest is used (Expert 2: its boards are the largest, and its floor fallback stops after 2)
+  dirMix: Object.freeze({ queue: 150, cross: 10, near: 30, radius: 4, balance: 40, plug: 3 }),
   grow: Object.freeze({
     runBoost: 0.15, // turn chance added per straight cell since the last turn (no long plain lines)
     hug: 1, // weight of free neighbours (fewer = hugging walls and arrows)
@@ -417,6 +425,7 @@ export const TIER_FLOORS = Object.freeze({
       follow: 3,
       boardScale: 1.25,
       minFill: 0.97,
+      dirPicks: 3,
       depthAim: 1.9,
       depthPicks: 8,
       longShare: 0.42,
@@ -431,6 +440,13 @@ export const TIER_FLOORS = Object.freeze({
       minTurns3: 0.45,
       minWrap: 0.2,
       minHug: 0.5,
+      // direction mix targets (3.19.0): every level keeps sameDirBlock and queueMoves under these (see README
+      // "Direction mix"); localDirMix (12 x 12 windows, mean and worst) and crossBlock are tier averages
+      maxSameDirBlock: 0.3,
+      maxQueueMoves: 0.2,
+      maxLocalDirMix: 0.55,
+      maxLocalDirMixWorst: 0.75,
+      minCrossBlock: 0.6,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -444,8 +460,9 @@ export const TIER_FLOORS = Object.freeze({
       mediumShare: 0.8,
       turn: 0.64,
       follow: 5,
-      boardScale: 1.3,
+      boardScale: 1.4,
       minFill: 0.97,
+      dirPicks: 3,
       depthAim: 1.6,
       depthPicks: 4,
       longShare: 0.45,
@@ -460,6 +477,13 @@ export const TIER_FLOORS = Object.freeze({
       minTurns3: 0.5,
       minWrap: 0.25,
       minHug: 0.55,
+      // direction mix targets (3.19.0): every level keeps sameDirBlock and queueMoves under these (see README
+      // "Direction mix"); localDirMix (12 x 12 windows, mean and worst) and crossBlock are tier averages
+      maxSameDirBlock: 0.25,
+      maxQueueMoves: 0.15,
+      maxLocalDirMix: 0.5,
+      maxLocalDirMixWorst: 0.7,
+      minCrossBlock: 0.65,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -473,8 +497,9 @@ export const TIER_FLOORS = Object.freeze({
       mediumShare: 0.85,
       turn: 0.68,
       follow: 6,
-      boardScale: 1.4,
+      boardScale: 1.65,
       minFill: 0.98,
+      dirPicks: 3,
       longShare: 0.48,
       nativeLong: 0.7,
       maxStraight: 0.08,
@@ -487,6 +512,13 @@ export const TIER_FLOORS = Object.freeze({
       minTurns3: 0.55,
       minWrap: 0.3,
       minHug: 0.6,
+      // direction mix targets (3.19.0): every level keeps sameDirBlock and queueMoves under these (see README
+      // "Direction mix"); localDirMix (12 x 12 windows, mean and worst) and crossBlock are tier averages
+      maxSameDirBlock: 0.2,
+      maxQueueMoves: 0.12,
+      maxLocalDirMix: 0.45,
+      maxLocalDirMixWorst: 0.65,
+      minCrossBlock: 0.7,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -498,10 +530,11 @@ export const TIER_FLOORS = Object.freeze({
   Expert: Object.freeze({
     arrowShape: Object.freeze({
       mediumShare: 0.9,
-      turn: 0.72,
-      follow: 6,
-      boardScale: 1.55,
+      turn: 0.66,
+      follow: 5,
+      boardScale: 1.8,
       minFill: 0.98,
+      dirPicks: 2,
       longShare: 0.5,
       nativeLong: 0.8,
       maxStraight: 0.06,
@@ -514,6 +547,13 @@ export const TIER_FLOORS = Object.freeze({
       minTurns3: 0.6,
       minWrap: 0.35,
       minHug: 0.65,
+      // direction mix targets (3.19.0): every level keeps sameDirBlock and queueMoves under these (see README
+      // "Direction mix"); localDirMix (12 x 12 windows, mean and worst) and crossBlock are tier averages
+      maxSameDirBlock: 0.15,
+      maxQueueMoves: 0.1,
+      maxLocalDirMix: 0.45,
+      maxLocalDirMixWorst: 0.65,
+      minCrossBlock: 0.75,
     }),
     boost: 1.6, // depth and solve-round floors 1.6x the curve (Super Hard 1.4x)
     boardGrow: 6, // cells added to each side of the board: more arrows, longer chains

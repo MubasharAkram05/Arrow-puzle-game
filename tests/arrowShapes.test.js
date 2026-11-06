@@ -127,8 +127,8 @@ describe('tier rules never get easier', () => {
       // snake targets (3.18.0) and the knobs that reach them
       for (const k of ['minAvgLength', 'minLong15', 'minAvgTurns', 'minTurns3', 'minWrap', 'minHug', 'minFill'])
         expect(tiers[i][k], k).toBeGreaterThanOrEqual(tiers[i - 1][k]);
-      for (const k of ['turn', 'follow', 'boardScale', 'mediumShare'])
-        expect(tiers[i][k], k).toBeGreaterThanOrEqual(tiers[i - 1][k]);
+      // turn and follow are tuning knobs (Expert turns a little less to break same-way lanes, 3.19.0)
+      for (const k of ['boardScale', 'mediumShare']) expect(tiers[i][k], k).toBeGreaterThanOrEqual(tiers[i - 1][k]);
     }
     expect(tiers[0].minBlockersAhead).toBeGreaterThanOrEqual(2.5);
     expect(tiers[3].minBlockersAhead).toBeGreaterThanOrEqual(4);
