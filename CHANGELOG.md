@@ -2,6 +2,25 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.18.0] - 2026-11-06
+
+### Changed
+
+- Snake arrows from level 4 (levels 1-3 unchanged), like the reference boards: arrows turn often (staircases, battlements, hooks, U-turns, spirals), run in lanes side by side, wrap round other arrows and fill almost the whole board. Tier averages on the tested samples: length 9.9 / 11.5 / 12.9 / 13.7, 15+ cell arrows 16 / 24 / 32 / 36%, turns 4.5 / 5.0 / 5.9 / 6.5, straight 4 / 4 / 3 / 3%, wrap 24 / 28 / 31 / 34%, hug 81-85%, fill 99-100%.
+- New per-tier targets in `TIER_FLOORS[tier].arrowShape`. Every level must meet the straight, turns, hug and fill targets; avg length, 15+ cells, 3+ turns and wrap are tier averages. Expert wrap reaches 34% of the 35% target.
+- Boards hold 1.25-1.55x the cells (`boardScale`) so the depth stays: average depth 35.6 / 65.0 / 112.6 / 144.5 (was 34.7 / 64.8 / 106.9 / 132.5). No floor was lowered. Arrows are at most 40 cells (was 30).
+- Heads with exactly one arrow in front are preferred more while peeling (`decoyBias` 30, was 10).
+
+### Added
+
+- `src/engine/fill.js`: tails, heads, battlement bumps and pocket arrows fill the gaps left by the hard-board passes, without cycles, new free arrows or lost decoys.
+- `src/engine/styleMetrics.js`: avgLength, longShare15, turns3Share, wrapRatio, hugRatio and fill (also in `analyzeLevel`).
+- Tests for every new metric per tier, the fill pass, and no goal drop from level N to N+10.
+
+### Fixed
+
+- A fill bump could put body cells in the arrow's own way out (unsolvable boards were already thrown away, but cost retries).
+
 ## [3.17.0] - 2026-11-04
 
 ### Changed

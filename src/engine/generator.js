@@ -14,11 +14,13 @@ const MAX_ATTEMPTS = 500;
  * then pull its head in from the edge); a straight arrow is at least 4 cells long.
  * @returns {[number, string]}
  */
-function shapeFor(cfg, rng, hide, deep) {
-  // from level 4: some blocked arrows start long (11-25 cells, snakes, spirals, U-turns). They are blocked,
-  // so they leave late: walls around the arrows placed after them
+function shapeFor(cfg, rng, hide, deep, done = 0.5) {
+  // from level 4: some blocked arrows start long (snakes, spirals, U-turns). They are blocked, so they leave
+  // late: walls around the arrows placed after them. Snake boards (3.18.0) draw them more often as the board
+  // fills (same chance on average), so long arrows leave later than average
   const long = cfg.lengths.long;
-  if (cfg.shapeRules && deep && rng() < cfg.arrowShape.nativeLong)
+  const chance = cfg.snake ? cfg.arrowShape.nativeLong * (0.2 + 1.6 * done) : cfg.arrowShape?.nativeLong;
+  if (cfg.shapeRules && deep && rng() < chance)
     return [randInt(rng, long.min, long.max), weightedPick(rng, cfg.longStyles)];
   // length first, then style: the same random draws as before 3.17.0 (the tutorial stays identical)
   const len = pickLength(cfg, rng);
@@ -56,7 +58,13 @@ export function buildLevel(cfg, rng) {
     if (!any.length) break;
     // hard boards leave the last few pockets to neighbouring tails (or empty) instead of adding free
     // arrows there: no arrow's way out crosses a cell that is still free, so no arrow gets freed by it
-    if (cfg.deepen && startFree >= freeLimit && !deep.length && grid.left <= (1 - MIN_FILL) * total * 0.5) break;
+    if (
+      cfg.deepen &&
+      startFree >= freeLimit &&
+      !deep.length &&
+      grid.left <= (1 - (cfg.minFill ?? MIN_FILL)) * total * 0.5
+    )
+      break;
     // a head with nothing in front stays free at the start: once the tier's limit is used up,
     // only take one when nothing else can be placed
     const top3 = startFree >= freeLimit && deep.length ? deep : any;
@@ -75,7 +83,7 @@ export function buildLevel(cfg, rng) {
       arrows.length,
       { r: pick.r, c: pick.c },
       pick.d,
-      ...shapeFor(cfg, rng, hide, pick.depth > 0),
+      ...shapeFor(cfg, rng, hide, pick.depth > 0, 1 - grid.left / total),
     );
     arrows.push(a);
   }
@@ -106,7 +114,7 @@ export function buildLevel(cfg, rng) {
  * @returns {boolean}
  */
 export function meetsConstraints(level, cfg) {
-  if (level.fill < MIN_FILL) return false;
+  if (level.fill < (cfg.minFill ?? MIN_FILL)) return false;
   if (cfg.arrowsMin && level.arrows.length < cfg.arrowsMin) return false;
   if (cfg.arrowsMax && level.arrows.length > cfg.arrowsMax) return false;
   return level.arrows.every((a) => a.path.length >= MIN_LEN && a.path.length <= MAX_LEN);
@@ -137,7 +145,10 @@ export function meetsGoals(report, goals) {
     (goals.minBlockedShare === undefined || report.blockedShare >= goals.minBlockedShare) &&
     (goals.maxStraightShare === undefined || report.straightShare <= goals.maxStraightShare) &&
     (goals.maxShortShare === undefined || report.shortShare <= goals.maxShortShare) &&
-    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs)
+    (goals.maxStraightStubs === undefined || report.straightStubs <= goals.maxStraightStubs) &&
+    // snake arrows (3.18.0)
+    (goals.minAvgTurns === undefined || report.avgTurns >= goals.minAvgTurns) &&
+    (goals.minHugRatio === undefined || report.hugRatio >= goals.minHugRatio)
   );
 }
 

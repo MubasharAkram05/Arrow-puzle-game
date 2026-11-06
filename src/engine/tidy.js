@@ -40,22 +40,14 @@ export const needsTidy = (a) => a.path.length > 0 && (a.path.length < 3 || (a.pa
 
 const touches = (p, q) => Math.abs(p.r - q.r) + Math.abs(p.c - q.c) === 1;
 
-/**
- * Join short arrows into neighbours. Mutates the arrows: joined arrows get an empty path (the caller removes
- * them and renumbers).
- * @param {{rows: number, cols: number, arrows: object[]}} level
- * @param {number} maxLen longest arrow allowed
- * @param {number} [budget] most cells that may be left empty by dropping stubs nothing can fix
- * @returns {number} joins and drops made
- */
-export function tidyShapes(level, maxLen, budget = 0) {
+/** Shared state of the tidy and fill passes: owners, blockers, waiters and solve rounds, kept exact. */
+export function tidyContext(level, maxLen) {
   const { arrows, cols } = level;
   const occ = buildOccupancy(level);
   const deps = arrows.map((a) => rayArrows(occ, level, a));
   const waiting = arrows.map(() => []);
   deps.forEach((d, id) => d.forEach((b) => waiting[b].push(id)));
   const round = roundsOf(deps);
-  let joins = 0;
   /** Add `piece`'s cells to `keeper`'s tail (piece touches the tail with one of its ends). */
   const join = (keeper, piece) => {
     const tail = keeper.path[keeper.path.length - 1];
@@ -76,7 +68,6 @@ export function tidyShapes(level, maxLen, budget = 0) {
     piece.path = [];
     // arrows that now wait for the keeper may leave later: push their rounds up
     pushRounds(keeper.id);
-    joins++;
   };
   /** Push the rounds of everything waiting for `id` up after it got new waiters. */
   const pushRounds = (id) => {
@@ -109,9 +100,9 @@ export function tidyShapes(level, maxLen, budget = 0) {
    * cell is taken only when x does not wait for any of them (no cycle) and it is not in x's own way out.
    * @returns {boolean} true when x grew
    */
-  const growTail = (x) => {
+  const growTail = (x, want = needsTidy, skip = null) => {
     let grew = false;
-    while (needsTidy(x) && x.path.length < maxLen) {
+    while (want(x) && x.path.length < maxLen) {
       const tail = x.path[x.path.length - 1];
       const prev = x.path[x.path.length - 2];
       let best = null;
@@ -123,6 +114,7 @@ export function tidyShapes(level, maxLen, budget = 0) {
         if (level.mask && !level.mask[i]) continue;
         const ws = rayThrough(r, c);
         if (ws.includes(x.id) || ws.some((w) => waitsFor(waiting, w, [x.id]))) continue;
+        if (skip && ws.some((w) => skip(w, x))) continue;
         const bends = !prev || dr !== tail.r - prev.r || dc !== tail.c - prev.c;
         const score = (bends ? 0 : 10) - ws.length;
         if (!best || score < best.score) best = { r, c, ws, score };
@@ -178,6 +170,22 @@ export function tidyShapes(level, maxLen, budget = 0) {
     }
     return false;
   };
+  return { occ, deps, waiting, round, pushRounds, rayThrough, growTail, stealTail, join };
+}
+
+/**
+ * Join short arrows into neighbours. Mutates the arrows: joined arrows get an empty path (the caller removes
+ * them and renumbers).
+ * @param {{rows: number, cols: number, arrows: object[]}} level
+ * @param {number} maxLen longest arrow allowed
+ * @param {number} [budget] most cells that may be left empty by dropping stubs nothing can fix
+ * @returns {number} joins and drops made
+ */
+export function tidyShapes(level, maxLen, budget = 0) {
+  const { arrows, cols } = level;
+  const t = tidyContext(level, maxLen);
+  const { occ, deps, waiting, round, growTail, stealTail, join } = t;
+  let joins = 0;
   /** Can `piece` join `keeper`'s tail? Returns a score (lower = better), or null. */
   const fit = (keeper, piece) => {
     if (keeper === piece || !keeper.path.length || !piece.path.length) return null;
@@ -215,7 +223,10 @@ export function tidyShapes(level, maxLen, budget = 0) {
           consider(x, arrows[id]);
           consider(arrows[id], x);
         }
-      if (best) join(best.keeper, best.piece);
+      if (best) {
+        join(best.keeper, best.piece);
+        joins++;
+      }
     }
   }
   // last resort: a stub still too short is dropped (its cells stay empty) within the fill budget, when

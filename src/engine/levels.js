@@ -1,4 +1,4 @@
-import { LEVELS } from '../config.js';
+import { LEVELS, SNAKE } from '../config.js';
 import { makeMask } from './masks.js';
 import { shapeOrder } from './shapes/library.js';
 import { shapeAt } from './shapes/plan.js';
@@ -131,10 +131,12 @@ export function getLevelConfig(n, shape, grow = 0) {
   // Expert boards get boardGrow more cells on each side, but never past growUpTo (a board already
   // bigger than that keeps its own size)
   const grown = (side) => Math.max(side, Math.min(side + d.boardGrow, d.growUpTo));
-  let rows = grown(d.gridH);
-  let cols = grown(d.gridW);
+  // snake arrows are longer (fewer per board): boards hold boardScale x the cells, so the depth stays
+  const scale = d.arrowShape.boardScale || 1;
+  let rows = grown(Math.round(d.gridH * Math.sqrt(scale)));
+  let cols = grown(Math.round(d.gridW * Math.sqrt(scale)));
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells
-  if (mask) cols = rows = grown(shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale))) + grow;
+  if (mask) cols = rows = grown(shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale * scale))) + grow;
   const goals = {
     maxStartFree: d.maxStartFree,
     minAvgDepth: d.minAvgDepth,
@@ -147,6 +149,9 @@ export function getLevelConfig(n, shape, grow = 0) {
     minBlockersAhead: d.arrowShape.minBlockersAhead,
     minBlockedShare: LEVELS.minBlockedShare,
     maxStraightShare: d.arrowShape.maxStraight,
+    // snake arrows (3.18.0): every board turns often and runs its arrows side by side
+    minAvgTurns: d.arrowShape.minAvgTurns,
+    minHugRatio: d.arrowShape.minHug,
     maxShortShare: LEVELS.maxShortShare,
     maxStraightStubs: 0, // straight arrows are 4+ cells
   };
@@ -169,20 +174,26 @@ export function getLevelConfig(n, shape, grow = 0) {
     // from level 4: no arrow under 3 cells (2 only as a last resort), 3-5 / 6-10 / 11-25 cells, bends first
     shapeRules: true,
     lenMin: 3,
-    lenMax: 10,
+    lenMax: SNAKE.mediumMax,
     styles: LEVELS.styles,
+    // snake growth (3.18.0): turn often, follow the arrows already placed (see grow.js growSnake)
+    snake: { ...SNAKE.grow, turn: d.arrowShape.turn, follow: d.arrowShape.follow },
+    minFill: d.arrowShape.minFill, // share of usable cells covered by arrows (3.18.0: boards almost full)
     lengths: {
       short: { min: 3, max: 5 },
-      medium: { min: 6, max: 10, share: d.arrowShape.mediumShare },
-      long: { min: 11, max: 25, share: d.arrowShape.longShare },
+      medium: { min: 6, max: SNAKE.mediumMax, share: d.arrowShape.mediumShare },
+      long: { min: SNAKE.longMin, max: SNAKE.longMax, share: d.arrowShape.longShare },
     },
     arrowShape: d.arrowShape,
     // depth aim (Normal, Hard): try a few more boards until one is depthAim x the depth floor (see generator)
     depthAim: d.arrowShape.depthAim || 0,
     depthPicks: d.arrowShape.depthPicks || 1,
-    arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare),
+    // snake arrows are longer, so a board holds fewer of them (the depth floors stay the same)
+    arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare * SNAKE.arrowsShare),
     goals,
     floorFallback: d.floorFallback,
     ...LEVELS.curve.hardness,
+    // snake boards refill cut cells (fill.js), so a decoy cut may take a whole long tail
+    deepen: { ...LEVELS.curve.hardness.deepen, maxCut: SNAKE.longMax },
   };
 }

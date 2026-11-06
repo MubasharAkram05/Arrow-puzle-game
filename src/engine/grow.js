@@ -5,6 +5,18 @@ import { DIRS, opposite } from './directions.js';
 import { randInt } from './rng.js';
 import { makePlan } from './shapes.js';
 
+/** The 8 cells around a cell: sides first, then corners. */
+const AROUND = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, -1],
+  [-1, 1],
+  [1, -1],
+  [1, 1],
+];
+
 /** Does a growing body still run in one straight line? */
 function straightSoFar(path) {
   const dr = path[1].r - path[0].r;
@@ -12,8 +24,93 @@ function straightSoFar(path) {
   return path.every((p, i) => i === 0 || (p.r - path[i - 1].r === dr && p.c - path[i - 1].c === dc));
 }
 
+/**
+ * Snake growth (3.18.0, from level 4): the body turns often and follows the arrows already placed, so
+ * arrows bend like the reference boards (staircases, battlements, hooks, U-turns, spirals) and run in
+ * lanes next to each other. Each step:
+ * - turns with chance snake.turn (straight on otherwise), when a turn is possible
+ * - prefers cells with fewer free neighbours (hugging walls and other arrows, so no small gaps are left)
+ * - keeps going toward its target length (a cell with no free neighbour ends it, so it is avoided early)
+ * The body only takes free cells, which no placed arrow's way out crosses, so solvability is not affected.
+ */
+function growSnake(grid, cfg, rng, id, head, dir, targetLen) {
+  const { isFree, degree, take, owner, rows, cols } = grid;
+  const neck = { r: head.r - DIRS[dir].dr, c: head.c - DIRS[dir].dc };
+  const path = [head, neck];
+  take(head.r, head.c, id);
+  take(neck.r, neck.c, id);
+  const sn = cfg.snake;
+  // does cell (r, c) touch arrow w (side by side or at a corner)? Corner contact keeps the body on an
+  // arrow's outline when it steps past that arrow's end, so it turns round the end
+  const touches = (r, c, w) => {
+    for (const [dr, dc] of AROUND) {
+      const rr = r + dr;
+      const cc = c + dc;
+      if (rr >= 0 && rr < rows && cc >= 0 && cc < cols && owner[rr * cols + cc] === w) return true;
+    }
+    return false;
+  };
+  // the arrow this body follows: keep it while touching, so the body goes round its end (a U holding it)
+  // a new wall is preferably an arrow whose end (head or tail) is right here: the body can go round it
+  const wallOf = (r, c, prev) => {
+    if (prev >= 0 && touches(r, c, prev)) return prev;
+    let any = -1;
+    for (const [dr, dc] of AROUND) {
+      const rr = r + dr;
+      const cc = c + dc;
+      if (rr < 0 || rr >= rows || cc < 0 || cc >= cols) continue;
+      const o = owner[rr * cols + cc];
+      if (o < 0 || o === id) continue;
+      if (grid.ends[rr * cols + cc]) return o;
+      if (any < 0) any = o;
+    }
+    return any;
+  };
+  let wall = wallOf(neck.r, neck.c, -1);
+  let heading = opposite(dir);
+  let run = 1; // cells since the last turn
+  while (path.length < targetLen || (path.length < 4 && straightSoFar(path))) {
+    const cur = path[path.length - 1];
+    let next = -1;
+    let best = Infinity;
+    // turn more after a long straight run (no long plain lines), less right after a turn
+    const turn = rng() < Math.min(0.95, sn.turn + (run - 1) * sn.runBoost);
+    for (let k = 0; k < 4; k++) {
+      const nr = cur.r + DIRS[k].dr;
+      const nc = cur.c + DIRS[k].dc;
+      if (!isFree(nr, nc)) continue;
+      const deg = degree(nr, nc);
+      // a neighbour that would be left alone forever is absorbed right away
+      if (deg === 0 && path.length >= cfg.lenMin) {
+        next = k;
+        break;
+      }
+      let s = deg * sn.hug + rng() * sn.noise;
+      if (wall >= 0 && touches(nr, nc, wall)) s -= sn.follow;
+      if ((k === heading) === turn) s += sn.wrongWay;
+      if (s < best) {
+        best = s;
+        next = k;
+      }
+    }
+    if (next < 0) break;
+    const nr = cur.r + DIRS[next].dr;
+    const nc = cur.c + DIRS[next].dc;
+    take(nr, nc, id);
+    path.push({ r: nr, c: nc });
+    wall = wallOf(nr, nc, wall);
+    run = next === heading ? run + 1 : 1;
+    heading = next;
+  }
+  const tail = path[path.length - 1];
+  grid.ends[head.r * cols + head.c] = 1;
+  grid.ends[tail.r * cols + tail.c] = 1;
+  return { id, dir, path };
+}
+
 /** Grow an arrow body away from its head following a shape plan. */
 export function growArrow(grid, cfg, rng, id, head, dir, targetLen, style) {
+  if (cfg.snake) return growSnake(grid, cfg, rng, id, head, dir, targetLen);
   const { isFree, degree, take } = grid;
   const neck = { r: head.r - DIRS[dir].dr, c: head.c - DIRS[dir].dc };
   const path = [head, neck];

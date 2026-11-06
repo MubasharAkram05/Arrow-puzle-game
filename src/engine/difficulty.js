@@ -23,6 +23,12 @@ import { extraMetrics } from './metrics.js';
  * @property {number} shortShare share of arrows under 3 cells
  * @property {number} straightStubs straight arrows of 3 cells (straight arrows must be 4+ cells)
  * @property {number} avgTurns mean number of turns per arrow
+ * @property {number} avgLength mean arrow length in cells (3.18.0, see styleMetrics.js)
+ * @property {number} longShare15 share of arrows with 15+ cells
+ * @property {number} turns3Share share of arrows with 3+ turns
+ * @property {number} wrapRatio share of arrows that wrap part of another arrow (a U or spiral round it)
+ * @property {number} hugRatio share of arrow cells with a parallel neighbour arrow
+ * @property {number} fill share of usable cells covered by arrows
  */
 
 /**

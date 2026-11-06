@@ -9,6 +9,8 @@ import { DIRS } from './directions.js';
 export function createGrid(rows, cols, usable) {
   const free = Uint8Array.from(usable);
   const owner = new Int16Array(rows * cols).fill(-1);
+  // head and tail cells of the arrows placed so far (snake growth wraps round them)
+  const ends = new Uint8Array(rows * cols);
   const inB = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;
   const isFree = (r, c) => inB(r, c) && free[r * cols + c] === 1;
   // free neighbours of a cell (the four directions written out: this runs for every head candidate)
@@ -57,6 +59,7 @@ export function createGrid(rows, cols, usable) {
     cols,
     free,
     owner,
+    ends,
     inB,
     isFree,
     degree,

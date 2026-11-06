@@ -305,7 +305,7 @@ export const OFFERS = Object.freeze({
  */
 export const LEVELS = Object.freeze({
   minLen: 2,
-  maxLen: 30,
+  maxLen: 40,
   minFill: 0.9, // share of usable cells covered by arrows
   minBlockedShare: 0.9, // from level 4: at least this share of arrows is blocked on the first move
   maxShortShare: 0.03, // from level 4: 2-cell arrows only as a last resort, at most this share
@@ -334,7 +334,7 @@ export const LEVELS = Object.freeze({
     // how the generator pushes boards toward hard structure (src/engine/generator.js, deepen.js)
     hardness: Object.freeze({
       roundBias: 0.3, // prefer heads behind the latest arrows (long chains)
-      decoyBias: 10, // prefer heads with exactly one arrow in front
+      decoyBias: 30, // prefer heads with exactly one arrow in front
       sidePenalty: 6, // keep the first free arrow off the sides, so it can be hidden inside the board
       pickWindow: 2, // pick among heads scoring within this of the best
       deepen: Object.freeze({
@@ -379,6 +379,23 @@ export const LEVELS = Object.freeze({
 });
 
 /**
+ * Snake arrows (3.18.0, from level 4): long arrows that bend often and run next to each other (see
+ * src/engine/grow.js growSnake and README "Snake arrows"). Per-tier targets are in TIER_FLOORS[tier].arrowShape.
+ */
+export const SNAKE = Object.freeze({
+  mediumMax: 14, // normal arrows aim for 3-5 or 6-14 cells
+  longMin: 15, // long arrows: 15-40 cells
+  longMax: 40,
+  arrowsShare: 0.6, // a board needs at least this share of the old minimum arrow count (arrows are longer)
+  grow: Object.freeze({
+    runBoost: 0.15, // turn chance added per straight cell since the last turn (no long plain lines)
+    hug: 1, // weight of free neighbours (fewer = hugging walls and arrows)
+    noise: 1.2, // random part of each step's score
+    wrongWay: 1.5, // cost of going straight when a turn was drawn (or turning when straight was drawn)
+  }),
+});
+
+/**
  * Difficulty floors per tier (from level 4; levels 1-3 are the tutorial). Each tier is stricter than the
  * one before. boost multiplies the depth and rounds curve (1.4 = 40% deeper than before 3.12.0).
  * Requested starting targets were tuned where the generator could not reach them fast enough; see
@@ -392,13 +409,28 @@ export const TIER_FLOORS = Object.freeze({
     // but is shallower than depthAim x the depth floor is kept, and up to depthPicks boards are tried; the
     // first one at the aim wins, else the deepest (longer arrows mean fewer arrows, so shallower boards)
     arrowShape: Object.freeze({
-      mediumShare: 0.55,
+      // snake arrows (3.18.0): turn = chance a growing body turns at each step, follow = how strongly it keeps
+      // touching the arrow it runs along (and goes round its end), boardScale = board cells x this (longer
+      // arrows, fewer of them: bigger boards keep the depth), minFill = least share of usable cells covered
+      mediumShare: 0.75,
+      turn: 0.6,
+      follow: 3,
+      boardScale: 1.25,
+      minFill: 0.97,
       depthAim: 1.9,
       depthPicks: 8,
       longShare: 0.42,
-      nativeLong: 0.2,
-      maxStraight: 0.3,
+      nativeLong: 0.4,
+      maxStraight: 0.12,
       minBlockersAhead: 2.5,
+      // snake targets (3.18.0): per level, avg turns and hug; on average over the tier, avg length, 15+ cell
+      // arrows, 3+ turn arrows and wrap (see README "Snake arrows")
+      minAvgLength: 9,
+      minLong15: 0.15,
+      minAvgTurns: 3.5,
+      minTurns3: 0.45,
+      minWrap: 0.2,
+      minHug: 0.5,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -409,13 +441,25 @@ export const TIER_FLOORS = Object.freeze({
   }),
   Hard: Object.freeze({
     arrowShape: Object.freeze({
-      mediumShare: 0.56,
+      mediumShare: 0.8,
+      turn: 0.64,
+      follow: 5,
+      boardScale: 1.3,
+      minFill: 0.97,
       depthAim: 1.6,
       depthPicks: 4,
       longShare: 0.45,
-      nativeLong: 0.2,
-      maxStraight: 0.28,
+      nativeLong: 0.5,
+      maxStraight: 0.1,
       minBlockersAhead: 3,
+      // snake targets (3.18.0): per level, avg turns and hug; on average over the tier, avg length, 15+ cell
+      // arrows, 3+ turn arrows and wrap (see README "Snake arrows")
+      minAvgLength: 10,
+      minLong15: 0.2,
+      minAvgTurns: 4,
+      minTurns3: 0.5,
+      minWrap: 0.25,
+      minHug: 0.55,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -426,11 +470,23 @@ export const TIER_FLOORS = Object.freeze({
   }),
   'Super Hard': Object.freeze({
     arrowShape: Object.freeze({
-      mediumShare: 0.58,
+      mediumShare: 0.85,
+      turn: 0.68,
+      follow: 6,
+      boardScale: 1.4,
+      minFill: 0.98,
       longShare: 0.48,
-      nativeLong: 0.22,
-      maxStraight: 0.26,
+      nativeLong: 0.7,
+      maxStraight: 0.08,
       minBlockersAhead: 3.5,
+      // snake targets (3.18.0): per level, avg turns and hug; on average over the tier, avg length, 15+ cell
+      // arrows, 3+ turn arrows and wrap (see README "Snake arrows")
+      minAvgLength: 11,
+      minLong15: 0.25,
+      minAvgTurns: 4.5,
+      minTurns3: 0.55,
+      minWrap: 0.3,
+      minHug: 0.6,
     }),
     boost: 1.4,
     maxStartFree: 2,
@@ -441,11 +497,23 @@ export const TIER_FLOORS = Object.freeze({
   }),
   Expert: Object.freeze({
     arrowShape: Object.freeze({
-      mediumShare: 0.6,
+      mediumShare: 0.9,
+      turn: 0.72,
+      follow: 6,
+      boardScale: 1.55,
+      minFill: 0.98,
       longShare: 0.5,
-      nativeLong: 0.25,
-      maxStraight: 0.24,
+      nativeLong: 0.8,
+      maxStraight: 0.06,
       minBlockersAhead: 4,
+      // snake targets (3.18.0): per level, avg turns and hug; on average over the tier, avg length, 15+ cell
+      // arrows, 3+ turn arrows and wrap (see README "Snake arrows")
+      minAvgLength: 12,
+      minLong15: 0.3,
+      minAvgTurns: 5,
+      minTurns3: 0.6,
+      minWrap: 0.35,
+      minHug: 0.65,
     }),
     boost: 1.6, // depth and solve-round floors 1.6x the curve (Super Hard 1.4x)
     boardGrow: 6, // cells added to each side of the board: more arrows, longer chains
