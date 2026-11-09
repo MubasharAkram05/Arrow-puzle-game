@@ -2,6 +2,22 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.22.0] - 2026-11-09
+
+### Changed
+
+- Higher prices: hint 50 -> 90 coins, 5-hint pack 200 -> 350, heart refill 80 -> 150 (still max 2 per level), Continue 2 -> 3 diamonds. Coin shop items about x2 (now 400-900 coins), diamond items about x1.5 (now 4-15 diamonds). Items already owned stay owned; the Weekly Sale still takes 30% off the new price.
+- Combo prices: an item can cost coins and diamonds together. Cards and dialogs show both icons, buying needs both, and the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). Rocket Flame, Night Stars, the Gold and Diamond frames and the 6 premium avatars now use combo prices (600 coins + 3 diamonds up to 1500 coins + 8 diamonds).
+- The bottom navigation has 5 tabs: Home, Levels, Quests, Shop, Profile.
+- The avatar picker shows a lock on premium avatars instead of a price (the Shop shows the price).
+- Save format v7 (adds the Weekly Quests record). v6 saves migrate with nothing lost.
+
+### Added
+
+- 5 premium combo items with original art: Rose Gold and Neon Night arrow styles, Aurora Ribbon escape effect, Blueprint board background, Prism avatar frame.
+- Weekly Quests: 6 quests a week from a pool of 22, the same for everyone (seeded by the ISO week), reset every Monday 00:00 local time with a countdown. A 0-100 points bar with chests at 30 (150 coins), 60 (300 coins + 1 hint) and 100 points (500 coins + 3 diamonds) that open with an animation. Unclaimed quests and chests are lost at the reset; a red dot on the Quests tab shows when something is ready. Clock changes give no extra progress or resets.
+- Tests: new prices and ranges, combo purchases (enough / short of each currency), week seeding, quest progress, points bar and chests, Monday reset, clock tampering and the v6 -> v7 migration.
+
 ## [3.21.0] - 2026-11-09
 
 ### Changed
