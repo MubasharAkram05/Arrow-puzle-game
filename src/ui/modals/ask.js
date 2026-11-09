@@ -2,7 +2,7 @@
  * Generic purchase / confirm dialog with an optional price.
  * When the wallet can't pay, the confirm button is disabled and the dialog says how much is missing.
  */
-import { canAfford, shortfall } from '../../game/economy.js';
+import { canAfford, missingLabel, priceLabel, shortfall } from '../../game/economy.js';
 import { wallet } from '../../game/rewards.js';
 import { $ } from '../dom.js';
 import { closeModals, openModal } from './modal.js';
@@ -15,21 +15,22 @@ let pending = null;
  * @returns {string}
  */
 export function priceHTML(price) {
-  const kind = price.diamonds ? 'gem' : 'coin';
-  const value = price.diamonds || price.coins || 0;
-  return `<span class="price"><svg class="cur-icon" aria-hidden="true"><use href="#i-${kind}" /></svg>${value}</span>`;
+  const part = (kind, value) =>
+    `<span class="price-part"><svg class="cur-icon" aria-hidden="true"><use href="#i-${kind}" /></svg>${value.toLocaleString('en-US')}</span>`;
+  const parts = [];
+  if (price.coins || !price.diamonds) parts.push(part('coin', price.coins || 0));
+  if (price.diamonds) parts.push(part('gem', price.diamonds));
+  // a combo price shows both icons: "[coin] 600 + [gem] 3"
+  return `<span class="price${parts.length > 1 ? ' combo' : ''}" aria-label="${priceLabel(price)}">${parts.join('<span class="price-plus" aria-hidden="true">+</span>')}</span>`;
 }
 
 /**
- * Message for a missing amount, e.g. "You need 30 more coins."
+ * Message for a missing amount, e.g. "Need 120 more coins and 1 more diamond".
  * @param {{coins?: number, diamonds?: number}} price
  * @returns {string} empty when affordable
  */
 export function missingText(price) {
-  const m = shortfall(wallet(), price);
-  if (m.coins) return `You need ${m.coins} more coins.`;
-  if (m.diamonds) return `You need ${m.diamonds} more diamond${m.diamonds === 1 ? '' : 's'}.`;
-  return '';
+  return missingLabel(shortfall(wallet(), price));
 }
 
 /**

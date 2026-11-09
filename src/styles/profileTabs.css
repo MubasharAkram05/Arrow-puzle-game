@@ -1,4 +1,4 @@
-/* ---------- Profile | Awards segmented control (src/ui/screens/profile/tabs.js) ---------- */
+/* ---------- Segmented control: Profile | Awards, Tasks: Weekly | Achievements (src/ui/components/segmented.js) ---------- */
 .prof-tabs {
   position: relative;
   display: grid;
@@ -21,7 +21,7 @@
   box-shadow: 0 2px 8px rgba(8, 24, 56, 0.14);
   transition: transform 0.25s cubic-bezier(0.3, 0.9, 0.3, 1);
 }
-.prof-tabs[data-active='awards'] .prof-thumb {
+.prof-tabs[data-index='1'] .prof-thumb {
   transform: translateX(100%);
 }
 .prof-tab {
@@ -41,9 +41,19 @@
   outline: 3px solid var(--primary);
   outline-offset: 2px;
 }
+.prof-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* red like the nav dots (something to claim or see), right after the label so it never covers it */
 .prof-tab .tab-dot {
-  top: 10px;
-  right: calc(50% - 46px);
+  position: relative;
+  top: -6px;
+  right: auto;
+  flex: none;
+  margin-left: 4px;
+  background: var(--error);
 }
 .prof-panel.slide-l {
   animation: slide-l 0.24s ease-out;

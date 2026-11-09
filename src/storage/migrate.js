@@ -1,6 +1,7 @@
 /**
  * Migrations from older save formats: v1 (single key), v2 (before the shop expansion), v3 (before the
- * shape collection), v4 (before daily rewards and tiered achievements) and v5 (before boosters were removed). Pure.
+ * shape collection), v4 (before daily rewards and tiered achievements), v5 (before boosters were removed) and v6
+ * (before Weekly Quests). Pure.
  */
 import { REWARDS } from '../config.js';
 import { ORIGINAL_SHAPES } from '../engine/index.js';
@@ -88,7 +89,7 @@ export function migrateV1(raw) {
  * @returns {object} sanitized current save
  */
 export function migrateV2(raw) {
-  return sanitize({ ...obj(raw), version: 6 });
+  return sanitize({ ...obj(raw), version: 7 });
 }
 
 /**
@@ -99,7 +100,7 @@ export function migrateV2(raw) {
  */
 export function migrateV3(raw) {
   // v3 had no shapes list, so sanitize fills it from the finished shape levels
-  return sanitize({ ...obj(raw), version: 6 });
+  return sanitize({ ...obj(raw), version: 7 });
 }
 
 /**
@@ -110,7 +111,7 @@ export function migrateV3(raw) {
  * @returns {object} sanitized v5 save
  */
 export function migrateV4(raw) {
-  return sanitize({ ...obj(raw), version: 6 });
+  return sanitize({ ...obj(raw), version: 7 });
 }
 
 /**
@@ -120,5 +121,15 @@ export function migrateV4(raw) {
  * @returns {object} sanitized v6 save
  */
 export function migrateV5(raw) {
-  return sanitize({ ...obj(raw), version: 6 });
+  return sanitize({ ...obj(raw), version: 7 });
+}
+
+/**
+ * Convert a v6 save to v7: everything is kept; the Weekly Quests record starts empty (the first week starts
+ * the next time the game counts progress or shows the Quests screen).
+ * @param {unknown} raw
+ * @returns {object} sanitized v7 save
+ */
+export function migrateV6(raw) {
+  return sanitize({ ...obj(raw), version: 7 });
 }

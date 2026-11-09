@@ -109,6 +109,26 @@ html[data-theme='dark'] [data-preview='mint'] {
   --dot: #24453b;
 }
 
+/* 3.22.0 combo styles: Rose Gold (warm cream / rose metal) and Neon Night (deep navy / glowing cyan) */
+html[data-theme='light'][data-style='rose'],
+html[data-theme='light'] [data-preview='rose'] {
+  --arrow: #8c3f3a;
+  --board-bg: #fbf1ec;
+  --dot: #ecd3c8;
+}
+html[data-theme='dark'][data-style='rose'],
+html[data-theme='dark'] [data-preview='rose'] {
+  --arrow: #f3bfae;
+  --board-bg: #231918;
+  --dot: #46302c;
+}
+html[data-style='neon'],
+[data-preview='neon'] {
+  --arrow: #5ef2ff;
+  --board-bg: #0a1027;
+  --dot: #1e2b57;
+}
+
 /* Accent themes (bought in the Shop) */
 html[data-accent='purple'] {
   --primary: #7c4dff;

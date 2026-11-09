@@ -1,4 +1,4 @@
-/* ---------- Achievements list on the Profile tab (src/ui/screens/profile/achievementsList.js) ---------- */
+/* ---------- Tasks > Achievements list (src/ui/screens/tasks/achievementsList.js) and the shared Claim button ---------- */
 .ach-list {
   display: flex;
   flex-direction: column;
@@ -145,12 +145,15 @@
       0 0 0 6px color-mix(in srgb, var(--primary) 18%, transparent);
   }
 }
-/* not ready: flat and grey, but the label still reads at 4.5:1 (muted on pill) */
+/* not ready (3.23.0): clearly disabled, so it can't be mistaken for an active button: flat, no border, light
+   text and slightly transparent. Disabled controls are exempt from the text contrast minimum (WCAG 1.4.3);
+   aria-disabled tells assistive tech */
 .ach-claim.is-locked {
   background: var(--pill);
-  color: var(--muted);
-  border-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  color: color-mix(in srgb, var(--muted) 80%, var(--pill));
+  border-color: transparent;
   box-shadow: none;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 .ach-claim.is-locked.shake {

@@ -1,7 +1,7 @@
 /**
  * Profile, in two tabs (profile/tabs.js). Profile: avatar, editable name, player level/XP, stats, (hidden)
- * shape collection, the Achievements list and a quiet Credits link at the bottom. Awards: the award badges and
- * the monthly trophies.
+ * shape collection, a "View achievements" link (the list lives in Tasks > Achievements since 3.23.0) and a
+ * quiet Credits link at the bottom. Awards: the award badges and the monthly trophies (show-off only).
  */
 import { state } from '../../game/state.js';
 import { playerLevel, validateName } from '../../game/stats.js';
@@ -11,12 +11,11 @@ import { COSMETICS, SHOW_SHAPE_COLLECTION } from '../../config.js';
 import { buyCosmeticItem } from '../../game/rewards.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { ask } from '../modals/ask.js';
-import { updateBottomNav } from '../components/bottomNav.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
 import { bindCredits } from '../modals/credits.js';
-import { achievementsSkeleton, bindAchievements, renderAchievements } from './profile/achievementsList.js';
+import { openTasks } from './tasks/index.js';
 import {
   awardsPageSkeleton,
   bindAwardsPage,
@@ -25,8 +24,6 @@ import {
   renderAwardsPage,
 } from './profile/awardsPage.js';
 import { activeTab, bindTabs, setTabDots, showTab, tabsSkeleton } from './profile/tabs.js';
-import { achievementRows, readyCount } from '../../game/achievementList.js';
-import { achievementContext } from '../../game/rewards.js';
 import { renderStatsView, statsSkeleton } from './profile/statsView.js';
 import { bindCollection, collectionSkeleton, renderCollection } from './shapeCollection.js';
 import { onReturn, openTab } from '../navigation.js';
@@ -36,7 +33,7 @@ function buildSkeleton() {
   const picker = Array.from(
     { length: AVATAR_TOTAL },
     (_, i) =>
-      `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock"><svg class="cur-icon"><use href="#i-gem" /></svg>2</span></button>`,
+      `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock" aria-hidden="true">${icon('lock')}</span></button>`,
   ).join('');
   const profile = `
     <div class="profile-card">
@@ -51,7 +48,7 @@ function buildSkeleton() {
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
     ${statsSkeleton()}
     ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
-    ${achievementsSkeleton()}
+    <button class="view-ach-link" id="btn-view-achievements">${icon('trophy')}<span>View achievements</span>${icon('back')}</button>
     <button class="credits-link" id="btn-credits">Credits</button>`;
   $('profile-body').innerHTML = tabsSkeleton(profile, awardsPageSkeleton());
 }
@@ -72,10 +69,10 @@ function renderHeader() {
   $('xp-text').textContent = `${lv.into} / ${lv.need} XP to level ${lv.level + 1}`;
 }
 
-/** Red dots: Profile when an achievement is ready to claim, Awards when a badge is newly earned. */
+/** Red dot on Awards when a badge is newly earned (achievements are claimed in Tasks since 3.23.0). */
 function renderDots() {
   setTabDots({
-    profile: readyCount(achievementRows(achievementContext(), state.claimed)) > 0,
+    profile: false,
     awards: newAwardsCount() > 0,
   });
 }
@@ -88,7 +85,6 @@ function renderProfile(animate = false) {
   renderHeader();
   renderStatsView(state, animate);
   if (SHOW_SHAPE_COLLECTION) renderCollection();
-  renderAchievements();
   renderAwardsPage();
   renderDots();
   // looking at the Awards tab counts as seeing its new badges (their dots stay until the next visit)
@@ -160,12 +156,7 @@ export function bindProfile() {
   $('name-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') e.currentTarget.blur();
   });
-  bindAchievements(() => {
-    renderStatsView(state);
-    renderAwardsPage();
-    renderDots();
-    updateBottomNav('screen-profile');
-  });
+  $('btn-view-achievements').addEventListener('click', () => openTasks('achievements'));
   bindAwardsPage();
   bindTabs((id) => {
     if (id === 'awards') {

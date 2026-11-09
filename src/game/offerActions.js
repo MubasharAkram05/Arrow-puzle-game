@@ -4,6 +4,7 @@
 import { OFFERS, SHOP_STYLES, SHOP_THEMES } from '../config.js';
 import { claimGift, exchange, starterPackVisible, weeklySale } from './offers.js';
 import { buyCosmeticItem, buyItem, credit, pay } from './rewards.js';
+import { questEvent } from './questState.js';
 import { state } from './state.js';
 
 /**
@@ -53,6 +54,7 @@ export function exchangeCoins(times) {
   state.coins = res.wallet.coins;
   state.diamonds = res.wallet.diamonds;
   state.stats = { ...state.stats, coinsSpent: state.stats.coinsSpent + spent };
+  questEvent({ spend: spent });
   return { ok: true };
 }
 

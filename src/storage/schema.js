@@ -1,5 +1,5 @@
 /**
- * Save format v6, validation and loading (v5, v4, v3, v2 and v1 saves are migrated, see migrate.js).
+ * Save format v7, validation and loading (v6, v5, v4, v3, v2 and v1 saves are migrated, see migrate.js).
  * Pure: storage is passed in, so tests can use a fake.
  */
 import { REWARDS, SHOP_STYLES, SHOP_THEMES, START_HINTS, THEMES } from '../config.js';
@@ -13,6 +13,7 @@ import {
   migrateV3,
   migrateV4,
   migrateV5,
+  migrateV6,
   OLD_CHAPTER_SIZE,
 } from './migrate.js';
 import {
@@ -30,6 +31,7 @@ import {
   pendingRefund,
   sanitizeCosmetics,
   sanitizeDaily,
+  sanitizeQuests,
   seenBadgeIds,
   seenKeys,
   shapeIds,
@@ -46,8 +48,10 @@ export const V4_BACKUP_KEY = 'arrowEscape:v4:backup';
 export const V5_KEY = 'arrowEscape:v5';
 export const V5_BACKUP_KEY = 'arrowEscape:v5:backup';
 export const V6_KEY = 'arrowEscape:v6';
-export const BACKUP_KEY = 'arrowEscape:v6:backup';
-export const VERSION = 6;
+export const V6_BACKUP_KEY = 'arrowEscape:v6:backup';
+export const V7_KEY = 'arrowEscape:v7';
+export const BACKUP_KEY = 'arrowEscape:v7:backup';
+export const VERSION = 7;
 const STAT_KEYS = [
   'arrowsCleared',
   'wins',
@@ -86,6 +90,7 @@ export function defaultSave() {
     daily: newDaily(),
     dailyDays: [],
     seenBadges: [],
+    quests: { week: 0, counts: {}, claimed: [], chests: [] },
     xp: 0,
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     achievements: { claimed: [], progress: {} },
@@ -95,13 +100,23 @@ export function defaultSave() {
   };
 }
 
-export { convertChapters, migrateV1, migrateV2, migrateV3, migrateV4, migrateV5, OLD_CHAPTER_SIZE, sanitizeCosmetics };
+export {
+  convertChapters,
+  migrateV1,
+  migrateV2,
+  migrateV3,
+  migrateV4,
+  migrateV5,
+  migrateV6,
+  OLD_CHAPTER_SIZE,
+  sanitizeCosmetics,
+};
 
 /** Renamed achievement ids: the old single-step Shape Solver claim counts as Shape Solver I (never paid twice). */
 const RENAMED_CLAIMS = Object.freeze({ 'shape-solver': 'shape-solver-1' });
 
 /**
- * Validate any parsed value into a complete v6 save. Unknown keys are dropped, bad numbers become 0, an
+ * Validate any parsed value into a complete v7 save. Unknown keys are dropped, bad numbers become 0, an
  * equipped item must be owned, and fields newer than the save are filled in (e.g. dailyDays, seenBadges).
  * @param {unknown} raw
  * @returns {object}
@@ -158,6 +173,7 @@ export function sanitize(raw) {
     daily,
     dailyDays: dailyDays(d.dailyDays, daily),
     seenBadges: seenBadgeIds(d.seenBadges, claimed),
+    quests: sanitizeQuests(d.quests),
     xp: count(d.xp),
     stats: Object.fromEntries(STAT_KEYS.map((k) => [k, count(st[k])])),
     achievements: {
@@ -205,18 +221,32 @@ function upgrade(storage, data, oldKeys) {
 }
 
 /**
- * Read the save: v6, then its backup, then v5, v4, v3, v2 (each or its backup) and v1, migrated to v6.
- * Old keys are removed only after v6 is written. Otherwise defaults. Never throws, even if storage is unavailable.
+ * Read the save: v7, then its backup, then v6, v5, v4, v3, v2 (each or its backup) and v1, migrated to v7.
+ * Old keys are removed only after v7 is written. Otherwise defaults. Never throws, even if storage is unavailable.
  * @param {{getItem: Function, setItem: Function, removeItem: Function}|null} storage
- * @returns {{data: object, source: 'v6'|'backup'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'}}
+ * @returns {{data: object, source: 'v7'|'backup'|'v6'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'}}
  */
 export function readSave(storage) {
   try {
-    const main = readKey(storage, V6_KEY);
-    if (main) return { data: sanitize(main), source: 'v6' };
+    const main = readKey(storage, V7_KEY);
+    if (main) return { data: sanitize(main), source: 'v7' };
     const backup = readKey(storage, BACKUP_KEY);
     if (backup) return { data: sanitize(backup), source: 'backup' };
-    const old = [V5_KEY, V5_BACKUP_KEY, V4_KEY, V4_BACKUP_KEY, V3_KEY, V3_BACKUP_KEY, V2_KEY, V2_BACKUP_KEY, V1_KEY];
+    const old = [
+      V6_KEY,
+      V6_BACKUP_KEY,
+      V5_KEY,
+      V5_BACKUP_KEY,
+      V4_KEY,
+      V4_BACKUP_KEY,
+      V3_KEY,
+      V3_BACKUP_KEY,
+      V2_KEY,
+      V2_BACKUP_KEY,
+      V1_KEY,
+    ];
+    const v6 = readKey(storage, V6_KEY) || readKey(storage, V6_BACKUP_KEY);
+    if (v6) return { data: upgrade(storage, migrateV6(v6), old), source: 'v6' };
     const v5 = readKey(storage, V5_KEY) || readKey(storage, V5_BACKUP_KEY);
     if (v5) return { data: upgrade(storage, migrateV5(v5), old), source: 'v5' };
     const v4 = readKey(storage, V4_KEY) || readKey(storage, V4_BACKUP_KEY);
@@ -242,9 +272,9 @@ export function readSave(storage) {
 export function writeSave(storage, data) {
   try {
     const text = JSON.stringify(data);
-    storage.setItem(V6_KEY, text);
+    storage.setItem(V7_KEY, text);
     storage.setItem(BACKUP_KEY, text);
-    return storage.getItem(V6_KEY) === text;
+    return storage.getItem(V7_KEY) === text;
   } catch {
     return false;
   }

@@ -55,6 +55,22 @@
   width: 18px;
   height: 18px;
 }
+/* combo price (3.22.0): "[coin] 600 + [gem] 3", wraps to two lines on a narrow card */
+.price.combo {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0;
+}
+.price-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.price-plus {
+  color: var(--muted);
+  font-weight: 700;
+}
 .btn.buy {
   justify-content: space-between;
 }

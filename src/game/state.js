@@ -49,6 +49,7 @@ export const state = {
   daily: newDaily(), // daily reward record (src/game/daily.js)
   dailyDays: [], // local day numbers of every daily-reward claim (monthly trophies)
   seenBadges: new Set(), // claimed achievement steps whose award badge was seen (no red dot)
+  quests: { week: 0, counts: {}, claimed: [], chests: [] }, // this week's quest record (src/game/quests.js)
   cosmetics: newCosmetics(), // owned/equipped effects, boards, heads, confetti, sounds, avatars, frames
   levelAssist: newLevelAssist(), // a hint was used in this attempt
   pendingRefund: null, // removed boosters paid back, waiting for its toast

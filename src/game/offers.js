@@ -98,14 +98,17 @@ export function saleCandidates() {
 }
 
 /**
- * Discounted price (coins rounded to 5, diamonds rounded, never below 1).
+ * Discounted price (coins rounded to 5, diamonds rounded, never below 1). A combo price is discounted in both
+ * currencies.
  * @param {{coins?: number, diamonds?: number}} price
  * @returns {{coins?: number, diamonds?: number}}
  */
 export function salePrice(price) {
   const k = 1 - OFFERS.weeklySale.discount;
-  if (price.diamonds) return { diamonds: Math.max(1, Math.round(price.diamonds * k)) };
-  return { coins: Math.max(5, Math.round((price.coins * k) / 5) * 5) };
+  const out = {};
+  if (price.coins) out.coins = Math.max(5, Math.round((price.coins * k) / 5) * 5);
+  if (price.diamonds) out.diamonds = Math.max(1, Math.round(price.diamonds * k));
+  return out;
 }
 
 /**

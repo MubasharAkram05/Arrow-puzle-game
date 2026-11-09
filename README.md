@@ -12,11 +12,12 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
 - Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
 - Shop with tabs (All, Offers, Hints, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
-- Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
+- Pages: Home, Levels, Tasks, Shop and Profile behind a bottom navigation bar
+- Tasks: Weekly Quests and the permanent Achievements in one place, behind two tabs. Weekly Quests: 6 quests a week (same for everyone, reset every Monday), a 0-100 points bar and 3 reward chests
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
-- Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and the Achievements list) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies)
-- Light, dark and auto theme, 4 arrow styles, 4 accent themes
+- Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and a "View achievements" link) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies, show-off only)
+- Light, dark and auto theme, 6 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
 ## Requirements
@@ -89,15 +90,17 @@ src/
     cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
     offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
     offerActions.js     applies offers to the game state
+    quests.js           Weekly Quests: weeks, seeding, progress, points, chests, clock safety (pure)
+    questState.js       applies quest progress, claims and chests to the game state
   render/               canvas board (canvasBoard.js layers, canvasDraw.js arrows, canvasHeads.js heads),
                         HUD, pointing hand, animations, confetti; board.js keeps the small SVG boards
     effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
-    schema.js           v6 save format, validation, loading and backup (pure)
+    schema.js           v7 save format, validation, loading and backup (pure)
     validators.js       number, list, cosmetics, avatar and shape-id validators (pure)
-    migrate.js          v1 to v5 to v6 migrations, chapter-size conversion (pure)
+    migrate.js          v1 to v6 to v7 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
@@ -381,16 +384,22 @@ All numbers live in `src/config.js`.
 
 ### Spending
 
-| Item                                  | Price      |
-| ------------------------------------- | ---------- |
-| Hint (once free hints run out)        | 50 coins   |
-| 5-hint pack                           | 200 coins  |
-| Refill 1 heart (max 2 per level)      | 80 coins   |
-| Continue after game over, full hearts | 2 diamonds |
-| Arrow styles: Dark Slate, Olive       | 300 coins  |
-| Arrow style: Soft Mint                | 5 diamonds |
-| Themes: Royal Purple, Lagoon Teal     | 400 coins  |
-| Theme: Sunset Coral                   | 8 diamonds |
+Prices went up in 3.22.0 (coin items about x2, diamond items about x1.5). Items already owned stay owned.
+
+**Combo prices** (3.22.0): an item can cost coins and diamonds together (`{ coins, diamonds }` in `src/config.js`). The card shows both icons ("[coin] 600 + [gem] 3"), buying needs both amounts, and when either is short the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). The Weekly Sale takes 30% off both parts. The premium avatars no longer show a price on the Profile avatar picker, only a lock (the Shop shows the price).
+
+| Item                                  | Price                   |
+| ------------------------------------- | ----------------------- |
+| Hint (once free hints run out)        | 90 coins                |
+| 5-hint pack                           | 350 coins               |
+| Refill 1 heart (max 2 per level)      | 150 coins               |
+| Continue after game over, full hearts | 3 diamonds              |
+| Arrow styles: Dark Slate, Olive       | 600 coins               |
+| Arrow style: Soft Mint                | 8 diamonds              |
+| Themes: Royal Purple, Lagoon Teal     | 800 coins               |
+| Arrow style: Rose Gold (new)          | 800 coins + 4 diamonds  |
+| Arrow style: Neon Night (new)         | 1100 coins + 6 diamonds |
+| Theme: Sunset Coral                   | 12 diamonds             |
 
 ### Hints
 
@@ -402,33 +411,36 @@ The Shield and Extra Heart Start boosters and the Booster Pack were removed in 3
 
 Each category has a free default. Owned items are equipped only in the Shop: every owned card shows "Equip" (or "Equipped"), free defaults included (`src/game/shopEquip.js`). Settings keeps sound, vibration and theme (3.20.0: "Show zoom tips again", "Credits" and "Reset progress" are gone; Credits moved to the Profile tab, and the reset function stays for tests only).
 
-| Category         | Item                             | Price           |
-| ---------------- | -------------------------------- | --------------- |
-| Escape effect    | Classic Slide (default)          | Free            |
-| Escape effect    | Spark Trail                      | 250 coins       |
-| Escape effect    | Comet Glow                       | 400 coins       |
-| Escape effect    | Burst                            | 3 diamonds      |
-| Escape effect    | Rocket Flame                     | 6 diamonds      |
-| Board background | Plain (default)                  | Free            |
-| Board background | Soft Paper                       | 200 coins       |
-| Board background | Gradient Sky                     | 300 coins       |
-| Board background | Chalkboard                       | 4 diamonds      |
-| Board background | Night Stars                      | 6 diamonds      |
-| Arrowhead        | Triangle (default)               | Free            |
-| Arrowhead        | Chevron                          | 200 coins       |
-| Arrowhead        | Round                            | 250 coins       |
-| Arrowhead        | Feather                          | 3 diamonds      |
-| Victory confetti | Classic (default)                | Free            |
-| Victory confetti | Hearts                           | 150 coins       |
-| Victory confetti | Coins                            | 200 coins       |
-| Victory confetti | Stars                            | 250 coins       |
-| Sound pack       | Soft (default)                   | Free            |
-| Sound pack       | Retro 8-bit                      | 300 coins       |
-| Sound pack       | Nature                           | 3 diamonds      |
-| Avatar           | 6 premium avatars                | 2 diamonds each |
-| Avatar frame     | Silver (free with Perfectionist) | 500 coins       |
-| Avatar frame     | Gold (free with Chapter Master)  | 1000 coins      |
-| Avatar frame     | Diamond                          | 10 diamonds     |
+| Category         | Item                             | Price                       |
+| ---------------- | -------------------------------- | --------------------------- |
+| Escape effect    | Classic Slide (default)          | Free                        |
+| Escape effect    | Spark Trail                      | 500 coins                   |
+| Escape effect    | Comet Glow                       | 800 coins                   |
+| Escape effect    | Burst                            | 5 diamonds                  |
+| Escape effect    | Aurora Ribbon (new)              | 1300 coins + 7 diamonds     |
+| Escape effect    | Rocket Flame                     | 1000 coins + 5 diamonds     |
+| Board background | Plain (default)                  | Free                        |
+| Board background | Soft Paper                       | 400 coins                   |
+| Board background | Gradient Sky                     | 600 coins                   |
+| Board background | Chalkboard                       | 6 diamonds                  |
+| Board background | Blueprint (new)                  | 1000 coins + 5 diamonds     |
+| Board background | Night Stars                      | 900 coins + 5 diamonds      |
+| Arrowhead        | Triangle (default)               | Free                        |
+| Arrowhead        | Chevron                          | 400 coins                   |
+| Arrowhead        | Round                            | 500 coins                   |
+| Arrowhead        | Feather                          | 5 diamonds                  |
+| Victory confetti | Classic (default)                | Free                        |
+| Victory confetti | Hearts                           | 400 coins                   |
+| Victory confetti | Coins                            | 450 coins                   |
+| Victory confetti | Stars                            | 500 coins                   |
+| Sound pack       | Soft (default)                   | Free                        |
+| Sound pack       | Retro 8-bit                      | 600 coins                   |
+| Sound pack       | Nature                           | 5 diamonds                  |
+| Avatar           | 6 premium avatars                | 600 coins + 3 diamonds each |
+| Avatar frame     | Silver (free with Perfectionist) | 800 coins                   |
+| Avatar frame     | Gold (free with Chapter Master)  | 1200 coins + 4 diamonds     |
+| Avatar frame     | Diamond                          | 1500 coins + 8 diamonds     |
+| Avatar frame     | Prism (new)                      | 1400 coins + 7 diamonds     |
 
 Escape effects use transform, opacity and a small particle canvas, and are skipped with `prefers-reduced-motion`. Sound packs are generated with the Web Audio API (no audio files). Arrowhead shapes only change the drawing, not hit detection.
 
@@ -451,14 +463,14 @@ Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two
 
 The Profile screen has two tabs, Profile and Awards (a pill control with a sliding thumb; a red dot marks a tab with something new; the last tab is remembered on the device).
 
-- **Achievements list** (Profile tab, `src/game/achievementList.js`): one row per achievement group, full width. Each row has a small badge, the title and description, a progress bar with the count inside it ("4/5", white over the fill and dark over the track), the diamond reward and a side button. Tiered groups show only their current step ("Step 2/4"). Ready rows sort to the top, then rows in progress, then completed ones. Claiming plays a burst on the badge and the diamonds fly to the counter.
-- **Claim button** (`src/ui/screens/profile/claimButton.js`): every row has one, always 96x44 px, so rows line up and nothing jumps when a row changes state.
+- **Achievements list** (Tasks > Achievements since 3.23.0, on the Profile tab before; `src/game/achievementList.js`, `src/ui/screens/tasks/achievementsList.js`). Profile keeps a "View achievements" link that opens it: one row per achievement group, full width. Each row has a small badge, the title and description, a progress bar with the count inside it ("4/5", white over the fill and dark over the track), the diamond reward and a side button. Tiered groups show only their current step ("Step 2/4"). Ready rows sort to the top, then rows in progress, then completed ones. Claiming plays a burst on the badge and the diamonds fly to the counter.
+- **Claim button** (`src/ui/components/claimButton.js`, shared by achievements and weekly quests): every row has one, always 96x44 px, so rows line up and nothing jumps when a row changes state.
 
-  | State                | Look                                                                                      | Tap                                                                                           |
-  | -------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-  | Ready                | blue, glow pulse, red dot                                                                 | claims                                                                                        |
-  | Not ready            | grey and flat, no shadow or pulse, `aria-disabled="true"` (label 5.5:1 light, 6.5:1 dark) | small shake and a toast with what is left, e.g. "Finish 5 more levels first" (`notReadyText`) |
-  | Claimed (every step) | green "Claimed" pill with a check                                                         | nothing                                                                                       |
+  | State                | Look                                                                                                                                                                  | Tap                                                                                           |
+  | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+  | Ready                | blue, glow pulse, red dot                                                                                                                                             | claims                                                                                        |
+  | Not ready            | clearly disabled (3.23.0): flat, no border or shadow, lighter text, 60% opacity, `aria-disabled="true"` (disabled controls are exempt from the text contrast minimum) | small shake and a toast with what is left, e.g. "Finish 5 more levels first" (`notReadyText`) |
+  | Claimed (every step) | green "Claimed" pill with a check                                                                                                                                     | nothing                                                                                       |
 
 - **Award badges** (Awards tab, `src/game/awards.js`, `src/ui/components/clayBadge.js`): one original clay-style badge per group, 3 per row on a phone. Each group has its own shape (circle, shield, hexagon, rosette or gem) and colour. A badge lights up once a step is claimed and shows that step's goal (10, 25, 100...) on a ribbon in its tier colour (Bronze, Silver, Gold, Diamond; single-step achievements are Gold). Locked badges are pale grey embossed silhouettes. A red dot marks a newly earned badge until the Awards tab has been seen. Tapping a badge opens a bottom sheet with every step and its progress; the Awards tab never claims anything.
 - **Monthly trophies** (Awards tab, `src/game/trophies.js`, `src/ui/components/trophyArt.js`): twelve original trophies for the current year, one shape per month. Progress is the number of days that month the daily reward was claimed (e.g. "12 of 31", with leap years). The trophy fills with colour from the bottom; a complete month is full colour with a shine; future months are pale grey. Earlier years show in folded sections only when they have data.
@@ -493,6 +505,60 @@ Opening the app on a new local day shows the Daily Reward popup on Home: a ribbo
 - Clock checks (`src/game/daily.js`): if the time is earlier than the latest time this device has seen (beyond 1 hour, so time zones and DST are fine) or earlier than the last claimed day, nothing is paid until real time catches up; a jump of more than 60 days ahead pays nothing that day. The save is never broken.
 - Resetting progress keeps the daily record, so today's reward can't be claimed twice.
 
+### Weekly Quests
+
+A **Tasks** tab in the bottom navigation (clipboard icon, between Levels and Shop; called Quests in 3.22.0) opens the Tasks screen (`src/ui/screens/tasks/`). A tab was chosen over a Home button so the red reminder dot is visible from every page.
+
+- A segmented control (the same pill as Profile | Awards, `src/ui/components/segmented.js`) switches between **Weekly** (below) and **Achievements** (the permanent list, same rows, Claim states and order as before). The panel slides in, and the last tab is remembered on the device.
+- A red dot marks each tab with something to claim, and the Tasks nav icon shows one when either tab does (`src/game/taskDots.js`).
+
+The Weekly tab:
+
+- **Banner**: "Weekly Quests" with a countdown to the reset ("5d 23h"). Quests reset every Monday at 00:00 local time.
+- **Points bar** from 0 to 100 with three chests. Claimed quests add their points; a chest opens with an animation when tapped once its points are reached.
+
+  | Chest      | Reward                 |
+  | ---------- | ---------------------- |
+  | 30 points  | 150 coins              |
+  | 60 points  | 300 coins + 1 hint     |
+  | 100 points | 500 coins + 3 diamonds |
+
+- **6 quests per week**, at most one per group, picked from the pool with the ISO week number as the seed: the same for everyone in a week, different each week. The draw repeats on the same seed until the week's points add up to 115-170, so 100 points never needs every quest. No quest asks for hints to be used.
+- **Groups** (3.23.0): quests that count the same thing share a group, so one week never has two of them (e.g. never "Complete 30 levels" with "Finish 10 new levels"): levels (any levels, new levels), careful (perfect levels, levels with no hint), hard (Hard-or-above, Super Hard-or-above), and one group each for shapes, comebacks, arrows, daily claims and coins spent.
+- **Rows** look like the achievements list: points on the left, icon and title, a bar with "x/y" inside, and the Claim button on the right (grey when not ready, blue when ready, "Claimed" after). A tap on a grey button shakes it and says what is left ("Complete 5 more levels first").
+- **Lost at the reset**: unclaimed quest points and unopened chests. A red dot on the Weekly tab and on the Tasks nav icon shows when a quest or chest can be claimed.
+- **Progress** counts only from the week's start: wins, perfect wins (no heart lost, no hint), shape levels, Hard-or-above and Super Hard-or-above levels, levels with no hint, wins with 1 heart left, first clears, arrows cleared, daily reward claims and coins spent.
+- **Clock safety** (`src/game/quests.js`): the quest week only ever moves forward. A clock moved back keeps the current week (no reset, no old week back, claimed quests and opened chests stay claimed). A clock jumped forward starts that later week once, and then no reset happens until real time has passed it, so there are never more resets than real weeks plus that one.
+- Permanent achievements are separate and never reset.
+- All numbers live in `QUESTS` in `src/config.js`.
+
+Quest pool:
+
+| Quest                               | Goal  | Points |
+| ----------------------------------- | ----- | ------ |
+| Complete 20 levels                  | 20    | 10     |
+| Complete 30 levels                  | 30    | 15     |
+| Complete 40 levels                  | 40    | 25     |
+| Finish 5 perfect levels             | 5     | 15     |
+| Finish 10 perfect levels            | 10    | 30     |
+| Finish 8 shape levels               | 8     | 15     |
+| Finish 15 shape levels              | 15    | 30     |
+| Clear 1,500 arrows                  | 1,500 | 10     |
+| Clear 3,000 arrows                  | 3,000 | 25     |
+| Claim the daily reward on 3 days    | 3     | 20     |
+| Claim the daily reward on 5 days    | 5     | 35     |
+| Win 3 levels with only 1 heart left | 3     | 20     |
+| Win 5 levels with only 1 heart left | 5     | 30     |
+| Finish 5 Hard-or-above levels       | 5     | 20     |
+| Finish 12 Hard-or-above levels      | 12    | 35     |
+| Finish 3 Super Hard-or-above levels | 3     | 25     |
+| Spend 1,500 coins                   | 1,500 | 20     |
+| Spend 3,000 coins                   | 3,000 | 35     |
+| Complete 10 levels without a hint   | 10    | 25     |
+| Complete 20 levels without a hint   | 20    | 40     |
+| Finish 10 new levels                | 10    | 20     |
+| Finish 20 new levels                | 20    | 35     |
+
 Currency from outside the game (rewarded ads, in-app purchases) should go through `grant()` in `economy.js` (via `credit()` in `rewards.js`) with source `'ad'` or `'purchase'`.
 
 ## Test mode
@@ -501,7 +567,8 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Saves
 
-- Key `arrowEscape:v6`, plus a backup copy in `arrowEscape:v6:backup` written on every save.
+- Key `arrowEscape:v7`, plus a backup copy in `arrowEscape:v7:backup` written on every save.
+- v7 (3.22.0) adds the Weekly Quests record `quests: { week, counts, claimed, chests }`. A v6 save keeps everything and starts with an empty record; the v6 keys are removed only after v7 is written and read back.
 - 3.16.0 adds two fields to v6 saves, filled in on load: `dailyDays` (days the daily reward was claimed, for the monthly trophies) and `seenBadges` (award badges already seen). An older save rebuilds the claim days from its current streak (a streak is a run of consecutive claimed days); earlier days are unknown and start at 0. Badges claimed before count as seen.
 - v6 removes the Shield and Extra Heart boosters. Any owned ones are refunded once on load (60 coins per Shield, 1 diamond per Extra Heart), a toast says "Boosters removed, refunded X coins / Y diamonds" once, and the inventory is dropped. Everything else is kept. The v5 keys are removed only after v6 is written and read back.
 - v5 adds the daily reward record and two stats (clean first clears, comebacks). A v4 save (or its backup) is migrated automatically and nothing is lost: progress, coins, diamonds, hints, items, shapes and claimed achievements are kept. The v4 keys are removed only after v5 is written and read back.

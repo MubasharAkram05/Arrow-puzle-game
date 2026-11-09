@@ -59,12 +59,12 @@ export const REWARDS = Object.freeze({
   milestoneDiamonds: 1, // ...gives a diamond on its first clear
 });
 
-/** Prices. Each price is { coins } or { diamonds }. */
+/** Prices (3.22.0: hint 50 -> 90, pack 200 -> 350, refill 80 -> 150, continue 2 -> 3). */
 export const PRICES = Object.freeze({
-  hint: Object.freeze({ coins: 50 }),
-  hintPack: Object.freeze({ coins: 200, count: 5 }), // 5 hints for the price of 4
-  heartRefill: Object.freeze({ coins: 80 }),
-  continueGame: Object.freeze({ diamonds: 2 }),
+  hint: Object.freeze({ coins: 90 }),
+  hintPack: Object.freeze({ coins: 350, count: 5 }), // 5 hints for a bit less than 4
+  heartRefill: Object.freeze({ coins: 150 }),
+  continueGame: Object.freeze({ diamonds: 3 }),
 });
 /**
  * Achievements. A group with several steps shows only its next unclaimed step; each step pays once.
@@ -178,6 +178,232 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
 ]);
 
 /**
+ * Weekly Quests (3.22.0). A quest week starts on Monday 00:00 local time. Each week shows `perWeek` quests
+ * from the pool, picked from the ISO week number, so everyone gets the same quests in the same week. At most one
+ * quest per `group` (3.23.0): quests in a group count the same thing (levels: any finished level or new ones;
+ * careful: perfect or no-hint levels; hard: Hard-or-above or Super Hard-or-above), so one win never moves two
+ * of the week's quests that track the same thing. Claimed quests add their points to the 0-100 bar; the chests open at 30, 60 and 100 points.
+ * Unclaimed quests and chests are lost at the reset. No quest asks for hints to be used.
+ * Counters: wins, perfect (no heart lost, no hint), shapes (shape levels), hard (Hard, Super Hard or Expert),
+ * superHard (Super Hard or Expert), clean (no hint), comeback (won with exactly 1 heart left), newLevels
+ * (first clears), arrows (arrows cleared), daily (daily reward claims), spend (coins spent).
+ */
+export const QUESTS = Object.freeze({
+  perWeek: 6,
+  maxPoints: 100,
+  // the week's quests are redrawn (same seed stream) until their points add up to this range, so 100 is
+  // always reachable without needing every quest
+  weekPoints: Object.freeze({ min: 115, max: 170 }),
+  chests: Object.freeze([
+    Object.freeze({ at: 30, reward: Object.freeze({ coins: 150 }) }),
+    Object.freeze({ at: 60, reward: Object.freeze({ coins: 300, hints: 1 }) }),
+    Object.freeze({ at: 100, reward: Object.freeze({ coins: 500, diamonds: 3 }) }),
+  ]),
+  pool: Object.freeze(
+    [
+      {
+        id: 'wins-20',
+        group: 'levels',
+        counter: 'wins',
+        goal: 20,
+        points: 10,
+        title: 'Complete 20 levels',
+        icon: 'levels',
+      },
+      {
+        id: 'wins-30',
+        group: 'levels',
+        counter: 'wins',
+        goal: 30,
+        points: 15,
+        title: 'Complete 30 levels',
+        icon: 'levels',
+      },
+      {
+        id: 'wins-40',
+        group: 'levels',
+        counter: 'wins',
+        goal: 40,
+        points: 25,
+        title: 'Complete 40 levels',
+        icon: 'levels',
+      },
+      {
+        id: 'perfect-5',
+        group: 'careful',
+        counter: 'perfect',
+        goal: 5,
+        points: 15,
+        title: 'Finish 5 perfect levels',
+        icon: 'crown-o',
+      },
+      {
+        id: 'perfect-10',
+        group: 'careful',
+        counter: 'perfect',
+        goal: 10,
+        points: 30,
+        title: 'Finish 10 perfect levels',
+        icon: 'crown-o',
+      },
+      {
+        id: 'shapes-8',
+        group: 'shapes',
+        counter: 'shapes',
+        goal: 8,
+        points: 15,
+        title: 'Finish 8 shape levels',
+        icon: 'shape-heart',
+      },
+      {
+        id: 'shapes-15',
+        group: 'shapes',
+        counter: 'shapes',
+        goal: 15,
+        points: 30,
+        title: 'Finish 15 shape levels',
+        icon: 'shape-heart',
+      },
+      {
+        id: 'arrows-1500',
+        group: 'arrows',
+        counter: 'arrows',
+        goal: 1500,
+        points: 10,
+        title: 'Clear 1,500 arrows',
+        icon: 'target',
+      },
+      {
+        id: 'arrows-3000',
+        group: 'arrows',
+        counter: 'arrows',
+        goal: 3000,
+        points: 25,
+        title: 'Clear 3,000 arrows',
+        icon: 'target',
+      },
+      {
+        id: 'daily-3',
+        group: 'daily',
+        counter: 'daily',
+        goal: 3,
+        points: 20,
+        title: 'Claim the daily reward on 3 days',
+        icon: 'gift',
+      },
+      {
+        id: 'daily-5',
+        group: 'daily',
+        counter: 'daily',
+        goal: 5,
+        points: 35,
+        title: 'Claim the daily reward on 5 days',
+        icon: 'gift',
+      },
+      {
+        id: 'comeback-3',
+        group: 'comeback',
+        counter: 'comeback',
+        goal: 3,
+        points: 20,
+        title: 'Win 3 levels with only 1 heart left',
+        icon: 'heart-crack',
+      },
+      {
+        id: 'comeback-5',
+        group: 'comeback',
+        counter: 'comeback',
+        goal: 5,
+        points: 30,
+        title: 'Win 5 levels with only 1 heart left',
+        icon: 'heart-crack',
+      },
+      {
+        id: 'hard-5',
+        group: 'hard',
+        counter: 'hard',
+        goal: 5,
+        points: 20,
+        title: 'Finish 5 Hard-or-above levels',
+        icon: 'bolt',
+      },
+      {
+        id: 'hard-12',
+        group: 'hard',
+        counter: 'hard',
+        goal: 12,
+        points: 35,
+        title: 'Finish 12 Hard-or-above levels',
+        icon: 'bolt',
+      },
+      {
+        id: 'superhard-3',
+        group: 'hard',
+        counter: 'superHard',
+        goal: 3,
+        points: 25,
+        title: 'Finish 3 Super Hard-or-above levels',
+        icon: 'fire',
+      },
+      {
+        id: 'spend-1500',
+        group: 'spend',
+        counter: 'spend',
+        goal: 1500,
+        points: 20,
+        title: 'Spend 1,500 coins',
+        icon: 'shop',
+      },
+      {
+        id: 'spend-3000',
+        group: 'spend',
+        counter: 'spend',
+        goal: 3000,
+        points: 35,
+        title: 'Spend 3,000 coins',
+        icon: 'shop',
+      },
+      {
+        id: 'clean-10',
+        group: 'careful',
+        counter: 'clean',
+        goal: 10,
+        points: 25,
+        title: 'Complete 10 levels without a hint',
+        icon: 'bulb',
+      },
+      {
+        id: 'clean-20',
+        group: 'careful',
+        counter: 'clean',
+        goal: 20,
+        points: 40,
+        title: 'Complete 20 levels without a hint',
+        icon: 'bulb',
+      },
+      {
+        id: 'new-10',
+        group: 'levels',
+        counter: 'newLevels',
+        goal: 10,
+        points: 20,
+        title: 'Finish 10 new levels',
+        icon: 'play',
+      },
+      {
+        id: 'new-20',
+        group: 'levels',
+        counter: 'newLevels',
+        goal: 20,
+        points: 35,
+        title: 'Finish 20 new levels',
+        icon: 'play',
+      },
+    ].map((q) => Object.freeze(q)),
+  ),
+});
+
+/**
  * Daily reward: one claim per local calendar day. The streak grows by one per claim on consecutive days and
  * resets to day 1 after a missed day; the 7 cards repeat, the streak count keeps going.
  */
@@ -206,18 +432,26 @@ export const MAX_REFILLS_PER_LEVEL = 2;
 /** XP per level win and per heart left. */
 export const XP = Object.freeze({ perLevel: 10, perHeart: 5 });
 
-/** Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start. */
+/**
+ * Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start.
+ * 3.22.0 prices: coin items about x2 (400-900 coins), diamond items about x1.5 (4-15 diamonds). Items already
+ * owned stay owned (ownership is stored by id, never by price).
+ * Combo prices { coins, diamonds } need both amounts (600 coins + 3 diamonds up to 1500 coins + 8 diamonds):
+ * the top premium items and the 3.22.0 additions (Rose Gold, Neon Night, Aurora Ribbon, Blueprint, Prism).
+ */
 export const SHOP_STYLES = Object.freeze([
   { id: 'classic', name: 'Classic', price: null },
-  { id: 'slate', name: 'Dark Slate', price: { coins: 300 } },
-  { id: 'olive', name: 'Olive', price: { coins: 300 } },
-  { id: 'mint', name: 'Soft Mint', price: { diamonds: 5 } },
+  { id: 'slate', name: 'Dark Slate', price: { coins: 600 } },
+  { id: 'olive', name: 'Olive', price: { coins: 600 } },
+  { id: 'mint', name: 'Soft Mint', price: { diamonds: 8 } },
+  { id: 'rose', name: 'Rose Gold', price: { coins: 800, diamonds: 4 } },
+  { id: 'neon', name: 'Neon Night', price: { coins: 1100, diamonds: 6 } },
 ]);
 export const SHOP_THEMES = Object.freeze([
   { id: 'blue', name: 'Ocean Blue', price: null, color: '#1877F2' },
-  { id: 'purple', name: 'Royal Purple', price: { coins: 400 }, color: '#7C4DFF' },
-  { id: 'teal', name: 'Lagoon Teal', price: { coins: 400 }, color: '#0E9F8E' },
-  { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
+  { id: 'purple', name: 'Royal Purple', price: { coins: 800 }, color: '#7C4DFF' },
+  { id: 'teal', name: 'Lagoon Teal', price: { coins: 800 }, color: '#0E9F8E' },
+  { id: 'coral', name: 'Sunset Coral', price: { diamonds: 12 }, color: '#F0574A' },
 ]);
 
 /**
@@ -227,48 +461,51 @@ export const SHOP_THEMES = Object.freeze([
 export const COSMETICS = Object.freeze({
   effect: [
     { id: 'default', name: 'Classic Slide', price: null },
-    { id: 'spark', name: 'Spark Trail', price: { coins: 250 } },
-    { id: 'comet', name: 'Comet Glow', price: { coins: 400 } },
-    { id: 'burst', name: 'Burst', price: { diamonds: 3 } },
-    { id: 'rocket', name: 'Rocket Flame', price: { diamonds: 6 } },
+    { id: 'spark', name: 'Spark Trail', price: { coins: 500 } },
+    { id: 'comet', name: 'Comet Glow', price: { coins: 800 } },
+    { id: 'burst', name: 'Burst', price: { diamonds: 5 } },
+    { id: 'rocket', name: 'Rocket Flame', price: { coins: 1000, diamonds: 5 } },
+    { id: 'aurora', name: 'Aurora Ribbon', price: { coins: 1300, diamonds: 7 } },
   ],
   board: [
     { id: 'plain', name: 'Plain', price: null },
-    { id: 'paper', name: 'Soft Paper', price: { coins: 200 } },
-    { id: 'sky', name: 'Gradient Sky', price: { coins: 300 } },
-    { id: 'chalk', name: 'Chalkboard', price: { diamonds: 4 } },
-    { id: 'stars', name: 'Night Stars', price: { diamonds: 6 } },
+    { id: 'paper', name: 'Soft Paper', price: { coins: 400 } },
+    { id: 'sky', name: 'Gradient Sky', price: { coins: 600 } },
+    { id: 'chalk', name: 'Chalkboard', price: { diamonds: 6 } },
+    { id: 'stars', name: 'Night Stars', price: { coins: 900, diamonds: 5 } },
+    { id: 'blueprint', name: 'Blueprint', price: { coins: 1000, diamonds: 5 } },
   ],
   head: [
     { id: 'triangle', name: 'Triangle', price: null },
-    { id: 'chevron', name: 'Chevron', price: { coins: 200 } },
-    { id: 'round', name: 'Round', price: { coins: 250 } },
-    { id: 'feather', name: 'Feather', price: { diamonds: 3 } },
+    { id: 'chevron', name: 'Chevron', price: { coins: 400 } },
+    { id: 'round', name: 'Round', price: { coins: 500 } },
+    { id: 'feather', name: 'Feather', price: { diamonds: 5 } },
   ],
   confetti: [
     { id: 'classic', name: 'Classic', price: null },
-    { id: 'hearts', name: 'Hearts', price: { coins: 150 } },
-    { id: 'coins', name: 'Coins', price: { coins: 200 } },
-    { id: 'stars', name: 'Stars', price: { coins: 250 } },
+    { id: 'hearts', name: 'Hearts', price: { coins: 400 } },
+    { id: 'coins', name: 'Coins', price: { coins: 450 } },
+    { id: 'stars', name: 'Stars', price: { coins: 500 } },
   ],
   sound: [
     { id: 'soft', name: 'Soft', price: null },
-    { id: 'retro', name: 'Retro 8-bit', price: { coins: 300 } },
-    { id: 'nature', name: 'Nature', price: { diamonds: 3 } },
+    { id: 'retro', name: 'Retro 8-bit', price: { coins: 600 } },
+    { id: 'nature', name: 'Nature', price: { diamonds: 5 } },
   ],
   avatar: [
-    { id: 'p1', name: 'King', price: { diamonds: 2 } },
-    { id: 'p2', name: 'Cool Cat', price: { diamonds: 2 } },
-    { id: 'p3', name: 'Star Eyes', price: { diamonds: 2 } },
-    { id: 'p4', name: 'Astronaut', price: { diamonds: 2 } },
-    { id: 'p5', name: 'Wizard', price: { diamonds: 2 } },
-    { id: 'p6', name: 'Ninja', price: { diamonds: 2 } },
+    { id: 'p1', name: 'King', price: { coins: 600, diamonds: 3 } },
+    { id: 'p2', name: 'Cool Cat', price: { coins: 600, diamonds: 3 } },
+    { id: 'p3', name: 'Star Eyes', price: { coins: 600, diamonds: 3 } },
+    { id: 'p4', name: 'Astronaut', price: { coins: 600, diamonds: 3 } },
+    { id: 'p5', name: 'Wizard', price: { coins: 600, diamonds: 3 } },
+    { id: 'p6', name: 'Ninja', price: { coins: 600, diamonds: 3 } },
   ],
   frame: [
     { id: 'none', name: 'No Frame', price: null },
-    { id: 'silver', name: 'Silver', price: { coins: 500 }, achievement: 'perfectionist' },
-    { id: 'gold', name: 'Gold', price: { coins: 1000 }, achievement: 'chapter-master' },
-    { id: 'diamond', name: 'Diamond', price: { diamonds: 10 } },
+    { id: 'silver', name: 'Silver', price: { coins: 800 }, achievement: 'perfectionist' },
+    { id: 'gold', name: 'Gold', price: { coins: 1200, diamonds: 4 }, achievement: 'chapter-master' },
+    { id: 'diamond', name: 'Diamond', price: { coins: 1500, diamonds: 8 } },
+    { id: 'prism', name: 'Prism', price: { coins: 1400, diamonds: 7 } },
   ],
 });
 

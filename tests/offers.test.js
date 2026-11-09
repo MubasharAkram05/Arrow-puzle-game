@@ -135,8 +135,9 @@ describe('offers in the game state', () => {
     const date = new Date(T0);
     const sale = weeklySale(date);
     expect(buySaleItem(date).ok).toBe(true);
-    const spent = 5000 - state.coins + (20 - state.diamonds);
-    expect(spent).toBe(sale.sale.coins || sale.sale.diamonds);
+    // a combo sale price takes both parts
+    expect(5000 - state.coins).toBe(sale.sale.coins || 0);
+    expect(20 - state.diamonds).toBe(sale.sale.diamonds || 0);
     expect(buySaleItem(date).ok).toBe(false);
   });
 });

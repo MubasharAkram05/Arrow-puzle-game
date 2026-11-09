@@ -51,7 +51,7 @@ describe('Settings', () => {
   it('Credits stays in the app: a quiet link at the bottom of the Profile tab opens it', () => {
     const profile = readFileSync(new URL('../src/ui/screens/profileScreen.js', import.meta.url), 'utf8');
     expect(profile).toMatch(
-      /achievementsSkeleton\(\)\}\s*<button class="credits-link" id="btn-credits">Credits<\/button>/,
+      /id="btn-view-achievements">[^\n]*<\/button>\s*<button class="credits-link" id="btn-credits">Credits<\/button>/,
     );
     expect(html).toContain('id="modal-credits"');
   });

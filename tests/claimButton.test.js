@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { achievementRows, notReadyText } from '../src/game/achievementList.js';
 import { newStats } from '../src/game/stats.js';
-import { claimButtonHTML } from '../src/ui/screens/profile/claimButton.js';
+import { claimButtonHTML } from '../src/ui/components/claimButton.js';
 
 const row = (over) => ({ id: 'x-1', group: 'level-climber', value: 0, goal: 25, state: 'progress', ...over });
 const css = readFileSync(new URL('../src/styles/achievementsList.css', import.meta.url), 'utf8');

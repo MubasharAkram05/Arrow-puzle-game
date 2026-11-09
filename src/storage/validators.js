@@ -2,7 +2,7 @@
  * Small validators shared by the save schema: numbers, lists, cosmetics and avatars. Pure.
  */
 import { MAX_DAILY_DAYS } from '../game/trophies.js';
-import { BOOSTER_REFUND } from '../config.js';
+import { BOOSTER_REFUND, QUESTS } from '../config.js';
 import { CATEGORIES, findItem, newCosmetics } from '../game/cosmetics.js';
 
 export const LIMIT = 1e9; // keeps absurd numbers out of the UI
@@ -170,4 +170,26 @@ export function pendingRefund(raw) {
   const coins = count(r.coins);
   const diamonds = count(r.diamonds);
   return coins || diamonds ? { coins, diamonds } : null;
+}
+
+/**
+ * Weekly Quests record (3.22.0): a Monday week start, counts per known counter, claimed quest ids from the
+ * pool and opened chest thresholds. Anything else is dropped.
+ * @param {unknown} raw
+ * @returns {{week: number, counts: Record<string, number>, claimed: string[], chests: number[]}}
+ */
+export function sanitizeQuests(raw) {
+  const q = obj(raw);
+  const ids = new Set(QUESTS.pool.map((p) => p.id));
+  const counters = new Set(QUESTS.pool.map((p) => p.counter));
+  const ats = new Set(QUESTS.chests.map((c) => c.at));
+  const counts = {};
+  for (const [k, v] of Object.entries(obj(q.counts))) if (counters.has(k)) counts[k] = count(v);
+  const list = (v) => (Array.isArray(v) ? v : []);
+  return {
+    week: timestamp(q.week),
+    counts,
+    claimed: [...new Set(list(q.claimed).filter((id) => ids.has(id)))],
+    chests: [...new Set(list(q.chests).filter((at) => ats.has(at)))].sort((a, b) => a - b),
+  };
 }

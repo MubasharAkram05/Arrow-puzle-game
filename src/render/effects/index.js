@@ -5,12 +5,13 @@
 import { CELL } from '../../config.js';
 import { state } from '../../game/state.js';
 import { $ } from '../../ui/dom.js';
+import aurora from './aurora.js';
 import burst from './burst.js';
 import comet from './comet.js';
 import rocket from './rocket.js';
 import spark from './spark.js';
 
-const EFFECTS = { spark, comet, burst, rocket };
+const EFFECTS = { spark, comet, burst, rocket, aurora };
 
 const reducedMotion = () => !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

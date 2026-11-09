@@ -2,6 +2,36 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.23.0] - 2026-11-09
+
+### Changed
+
+- Tasks: the Quests tab and screen are now called Tasks (same clipboard icon). A segmented control (same pill as Profile | Awards) switches between Weekly (the Weekly Quests banner, points bar, chests and quests) and Achievements (the permanent list moved from Profile, with the same rows, Claim states and order). The panel slides in and the last tab is remembered. Each tab has a red dot when it has something to claim, and the Tasks nav icon has one when either does.
+- Profile no longer shows the achievements list: it keeps the avatar, name, XP and stats, plus a "View achievements" link that opens Tasks > Achievements. The Awards tab (badges, monthly trophies) is unchanged. The Profile nav dot now marks a newly earned award badge.
+- Weekly quest picker: at most one quest per group of quests that count the same thing (levels / new levels; perfect / no-hint levels; Hard-or-above / Super Hard-or-above), so a week never has e.g. "Complete 30 levels" with "Finish 10 new levels". Rewards, prices and quest points are unchanged.
+- The not-ready Claim button looks clearly disabled: flat, no border, lighter text and 60% opacity (same 96x44 size).
+- Tab dots on segmented controls are red like the nav dots and sit after the label.
+
+### Added
+
+- Tests: tab switching and the remembered tab, the Weekly / Achievements / nav dots, achievements living in Tasks, and no two quests from one group in a week (52 weeks, plus 5 years for the levels / new levels pair).
+
+## [3.22.0] - 2026-11-09
+
+### Changed
+
+- Higher prices: hint 50 -> 90 coins, 5-hint pack 200 -> 350, heart refill 80 -> 150 (still max 2 per level), Continue 2 -> 3 diamonds. Coin shop items about x2 (now 400-900 coins), diamond items about x1.5 (now 4-15 diamonds). Items already owned stay owned; the Weekly Sale still takes 30% off the new price.
+- Combo prices: an item can cost coins and diamonds together. Cards and dialogs show both icons, buying needs both, and the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). Rocket Flame, Night Stars, the Gold and Diamond frames and the 6 premium avatars now use combo prices (600 coins + 3 diamonds up to 1500 coins + 8 diamonds).
+- The bottom navigation has 5 tabs: Home, Levels, Quests, Shop, Profile.
+- The avatar picker shows a lock on premium avatars instead of a price (the Shop shows the price).
+- Save format v7 (adds the Weekly Quests record). v6 saves migrate with nothing lost.
+
+### Added
+
+- 5 premium combo items with original art: Rose Gold and Neon Night arrow styles, Aurora Ribbon escape effect, Blueprint board background, Prism avatar frame.
+- Weekly Quests: 6 quests a week from a pool of 22, the same for everyone (seeded by the ISO week), reset every Monday 00:00 local time with a countdown. A 0-100 points bar with chests at 30 (150 coins), 60 (300 coins + 1 hint) and 100 points (500 coins + 3 diamonds) that open with an animation. Unclaimed quests and chests are lost at the reset; a red dot on the Quests tab shows when something is ready. Clock changes give no extra progress or resets.
+- Tests: new prices and ranges, combo purchases (enough / short of each currency), week seeding, quest progress, points bar and chests, Monday reset, clock tampering and the v6 -> v7 migration.
+
 ## [3.21.0] - 2026-11-09
 
 ### Changed

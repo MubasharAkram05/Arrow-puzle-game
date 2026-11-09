@@ -44,6 +44,7 @@ export function applySave(raw) {
   state.daily = { ...d.daily };
   state.dailyDays = [...d.dailyDays];
   state.seenBadges = new Set(d.seenBadges);
+  state.quests = { ...d.quests };
   state.xp = d.xp;
   state.stats = { ...newStats(), ...d.stats };
   state.claimed = new Set(d.achievements.claimed);
@@ -85,6 +86,7 @@ export function snapshot() {
     daily: { ...state.daily },
     dailyDays: [...state.dailyDays],
     seenBadges: [...state.seenBadges].filter((id) => state.claimed.has(id)),
+    quests: state.quests,
     xp: state.xp,
     stats: { ...state.stats },
     achievements: { claimed: [...state.claimed], progress },
@@ -96,7 +98,7 @@ export function snapshot() {
 
 /**
  * Load the save (migrating v1 the first time). Works with defaults when storage is blocked or corrupt.
- * @returns {'v6'|'backup'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'} where the data came from
+ * @returns {'v7'|'backup'|'v6'|'v5'|'v4'|'v3'|'v2'|'v1'|'new'} where the data came from
  */
 export function loadSave() {
   const s = storage();
