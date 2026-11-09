@@ -137,6 +137,17 @@
   margin-top: -5px;
   background: radial-gradient(circle, #ffe08a, #ff6a2b 60%, transparent 72%);
 }
+.fx-aurora .fx-trail i {
+  width: 18px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #5dffb0, #8f7bff);
+}
+.fx-aurora .fx-trail i:nth-child(even) {
+  margin-top: 2px;
+  background: linear-gradient(90deg, transparent, #8f7bff, #ff8fd8);
+}
 @keyframes fx-move {
   0%,
   15% {

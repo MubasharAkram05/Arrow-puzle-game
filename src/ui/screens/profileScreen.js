@@ -36,7 +36,7 @@ function buildSkeleton() {
   const picker = Array.from(
     { length: AVATAR_TOTAL },
     (_, i) =>
-      `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock"><svg class="cur-icon"><use href="#i-gem" /></svg>2</span></button>`,
+      `<button class="avatar-opt" data-avatar="${i}" aria-label="Avatar ${i + 1}">${avatarSVG(i)}<span class="avatar-lock" aria-hidden="true">${icon('lock')}</span></button>`,
   ).join('');
   const profile = `
     <div class="profile-card">

@@ -47,8 +47,7 @@ describe('consumable prices', () => {
 describe('shop item prices', () => {
   it('coins-only items cost 400-900 coins, diamonds-only items 4-15 diamonds', () => {
     for (const i of items()) {
-      // the Gold frame becomes a coins + diamonds item (section 2)
-      if (!i.price || i.id === 'gold') continue;
+      if (!i.price) continue;
       if (i.price.coins && !i.price.diamonds) {
         expect(i.price.coins, i.id).toBeGreaterThanOrEqual(400);
         expect(i.price.coins, i.id).toBeLessThanOrEqual(900);

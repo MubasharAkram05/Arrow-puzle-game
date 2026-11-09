@@ -383,16 +383,20 @@ All numbers live in `src/config.js`.
 
 Prices went up in 3.22.0 (coin items about x2, diamond items about x1.5). Items already owned stay owned.
 
-| Item                                  | Price       |
-| ------------------------------------- | ----------- |
-| Hint (once free hints run out)        | 90 coins    |
-| 5-hint pack                           | 350 coins   |
-| Refill 1 heart (max 2 per level)      | 150 coins   |
-| Continue after game over, full hearts | 3 diamonds  |
-| Arrow styles: Dark Slate, Olive       | 600 coins   |
-| Arrow style: Soft Mint                | 8 diamonds  |
-| Themes: Royal Purple, Lagoon Teal     | 800 coins   |
-| Theme: Sunset Coral                   | 12 diamonds |
+**Combo prices** (3.22.0): an item can cost coins and diamonds together (`{ coins, diamonds }` in `src/config.js`). The card shows both icons ("[coin] 600 + [gem] 3"), buying needs both amounts, and when either is short the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). The Weekly Sale takes 30% off both parts. The premium avatars no longer show a price on the Profile avatar picker, only a lock (the Shop shows the price).
+
+| Item                                  | Price                   |
+| ------------------------------------- | ----------------------- |
+| Hint (once free hints run out)        | 90 coins                |
+| 5-hint pack                           | 350 coins               |
+| Refill 1 heart (max 2 per level)      | 150 coins               |
+| Continue after game over, full hearts | 3 diamonds              |
+| Arrow styles: Dark Slate, Olive       | 600 coins               |
+| Arrow style: Soft Mint                | 8 diamonds              |
+| Themes: Royal Purple, Lagoon Teal     | 800 coins               |
+| Arrow style: Rose Gold (new)          | 800 coins + 4 diamonds  |
+| Arrow style: Neon Night (new)         | 1100 coins + 6 diamonds |
+| Theme: Sunset Coral                   | 12 diamonds             |
 
 ### Hints
 
@@ -404,33 +408,36 @@ The Shield and Extra Heart Start boosters and the Booster Pack were removed in 3
 
 Each category has a free default. Owned items are equipped only in the Shop: every owned card shows "Equip" (or "Equipped"), free defaults included (`src/game/shopEquip.js`). Settings keeps sound, vibration and theme (3.20.0: "Show zoom tips again", "Credits" and "Reset progress" are gone; Credits moved to the Profile tab, and the reset function stays for tests only).
 
-| Category         | Item                             | Price           |
-| ---------------- | -------------------------------- | --------------- |
-| Escape effect    | Classic Slide (default)          | Free            |
-| Escape effect    | Spark Trail                      | 500 coins       |
-| Escape effect    | Comet Glow                       | 800 coins       |
-| Escape effect    | Burst                            | 5 diamonds      |
-| Escape effect    | Rocket Flame                     | 9 diamonds      |
-| Board background | Plain (default)                  | Free            |
-| Board background | Soft Paper                       | 400 coins       |
-| Board background | Gradient Sky                     | 600 coins       |
-| Board background | Chalkboard                       | 6 diamonds      |
-| Board background | Night Stars                      | 9 diamonds      |
-| Arrowhead        | Triangle (default)               | Free            |
-| Arrowhead        | Chevron                          | 400 coins       |
-| Arrowhead        | Round                            | 500 coins       |
-| Arrowhead        | Feather                          | 5 diamonds      |
-| Victory confetti | Classic (default)                | Free            |
-| Victory confetti | Hearts                           | 400 coins       |
-| Victory confetti | Coins                            | 450 coins       |
-| Victory confetti | Stars                            | 500 coins       |
-| Sound pack       | Soft (default)                   | Free            |
-| Sound pack       | Retro 8-bit                      | 600 coins       |
-| Sound pack       | Nature                           | 5 diamonds      |
-| Avatar           | 6 premium avatars                | 4 diamonds each |
-| Avatar frame     | Silver (free with Perfectionist) | 800 coins       |
-| Avatar frame     | Gold (free with Chapter Master)  | 1000 coins      |
-| Avatar frame     | Diamond                          | 15 diamonds     |
+| Category         | Item                             | Price                       |
+| ---------------- | -------------------------------- | --------------------------- |
+| Escape effect    | Classic Slide (default)          | Free                        |
+| Escape effect    | Spark Trail                      | 500 coins                   |
+| Escape effect    | Comet Glow                       | 800 coins                   |
+| Escape effect    | Burst                            | 5 diamonds                  |
+| Escape effect    | Aurora Ribbon (new)              | 1300 coins + 7 diamonds     |
+| Escape effect    | Rocket Flame                     | 1000 coins + 5 diamonds     |
+| Board background | Plain (default)                  | Free                        |
+| Board background | Soft Paper                       | 400 coins                   |
+| Board background | Gradient Sky                     | 600 coins                   |
+| Board background | Chalkboard                       | 6 diamonds                  |
+| Board background | Blueprint (new)                  | 1000 coins + 5 diamonds     |
+| Board background | Night Stars                      | 900 coins + 5 diamonds      |
+| Arrowhead        | Triangle (default)               | Free                        |
+| Arrowhead        | Chevron                          | 400 coins                   |
+| Arrowhead        | Round                            | 500 coins                   |
+| Arrowhead        | Feather                          | 5 diamonds                  |
+| Victory confetti | Classic (default)                | Free                        |
+| Victory confetti | Hearts                           | 400 coins                   |
+| Victory confetti | Coins                            | 450 coins                   |
+| Victory confetti | Stars                            | 500 coins                   |
+| Sound pack       | Soft (default)                   | Free                        |
+| Sound pack       | Retro 8-bit                      | 600 coins                   |
+| Sound pack       | Nature                           | 5 diamonds                  |
+| Avatar           | 6 premium avatars                | 600 coins + 3 diamonds each |
+| Avatar frame     | Silver (free with Perfectionist) | 800 coins                   |
+| Avatar frame     | Gold (free with Chapter Master)  | 1200 coins + 4 diamonds     |
+| Avatar frame     | Diamond                          | 1500 coins + 8 diamonds     |
+| Avatar frame     | Prism (new)                      | 1400 coins + 7 diamonds     |
 
 Escape effects use transform, opacity and a small particle canvas, and are skipped with `prefers-reduced-motion`. Sound packs are generated with the Web Audio API (no audio files). Arrowhead shapes only change the drawing, not hit detection.
 

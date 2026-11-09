@@ -210,12 +210,16 @@ export const XP = Object.freeze({ perLevel: 10, perHeart: 5 });
  * Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start.
  * 3.22.0 prices: coin items about x2 (400-900 coins), diamond items about x1.5 (4-15 diamonds). Items already
  * owned stay owned (ownership is stored by id, never by price).
+ * Combo prices { coins, diamonds } need both amounts (600 coins + 3 diamonds up to 1500 coins + 8 diamonds):
+ * the top premium items and the 3.22.0 additions (Rose Gold, Neon Night, Aurora Ribbon, Blueprint, Prism).
  */
 export const SHOP_STYLES = Object.freeze([
   { id: 'classic', name: 'Classic', price: null },
   { id: 'slate', name: 'Dark Slate', price: { coins: 600 } },
   { id: 'olive', name: 'Olive', price: { coins: 600 } },
   { id: 'mint', name: 'Soft Mint', price: { diamonds: 8 } },
+  { id: 'rose', name: 'Rose Gold', price: { coins: 800, diamonds: 4 } },
+  { id: 'neon', name: 'Neon Night', price: { coins: 1100, diamonds: 6 } },
 ]);
 export const SHOP_THEMES = Object.freeze([
   { id: 'blue', name: 'Ocean Blue', price: null, color: '#1877F2' },
@@ -234,14 +238,16 @@ export const COSMETICS = Object.freeze({
     { id: 'spark', name: 'Spark Trail', price: { coins: 500 } },
     { id: 'comet', name: 'Comet Glow', price: { coins: 800 } },
     { id: 'burst', name: 'Burst', price: { diamonds: 5 } },
-    { id: 'rocket', name: 'Rocket Flame', price: { diamonds: 9 } },
+    { id: 'rocket', name: 'Rocket Flame', price: { coins: 1000, diamonds: 5 } },
+    { id: 'aurora', name: 'Aurora Ribbon', price: { coins: 1300, diamonds: 7 } },
   ],
   board: [
     { id: 'plain', name: 'Plain', price: null },
     { id: 'paper', name: 'Soft Paper', price: { coins: 400 } },
     { id: 'sky', name: 'Gradient Sky', price: { coins: 600 } },
     { id: 'chalk', name: 'Chalkboard', price: { diamonds: 6 } },
-    { id: 'stars', name: 'Night Stars', price: { diamonds: 9 } },
+    { id: 'stars', name: 'Night Stars', price: { coins: 900, diamonds: 5 } },
+    { id: 'blueprint', name: 'Blueprint', price: { coins: 1000, diamonds: 5 } },
   ],
   head: [
     { id: 'triangle', name: 'Triangle', price: null },
@@ -261,18 +267,19 @@ export const COSMETICS = Object.freeze({
     { id: 'nature', name: 'Nature', price: { diamonds: 5 } },
   ],
   avatar: [
-    { id: 'p1', name: 'King', price: { diamonds: 4 } },
-    { id: 'p2', name: 'Cool Cat', price: { diamonds: 4 } },
-    { id: 'p3', name: 'Star Eyes', price: { diamonds: 4 } },
-    { id: 'p4', name: 'Astronaut', price: { diamonds: 4 } },
-    { id: 'p5', name: 'Wizard', price: { diamonds: 4 } },
-    { id: 'p6', name: 'Ninja', price: { diamonds: 4 } },
+    { id: 'p1', name: 'King', price: { coins: 600, diamonds: 3 } },
+    { id: 'p2', name: 'Cool Cat', price: { coins: 600, diamonds: 3 } },
+    { id: 'p3', name: 'Star Eyes', price: { coins: 600, diamonds: 3 } },
+    { id: 'p4', name: 'Astronaut', price: { coins: 600, diamonds: 3 } },
+    { id: 'p5', name: 'Wizard', price: { coins: 600, diamonds: 3 } },
+    { id: 'p6', name: 'Ninja', price: { coins: 600, diamonds: 3 } },
   ],
   frame: [
     { id: 'none', name: 'No Frame', price: null },
     { id: 'silver', name: 'Silver', price: { coins: 800 }, achievement: 'perfectionist' },
-    { id: 'gold', name: 'Gold', price: { coins: 1000 }, achievement: 'chapter-master' },
-    { id: 'diamond', name: 'Diamond', price: { diamonds: 15 } },
+    { id: 'gold', name: 'Gold', price: { coins: 1200, diamonds: 4 }, achievement: 'chapter-master' },
+    { id: 'diamond', name: 'Diamond', price: { coins: 1500, diamonds: 8 } },
+    { id: 'prism', name: 'Prism', price: { coins: 1400, diamonds: 7 } },
   ],
 });
 

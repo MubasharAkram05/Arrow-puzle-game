@@ -166,12 +166,36 @@ export function grant(wallet, amount, source) {
   return { coins: wallet.coins + add(amount.coins), diamonds: wallet.diamonds + add(amount.diamonds) };
 }
 
+const plural = (n, word) => `${n.toLocaleString('en-US')} ${word}${n === 1 ? '' : 's'}`;
+
 /**
- * Short price label, e.g. "50 coins" or "2 diamonds".
+ * Is this a combo price (coins and diamonds together, 3.22.0)?
+ * @param {Price} price
+ * @returns {boolean}
+ */
+export const isCombo = (price) => !!(price && price.coins > 0 && price.diamonds > 0);
+
+/**
+ * Short price label, e.g. "90 coins", "3 diamonds" or "600 coins + 3 diamonds".
  * @param {Price} price
  * @returns {string}
  */
 export function priceLabel(price) {
-  if (price.diamonds) return `${price.diamonds} diamond${price.diamonds === 1 ? '' : 's'}`;
-  return `${price.coins || 0} coins`;
+  const parts = [];
+  if (price.coins || !price.diamonds) parts.push(plural(price.coins || 0, 'coin'));
+  if (price.diamonds) parts.push(plural(price.diamonds, 'diamond'));
+  return parts.join(' + ');
+}
+
+/**
+ * What is missing to pay, in words: "Need 120 more coins and 1 more diamond". Empty when nothing is missing.
+ * @param {{coins: number, diamonds: number}} missing from shortfall()
+ * @returns {string}
+ */
+export function missingLabel(missing) {
+  const parts = [];
+  if (missing.coins > 0)
+    parts.push(`${missing.coins.toLocaleString('en-US')} more coin${missing.coins === 1 ? '' : 's'}`);
+  if (missing.diamonds > 0) parts.push(`${missing.diamonds} more diamond${missing.diamonds === 1 ? '' : 's'}`);
+  return parts.length ? `Need ${parts.join(' and ')}` : '';
 }

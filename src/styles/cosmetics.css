@@ -41,6 +41,24 @@ html[data-board='stars'] .board-card,
     radial-gradient(1px 1px at 22% 84%, #fff, transparent),
     radial-gradient(1.5px 1.5px at 58% 34%, #fdf6c4, transparent), linear-gradient(180deg, #0b1430, #18234d);
 }
+html[data-board='blueprint'] .board-card,
+[data-board-preview='blueprint'] {
+  --arrow: #ffffff;
+  --dot: #5d8cc4;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 5.5px 5.5px,
+    #1b4a85;
+}
+html[data-theme='dark'][data-board='blueprint'] .board-card,
+html[data-theme='dark'] [data-board-preview='blueprint'] {
+  --dot: #3f6aa0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    #0f2c52;
+}
 html:not([data-board='plain']) .board-card {
   box-shadow: var(--shadow);
 }
@@ -79,6 +97,15 @@ html[data-frame='diamond'] .avatar-btn,
     0 0 0 9px #b8eeff,
     0 0 18px rgba(53, 200, 244, 0.6);
 }
+html[data-frame='prism'] .avatar-btn,
+.frame-preview[data-frame='prism'] {
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 5px #ff6fb5,
+    0 0 0 7px #ffd23f,
+    0 0 0 9px #4fd8ff,
+    0 0 16px rgba(160, 110, 255, 0.55);
+}
 .avatar-opt {
   position: relative;
 }
@@ -89,14 +116,14 @@ html[data-frame='diamond'] .avatar-btn,
   display: none;
   align-items: center;
   gap: 1px;
-  padding: 0 5px 0 2px;
+  padding: 3px;
   border-radius: 999px;
   background: var(--surface);
   font-size: 12px;
   font-weight: 800;
   box-shadow: var(--shadow);
 }
-.avatar-lock .cur-icon {
+.avatar-lock .icon {
   width: 14px;
   height: 14px;
 }
