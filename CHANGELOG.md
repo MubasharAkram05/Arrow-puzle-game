@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.21.0] - 2026-11-09
+
+### Changed
+
+- Achievements list: every row now has a Claim button of the same size. Ready: blue with a glow pulse and a red dot, claims as before. Not ready: grey and flat with `aria-disabled="true"`; a tap shakes it and shows what is left (e.g. "Finish 5 more levels first"). Completed groups: a green "Claimed" pill with a check.
+- The progress count sits inside the progress bar ("4/5", centered), which is taller and readable over both the fill and the track.
+
+### Added
+
+- Tests for the three button states, their shared size and the not-ready toast text for every achievement group.
+
 ## [3.20.0] - 2026-11-09
 
 ### Changed
