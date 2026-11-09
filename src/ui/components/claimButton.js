@@ -1,5 +1,5 @@
 /** The side button of an achievement row (3.21.0). Pure, so tests can check the three states. */
-import { icon } from '../../components/icons.js';
+import { icon } from './icons.js';
 
 /**
  * The side button for a row; all three states have the same size, so rows line up.

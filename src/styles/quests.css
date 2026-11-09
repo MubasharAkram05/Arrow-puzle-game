@@ -1,5 +1,5 @@
-/* ---------- Weekly Quests screen (src/ui/screens/quests.js) ---------- */
-#quests-body > * {
+/* ---------- Tasks > Weekly tab (src/ui/screens/tasks/weekly.js) ---------- */
+#weekly-body > * {
   width: 100%;
   max-width: 560px;
   margin-left: auto;
@@ -334,4 +334,11 @@
   .q-track i {
     transition: none;
   }
+}
+.tasks-intro {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 10px;
+  color: var(--muted);
+  font-size: 14px;
 }

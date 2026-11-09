@@ -141,3 +141,45 @@
   opacity: 1;
   color: var(--primary);
 }
+/* "View achievements" link (3.23.0): the list lives in Tasks > Achievements */
+.view-ach-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  min-height: 52px;
+  margin: 16px auto 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.view-ach-link span {
+  flex: 1;
+  text-align: left;
+}
+.view-ach-link .icon {
+  width: 22px;
+  height: 22px;
+  color: var(--primary-on-white, var(--primary));
+}
+.view-ach-link .icon:last-child {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  transform: rotate(180deg);
+}
+.view-ach-link:active {
+  transform: scale(0.98);
+}
+.view-ach-link:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}

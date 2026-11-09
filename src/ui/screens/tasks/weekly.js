@@ -1,20 +1,18 @@
 /**
- * Weekly Quests screen (3.22.0): banner with the reset countdown, the 0-100 points bar with three chests,
- * and the week's six quests. Rules: src/game/quests.js; state: src/game/questState.js.
+ * Weekly tab of the Tasks screen (3.22.0, in Tasks since 3.23.0): banner with the reset countdown, the 0-100
+ * points bar with three chests, and the week's six quests. Rules: src/game/quests.js; state: questState.js.
  */
-import { QUESTS } from '../../config.js';
-import { chestRows, questLeftText, questRows, resetCountdown, weekPoints } from '../../game/quests.js';
-import { claimQuestPoints, openQuestChest, syncQuests } from '../../game/questState.js';
-import { state } from '../../game/state.js';
-import { saveProgress } from '../../storage/save.js';
-import { renderNavDots } from '../components/bottomNav.js';
-import { chestSVG } from '../components/chestArt.js';
-import { flyCurrency } from '../components/currencyBar.js';
-import { icon } from '../components/icons.js';
-import { toast } from '../components/toast.js';
-import { $ } from '../dom.js';
-import { openTab } from '../navigation.js';
-import { claimButtonHTML } from './profile/claimButton.js';
+import { QUESTS } from '../../../config.js';
+import { chestRows, questLeftText, questRows, resetCountdown, weekPoints } from '../../../game/quests.js';
+import { claimQuestPoints, openQuestChest, syncQuests } from '../../../game/questState.js';
+import { state } from '../../../game/state.js';
+import { saveProgress } from '../../../storage/save.js';
+import { chestSVG } from '../../components/chestArt.js';
+import { flyCurrency } from '../../components/currencyBar.js';
+import { icon } from '../../components/icons.js';
+import { toast } from '../../components/toast.js';
+import { $ } from '../../dom.js';
+import { claimButtonHTML } from '../../components/claimButton.js';
 
 const fmt = (n) => n.toLocaleString('en-US');
 const cur = (kind, n) =>
@@ -87,10 +85,12 @@ function rowHTML(q) {
   </li>`;
 }
 
-/** Draw the whole screen. */
+let changed = () => {};
+
+/** Draw the Weekly tab. */
 export function renderQuests() {
   const rec = state.quests;
-  $('quests-body').innerHTML = `${bannerHTML()}${pointsHTML(rec)}
+  $('weekly-body').innerHTML = `${bannerHTML()}${pointsHTML(rec)}
     <h3 class="section-title">This week</h3>
     <ul class="ach-list q-list">${questRows(rec).map(rowHTML).join('')}</ul>
     <p class="q-note">Unclaimed quests and chests are lost at the reset.</p>`;
@@ -104,22 +104,19 @@ function tick() {
   if (syncQuests()) {
     saveProgress();
     renderQuests();
-    renderNavDots();
+    changed();
     return;
   }
   el.textContent = resetCountdown(state.quests, Date.now());
 }
 
-/** Open the tab. */
-export function openQuests() {
-  if (syncQuests()) saveProgress();
-  renderQuests();
-  openTab('screen-quests');
-}
-
-/** Wire the screen once. */
-export function bindQuests() {
-  $('quests-body').addEventListener('click', (e) => {
+/**
+ * Wire the Weekly tab once.
+ * @param {() => void} onChange called after a claim, a chest or a new week (tab dots, nav dot)
+ */
+export function bindQuests(onChange) {
+  changed = onChange;
+  $('weekly-body').addEventListener('click', (e) => {
     const chest = e.target.closest('[data-chest]');
     if (chest) return onChest(chest);
     const locked = e.target.closest('[data-locked]');
@@ -139,10 +136,10 @@ export function bindQuests() {
     btn.disabled = true;
     toast(`+${res.points} points`);
     renderQuests();
-    renderNavDots();
+    changed();
   });
   setInterval(() => {
-    if ($('screen-quests').classList.contains('active')) tick();
+    if ($('screen-tasks').classList.contains('active')) tick();
   }, 30000);
 }
 
@@ -166,6 +163,6 @@ function onChest(btn) {
   if (res.reward.coins) flyCurrency(btn, 'coins', res.before.coins, res.reward.coins);
   if (res.reward.diamonds) flyCurrency(btn, 'diamonds', res.before.diamonds, res.reward.diamonds, 150);
   toast(`Chest opened: ${rewardText(res.reward)}`);
-  renderNavDots();
+  changed();
   setTimeout(renderQuests, 900);
 }

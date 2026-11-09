@@ -179,8 +179,10 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
 
 /**
  * Weekly Quests (3.22.0). A quest week starts on Monday 00:00 local time. Each week shows `perWeek` quests
- * from the pool (at most one per family), picked from the ISO week number, so everyone gets the same quests in
- * the same week. Claimed quests add their points to the 0-100 bar; the chests open at 30, 60 and 100 points.
+ * from the pool, picked from the ISO week number, so everyone gets the same quests in the same week. At most one
+ * quest per `group` (3.23.0): quests in a group count the same thing (levels: any finished level or new ones;
+ * careful: perfect or no-hint levels; hard: Hard-or-above or Super Hard-or-above), so one win never moves two
+ * of the week's quests that track the same thing. Claimed quests add their points to the 0-100 bar; the chests open at 30, 60 and 100 points.
  * Unclaimed quests and chests are lost at the reset. No quest asks for hints to be used.
  * Counters: wins, perfect (no heart lost, no hint), shapes (shape levels), hard (Hard, Super Hard or Expert),
  * superHard (Super Hard or Expert), clean (no hint), comeback (won with exactly 1 heart left), newLevels
@@ -201,7 +203,7 @@ export const QUESTS = Object.freeze({
     [
       {
         id: 'wins-20',
-        family: 'wins',
+        group: 'levels',
         counter: 'wins',
         goal: 20,
         points: 10,
@@ -210,7 +212,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'wins-30',
-        family: 'wins',
+        group: 'levels',
         counter: 'wins',
         goal: 30,
         points: 15,
@@ -219,7 +221,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'wins-40',
-        family: 'wins',
+        group: 'levels',
         counter: 'wins',
         goal: 40,
         points: 25,
@@ -228,7 +230,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'perfect-5',
-        family: 'perfect',
+        group: 'careful',
         counter: 'perfect',
         goal: 5,
         points: 15,
@@ -237,7 +239,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'perfect-10',
-        family: 'perfect',
+        group: 'careful',
         counter: 'perfect',
         goal: 10,
         points: 30,
@@ -246,7 +248,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'shapes-8',
-        family: 'shapes',
+        group: 'shapes',
         counter: 'shapes',
         goal: 8,
         points: 15,
@@ -255,7 +257,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'shapes-15',
-        family: 'shapes',
+        group: 'shapes',
         counter: 'shapes',
         goal: 15,
         points: 30,
@@ -264,7 +266,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'arrows-1500',
-        family: 'arrows',
+        group: 'arrows',
         counter: 'arrows',
         goal: 1500,
         points: 10,
@@ -273,7 +275,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'arrows-3000',
-        family: 'arrows',
+        group: 'arrows',
         counter: 'arrows',
         goal: 3000,
         points: 25,
@@ -282,7 +284,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'daily-3',
-        family: 'daily',
+        group: 'daily',
         counter: 'daily',
         goal: 3,
         points: 20,
@@ -291,7 +293,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'daily-5',
-        family: 'daily',
+        group: 'daily',
         counter: 'daily',
         goal: 5,
         points: 35,
@@ -300,7 +302,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'comeback-3',
-        family: 'comeback',
+        group: 'comeback',
         counter: 'comeback',
         goal: 3,
         points: 20,
@@ -309,7 +311,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'comeback-5',
-        family: 'comeback',
+        group: 'comeback',
         counter: 'comeback',
         goal: 5,
         points: 30,
@@ -318,7 +320,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'hard-5',
-        family: 'hard',
+        group: 'hard',
         counter: 'hard',
         goal: 5,
         points: 20,
@@ -327,7 +329,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'hard-12',
-        family: 'hard',
+        group: 'hard',
         counter: 'hard',
         goal: 12,
         points: 35,
@@ -336,7 +338,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'superhard-3',
-        family: 'superHard',
+        group: 'hard',
         counter: 'superHard',
         goal: 3,
         points: 25,
@@ -345,7 +347,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'spend-1500',
-        family: 'spend',
+        group: 'spend',
         counter: 'spend',
         goal: 1500,
         points: 20,
@@ -354,7 +356,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'spend-3000',
-        family: 'spend',
+        group: 'spend',
         counter: 'spend',
         goal: 3000,
         points: 35,
@@ -363,7 +365,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'clean-10',
-        family: 'clean',
+        group: 'careful',
         counter: 'clean',
         goal: 10,
         points: 25,
@@ -372,7 +374,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'clean-20',
-        family: 'clean',
+        group: 'careful',
         counter: 'clean',
         goal: 20,
         points: 40,
@@ -381,7 +383,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'new-10',
-        family: 'newLevels',
+        group: 'levels',
         counter: 'newLevels',
         goal: 10,
         points: 20,
@@ -390,7 +392,7 @@ export const QUESTS = Object.freeze({
       },
       {
         id: 'new-20',
-        family: 'newLevels',
+        group: 'levels',
         counter: 'newLevels',
         goal: 20,
         points: 35,

@@ -12,11 +12,11 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
 - Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
 - Shop with tabs (All, Offers, Hints, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
-- Pages: Home, Levels, Quests, Shop and Profile behind a bottom navigation bar
-- Weekly Quests: 6 quests a week (same for everyone, reset every Monday), a 0-100 points bar and 3 reward chests
+- Pages: Home, Levels, Tasks, Shop and Profile behind a bottom navigation bar
+- Tasks: Weekly Quests and the permanent Achievements in one place, behind two tabs. Weekly Quests: 6 quests a week (same for everyone, reset every Monday), a 0-100 points bar and 3 reward chests
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
-- Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and the Achievements list) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies)
+- Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and a "View achievements" link) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies, show-off only)
 - Light, dark and auto theme, 6 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
@@ -463,14 +463,14 @@ Three highlight tiles (Daily streak, Levels completed, Perfect levels) and a two
 
 The Profile screen has two tabs, Profile and Awards (a pill control with a sliding thumb; a red dot marks a tab with something new; the last tab is remembered on the device).
 
-- **Achievements list** (Profile tab, `src/game/achievementList.js`): one row per achievement group, full width. Each row has a small badge, the title and description, a progress bar with the count inside it ("4/5", white over the fill and dark over the track), the diamond reward and a side button. Tiered groups show only their current step ("Step 2/4"). Ready rows sort to the top, then rows in progress, then completed ones. Claiming plays a burst on the badge and the diamonds fly to the counter.
-- **Claim button** (`src/ui/screens/profile/claimButton.js`): every row has one, always 96x44 px, so rows line up and nothing jumps when a row changes state.
+- **Achievements list** (Tasks > Achievements since 3.23.0, on the Profile tab before; `src/game/achievementList.js`, `src/ui/screens/tasks/achievementsList.js`). Profile keeps a "View achievements" link that opens it: one row per achievement group, full width. Each row has a small badge, the title and description, a progress bar with the count inside it ("4/5", white over the fill and dark over the track), the diamond reward and a side button. Tiered groups show only their current step ("Step 2/4"). Ready rows sort to the top, then rows in progress, then completed ones. Claiming plays a burst on the badge and the diamonds fly to the counter.
+- **Claim button** (`src/ui/components/claimButton.js`, shared by achievements and weekly quests): every row has one, always 96x44 px, so rows line up and nothing jumps when a row changes state.
 
-  | State                | Look                                                                                      | Tap                                                                                           |
-  | -------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-  | Ready                | blue, glow pulse, red dot                                                                 | claims                                                                                        |
-  | Not ready            | grey and flat, no shadow or pulse, `aria-disabled="true"` (label 5.5:1 light, 6.5:1 dark) | small shake and a toast with what is left, e.g. "Finish 5 more levels first" (`notReadyText`) |
-  | Claimed (every step) | green "Claimed" pill with a check                                                         | nothing                                                                                       |
+  | State                | Look                                                                                                                                                                  | Tap                                                                                           |
+  | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+  | Ready                | blue, glow pulse, red dot                                                                                                                                             | claims                                                                                        |
+  | Not ready            | clearly disabled (3.23.0): flat, no border or shadow, lighter text, 60% opacity, `aria-disabled="true"` (disabled controls are exempt from the text contrast minimum) | small shake and a toast with what is left, e.g. "Finish 5 more levels first" (`notReadyText`) |
+  | Claimed (every step) | green "Claimed" pill with a check                                                                                                                                     | nothing                                                                                       |
 
 - **Award badges** (Awards tab, `src/game/awards.js`, `src/ui/components/clayBadge.js`): one original clay-style badge per group, 3 per row on a phone. Each group has its own shape (circle, shield, hexagon, rosette or gem) and colour. A badge lights up once a step is claimed and shows that step's goal (10, 25, 100...) on a ribbon in its tier colour (Bronze, Silver, Gold, Diamond; single-step achievements are Gold). Locked badges are pale grey embossed silhouettes. A red dot marks a newly earned badge until the Awards tab has been seen. Tapping a badge opens a bottom sheet with every step and its progress; the Awards tab never claims anything.
 - **Monthly trophies** (Awards tab, `src/game/trophies.js`, `src/ui/components/trophyArt.js`): twelve original trophies for the current year, one shape per month. Progress is the number of days that month the daily reward was claimed (e.g. "12 of 31", with leap years). The trophy fills with colour from the bottom; a complete month is full colour with a shine; future months are pale grey. Earlier years show in folded sections only when they have data.
@@ -507,7 +507,12 @@ Opening the app on a new local day shows the Daily Reward popup on Home: a ribbo
 
 ### Weekly Quests
 
-A **Quests** tab in the bottom navigation (clipboard icon, between Levels and Shop) opens the Weekly Quests screen (`src/ui/screens/quests.js`). A tab was chosen over a Home button so the red reminder dot is visible from every page.
+A **Tasks** tab in the bottom navigation (clipboard icon, between Levels and Shop; called Quests in 3.22.0) opens the Tasks screen (`src/ui/screens/tasks/`). A tab was chosen over a Home button so the red reminder dot is visible from every page.
+
+- A segmented control (the same pill as Profile | Awards, `src/ui/components/segmented.js`) switches between **Weekly** (below) and **Achievements** (the permanent list, same rows, Claim states and order as before). The panel slides in, and the last tab is remembered on the device.
+- A red dot marks each tab with something to claim, and the Tasks nav icon shows one when either tab does (`src/game/taskDots.js`).
+
+The Weekly tab:
 
 - **Banner**: "Weekly Quests" with a countdown to the reset ("5d 23h"). Quests reset every Monday at 00:00 local time.
 - **Points bar** from 0 to 100 with three chests. Claimed quests add their points; a chest opens with an animation when tapped once its points are reached.
@@ -518,9 +523,10 @@ A **Quests** tab in the bottom navigation (clipboard icon, between Levels and Sh
   | 60 points  | 300 coins + 1 hint     |
   | 100 points | 500 coins + 3 diamonds |
 
-- **6 quests per week**, one per family, picked from the pool with the ISO week number as the seed: the same for everyone in a week, different each week. The draw repeats on the same seed until the week's points add up to 115-170, so 100 points never needs every quest. No quest asks for hints to be used.
+- **6 quests per week**, at most one per group, picked from the pool with the ISO week number as the seed: the same for everyone in a week, different each week. The draw repeats on the same seed until the week's points add up to 115-170, so 100 points never needs every quest. No quest asks for hints to be used.
+- **Groups** (3.23.0): quests that count the same thing share a group, so one week never has two of them (e.g. never "Complete 30 levels" with "Finish 10 new levels"): levels (any levels, new levels), careful (perfect levels, levels with no hint), hard (Hard-or-above, Super Hard-or-above), and one group each for shapes, comebacks, arrows, daily claims and coins spent.
 - **Rows** look like the achievements list: points on the left, icon and title, a bar with "x/y" inside, and the Claim button on the right (grey when not ready, blue when ready, "Claimed" after). A tap on a grey button shakes it and says what is left ("Complete 5 more levels first").
-- **Lost at the reset**: unclaimed quest points and unopened chests. A red dot on the Quests tab shows when a quest or chest can be claimed.
+- **Lost at the reset**: unclaimed quest points and unopened chests. A red dot on the Weekly tab and on the Tasks nav icon shows when a quest or chest can be claimed.
 - **Progress** counts only from the week's start: wins, perfect wins (no heart lost, no hint), shape levels, Hard-or-above and Super Hard-or-above levels, levels with no hint, wins with 1 heart left, first clears, arrows cleared, daily reward claims and coins spent.
 - **Clock safety** (`src/game/quests.js`): the quest week only ever moves forward. A clock moved back keeps the current week (no reset, no old week back, claimed quests and opened chests stay claimed). A clock jumped forward starts that later week once, and then no reset happens until real time has passed it, so there are never more resets than real weeks plus that one.
 - Permanent achievements are separate and never reset.

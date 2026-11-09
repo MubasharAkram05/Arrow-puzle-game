@@ -58,20 +58,21 @@ export function isoWeekOf(t) {
 }
 
 /**
- * The week's quests: `perWeek` quests from different families, the same for everyone in an ISO week.
+ * The week's quests: `perWeek` quests from different groups (quests in a group count the same thing), the
+ * same for everyone in an ISO week.
  * Draws repeat on the same seed stream until the points add up to QUESTS.weekPoints.
  * @param {{year: number, week: number}} iso
  * @returns {typeof QUESTS.pool[number][]}
  */
 export function weekQuests(iso) {
   const rng = mulberry32(hashSeed(iso.year, iso.week));
-  const families = [...new Set(QUESTS.pool.map((q) => q.family))];
+  const groups = [...new Set(QUESTS.pool.map((q) => q.group))];
   const { min, max } = QUESTS.weekPoints;
   let picks = [];
   for (let tries = 0; tries < 200; tries++) {
-    const order = families.map((f) => ({ f, k: rng() })).sort((a, b) => a.k - b.k);
-    picks = order.slice(0, QUESTS.perWeek).map(({ f }) => {
-      const options = QUESTS.pool.filter((q) => q.family === f);
+    const order = groups.map((g) => ({ g, k: rng() })).sort((a, b) => a.k - b.k);
+    picks = order.slice(0, QUESTS.perWeek).map(({ g }) => {
+      const options = QUESTS.pool.filter((q) => q.group === g);
       return options[Math.floor(rng() * options.length)];
     });
     const total = picks.reduce((s, q) => s + q.points, 0);

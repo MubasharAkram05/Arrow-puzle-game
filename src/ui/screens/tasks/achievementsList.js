@@ -1,5 +1,5 @@
 /**
- * Achievements on the Profile tab: a single-column list, one row per achievement group (its current step).
+ * Achievements tab of the Tasks screen (on the Profile tab before 3.23.0): a single-column list, one row per achievement group (its current step).
  * Ready rows sort to the top, then rows in progress, then completed rows. Every row has the same size side
  * button (3.21.0): Claim (ready: blue, glowing, red dot), a grey Claim (not ready: aria-disabled, a tap
  * shakes it and says what is left) or a green Claimed pill. Claiming plays the burst on the row's badge and
@@ -14,16 +14,16 @@ import { clayBadgeSVG } from '../../components/clayBadge.js';
 import { flyCurrency } from '../../components/currencyBar.js';
 import { toast } from '../../components/toast.js';
 import { $ } from '../../dom.js';
-import { claimButtonHTML } from './claimButton.js';
+import { claimButtonHTML } from '../../components/claimButton.js';
 
 const fmt = (n) => n.toLocaleString('en-US');
 
 /** Rows as last rendered, by id (the not-ready toast reads their progress). */
 let shown = new Map();
 
-/** The section, filled by renderAchievements. */
+/** The Achievements tab of the Tasks screen (moved from Profile in 3.23.0), filled by renderAchievements. */
 export const achievementsSkeleton = () =>
-  `<h3 class="section-title">Achievements</h3><ul class="ach-list" id="ach-list"></ul>`;
+  `<p class="tasks-intro">Permanent goals: they never reset.</p><ul class="ach-list" id="ach-list"></ul>`;
 
 /** One row. */
 function rowHTML(r) {

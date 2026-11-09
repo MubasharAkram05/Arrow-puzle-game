@@ -69,13 +69,13 @@ describe('weeks', () => {
 });
 
 describe('week seeding', () => {
-  it('6 quests from 6 different families, the same for everyone in a week, different between weeks', () => {
+  it('6 quests from 6 different groups, the same for everyone in a week, different between weeks', () => {
     const seen = new Set();
     for (let y = 2026; y <= 2030; y++)
       for (let w = 1; w <= 52; w++) {
         const qs = weekQuests({ year: y, week: w });
         expect(qs).toHaveLength(QUESTS.perWeek);
-        expect(new Set(qs.map((q) => q.family)).size).toBe(6);
+        expect(new Set(qs.map((q) => q.group)).size).toBe(6);
         expect(weekQuests({ year: y, week: w })).toEqual(qs);
         // enough points that 100 is reachable without every quest
         const total = qs.reduce((s, q) => s + q.points, 0);
@@ -87,6 +87,33 @@ describe('week seeding', () => {
     const a = weekQuests({ year: 2026, week: 46 }).map((q) => q.id);
     const b = weekQuests({ year: 2026, week: 47 }).map((q) => q.id);
     expect(a).not.toEqual(b);
+  });
+
+  it('never two quests that track the same thing in one week (52 weeks)', () => {
+    // quests in one group count the same thing: one win would move both
+    const same = [
+      ['wins', 'newLevels'],
+      ['perfect', 'clean'],
+      ['hard', 'superHard'],
+    ];
+    for (const [a, b] of same) {
+      const ga = QUESTS.pool.find((q) => q.counter === a).group;
+      expect(QUESTS.pool.find((q) => q.counter === b).group, `${a} / ${b}`).toBe(ga);
+    }
+    for (let w = 1; w <= 52; w++) {
+      const qs = weekQuests({ year: 2026, week: w });
+      const counters = qs.map((q) => q.counter);
+      expect(new Set(counters).size, `week ${w}`).toBe(6);
+      expect(new Set(qs.map((q) => q.group)).size, `week ${w}`).toBe(6);
+      for (const [a, b] of same)
+        expect(counters.includes(a) && counters.includes(b), `week ${w}: ${a} + ${b}`).toBe(false);
+    }
+    // the example from the request: "Complete 30 levels" and "Finish 10 new levels" never share a week
+    for (let y = 2026; y <= 2030; y++)
+      for (let w = 1; w <= 52; w++) {
+        const ids = weekQuests({ year: y, week: w }).map((q) => q.id);
+        expect(ids.includes('wins-30') && ids.includes('new-10')).toBe(false);
+      }
   });
 
   it('every quest gives 10-40 points, and none asks for hints to be used', () => {

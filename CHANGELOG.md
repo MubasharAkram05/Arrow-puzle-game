@@ -2,6 +2,20 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.23.0] - 2026-11-09
+
+### Changed
+
+- Tasks: the Quests tab and screen are now called Tasks (same clipboard icon). A segmented control (same pill as Profile | Awards) switches between Weekly (the Weekly Quests banner, points bar, chests and quests) and Achievements (the permanent list moved from Profile, with the same rows, Claim states and order). The panel slides in and the last tab is remembered. Each tab has a red dot when it has something to claim, and the Tasks nav icon has one when either does.
+- Profile no longer shows the achievements list: it keeps the avatar, name, XP and stats, plus a "View achievements" link that opens Tasks > Achievements. The Awards tab (badges, monthly trophies) is unchanged. The Profile nav dot now marks a newly earned award badge.
+- Weekly quest picker: at most one quest per group of quests that count the same thing (levels / new levels; perfect / no-hint levels; Hard-or-above / Super Hard-or-above), so a week never has e.g. "Complete 30 levels" with "Finish 10 new levels". Rewards, prices and quest points are unchanged.
+- The not-ready Claim button looks clearly disabled: flat, no border, lighter text and 60% opacity (same 96x44 size).
+- Tab dots on segmented controls are red like the nav dots and sit after the label.
+
+### Added
+
+- Tests: tab switching and the remembered tab, the Weekly / Achievements / nav dots, achievements living in Tasks, and no two quests from one group in a week (52 weeks, plus 5 years for the levels / new levels pair).
+
 ## [3.22.0] - 2026-11-09
 
 ### Changed
