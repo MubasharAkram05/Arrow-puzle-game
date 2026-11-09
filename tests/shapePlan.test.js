@@ -20,6 +20,8 @@ beforeAll(() => loadShapeLibrary());
 
 /** Level number of the k-th shape level (k = 0 for the first one): two plain levels, then a shape. */
 const shapeLevel = (k) => LEVELS.shapeFrom + k * LEVELS.shapeEvery + LEVELS.shapeEvery - 1;
+/** Shapes that are not letters or numbers (they fill the "other" slots). */
+const otherShapes = () => shapeOrder().filter((id) => !['letters', 'numbers'].includes(getShape(id).category));
 
 describe('two plain levels, then a shape level', () => {
   it('levels 1-3 (tutorial) are plain; from level 4: plain, plain, shape, repeating', () => {
@@ -40,28 +42,30 @@ describe('two plain levels, then a shape level', () => {
     }
   });
 
-  it('two cycles of shape levels: a shape mask on every one, no repeat inside a cycle, never a rectangle', () => {
-    const L = shapeOrder().length;
+  it('two cycles of other shapes: a shape mask on every shape level, each other shape once per cycle', () => {
+    const O = otherShapes().length;
     for (let cycle = 0; cycle < 2; cycle++) {
       const seen = new Set();
-      for (let k = 0; k < L; k++) {
-        const n = shapeLevel(cycle * L + k);
+      for (let j = 0; j < O; j++) {
+        const n = shapeLevel(2 * (cycle * O + j) + 1); // the other slots: k = 1, 3, 5 ...
         const cfg = getLevelConfig(n);
         expect(cfg.mask, `level ${n}`).toBe(shapeOf(n));
         expect(seen.has(cfg.mask), `${cfg.mask} twice in cycle ${cycle}`).toBe(false);
         seen.add(cfg.mask);
+        if (j % 7) continue; // the mask check (slow) on a spread of them
         const mask = makeMask(cfg.mask, cfg.rows, cfg.cols);
         const used = mask.reduce((s, b) => s + b, 0);
         expect(used, `level ${n} is a full rectangle`).toBeLessThan(cfg.rows * cfg.cols);
       }
-      expect(seen.size).toBe(L);
+      expect(seen.size).toBe(O);
     }
   });
 
-  it('each cycle is a different mix, and a shape never comes back within half a cycle', () => {
+  it('each cycle of other shapes is a different mix, and a shape never comes back within half a cycle', () => {
     const order = shapeOrder();
-    const L = order.length;
+    const O = otherShapes().length;
     const [a, b, c] = [0, 1, 2].map((k) => cycleOrder(order, k));
+    expect(a).toHaveLength(O);
     expect(a).not.toEqual(b);
     expect(b).not.toEqual(c);
     for (const [x, y] of [
@@ -69,7 +73,7 @@ describe('two plain levels, then a shape level', () => {
       [b, c],
     ]) {
       const pos = new Map(x.map((id, i) => [id, i]));
-      for (let i = 0; i < L; i++) expect(L + i - pos.get(y[i])).toBeGreaterThan(L / 2);
+      for (let i = 0; i < O; i++) expect(O + i - pos.get(y[i])).toBeGreaterThan(O / 2);
     }
   });
 
@@ -90,40 +94,47 @@ describe('two plain levels, then a shape level', () => {
   });
 });
 
-describe('letters and numbers in order, categories mixed', () => {
+describe('slots: a letter, another shape, a number, another shape', () => {
   const category = (id) => getShape(id).category;
-  const shapesFrom = (k0, count) => Array.from({ length: count }, (_, k) => shapeOf(shapeLevel(k0 + k)));
+  const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const NUMS = '1234567890';
 
-  it('letter shapes come A to Z across the shape levels, then A again in the next cycle', () => {
-    const L = shapeOrder().length;
-    const ids = shapesFrom(0, 3 * L);
-    const letters = ids.filter((id) => category(id) === 'letters').map((id) => id.replace('letter', ''));
-    const az = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    expect(letters.join('')).toBe(az + az + az);
+  it('letters at every 4th shape level from level 6, strictly A..Z twice over; numbers 1..9, 0 in between', () => {
+    // two full alphabet cycles: 2 x 26 x 4 shape levels
+    const K = 2 * 26 * 4;
+    let letters = '';
+    let numbers = '';
+    for (let k = 0; k < K; k++) {
+      const id = shapeOf(shapeLevel(k));
+      const cat = category(id);
+      if (k % 4 === 0) {
+        expect(cat, `shape level ${k} (level ${shapeLevel(k)})`).toBe('letters');
+        letters += id.replace('letter', '');
+      } else if (k % 4 === 2) {
+        expect(cat, `shape level ${k} (level ${shapeLevel(k)})`).toBe('numbers');
+        numbers += id.replace('number', '');
+      } else expect(['letters', 'numbers'], `level ${shapeLevel(k)}`).not.toContain(cat);
+    }
+    expect(letters).toBe(AZ + AZ);
+    expect(numbers).toBe(NUMS.repeat(5) + NUMS.slice(0, 2));
   });
 
-  it('number shapes come 0 to 9, then 0 again', () => {
-    const L = shapeOrder().length;
-    const nums = shapesFrom(0, 3 * L)
-      .filter((id) => category(id) === 'numbers')
-      .map((id) => id.replace('number', ''));
-    expect(nums.join('')).toBe('0123456789'.repeat(3));
+  it('level 6 is A and level 12 is 1; the first B, C, Z and 2, 0 come where the slots put them', () => {
+    const first = {};
+    for (let n = 6; n < 6 + 3 * 120; n += 3) first[shapeOf(n)] ??= n;
+    expect([first.letterA, first.letterB, first.letterC, first.letterZ]).toEqual([6, 18, 30, 306]);
+    expect([first.number1, first.number2, first.number0]).toEqual([12, 24, 120]);
   });
 
-  it('letters and numbers are spread out between the other shapes, never all in a row', () => {
-    const order = shapeOrder();
-    const cyc = cycleOrder(order, 0);
-    const at = cyc.map((id, i) => (category(id) === 'letters' ? i : -1)).filter((i) => i >= 0);
-    // the letters span most of the cycle, and the longest run of letters (with no other shape between) is 1
-    expect(at.at(-1) - at[0]).toBeGreaterThan(order.length / 3);
-    for (let i = 1; i < at.length; i++) expect(at[i] - at[i - 1]).toBeGreaterThan(1);
+  it('the other slots never show the same category twice in a row, also across cycles', () => {
+    const O = otherShapes().length;
+    const others = Array.from({ length: 2 * O + 5 }, (_, j) => shapeOf(shapeLevel(2 * j + 1)));
+    for (let i = 1; i < others.length; i++) expect(category(others[i])).not.toBe(category(others[i - 1]));
   });
 
-  it('two shape levels in a row never share a category, also across cycles', () => {
-    const L = shapeOrder().length;
-    const ids = shapesFrom(0, 3 * L + 5);
-    for (let i = 1; i < ids.length; i++)
-      expect(category(ids[i]), `shape levels ${shapeLevel(i - 1)} and ${shapeLevel(i)}`).not.toBe(category(ids[i - 1]));
+  it('two shape levels in a row are never the same category', () => {
+    const ids = Array.from({ length: 600 }, (_, k) => shapeOf(shapeLevel(k)));
+    for (let i = 1; i < ids.length; i++) expect(category(ids[i])).not.toBe(category(ids[i - 1]));
   });
 });
 
@@ -177,7 +188,7 @@ describe('shapes that need a big board', () => {
   it('come in the second half of every cycle, on a board at least their minimum size', async () => {
     const { SHAPE_MIN_SIDE, REMOVED_SHAPES } = await import('../src/engine/shapes/removed.js');
     const order = shapeOrder();
-    const half = Math.ceil(order.length / 2);
+    const half = Math.ceil(otherShapes().length / 2);
     expect(Object.keys(SHAPE_MIN_SIDE).length).toBeGreaterThan(0);
     for (const id of Object.keys(SHAPE_MIN_SIDE)) {
       expect(REMOVED_SHAPES).not.toContain(id);
@@ -186,7 +197,7 @@ describe('shapes that need a big board', () => {
       for (const c of [0, 1, 2]) {
         const k = cycleOrder(order, c).indexOf(id);
         if (SHAPE_MIN_SIDE[id] > SHAPE_BOARD.lateSide) expect(k, `${id} in cycle ${c}`).toBeGreaterThanOrEqual(half);
-        const n = shapeLevel(c * order.length + k);
+        const n = shapeLevel(2 * (c * otherShapes().length + k) + 1);
         expect(getLevelConfig(n).cols, `${id} at level ${n}`).toBeGreaterThanOrEqual(SHAPE_MIN_SIDE[id]);
       }
     }

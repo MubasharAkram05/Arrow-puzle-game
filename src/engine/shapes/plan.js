@@ -1,16 +1,14 @@
 /**
- * Which shape each shape level shows (every third level from 6, see levels.js isShapeLevel). The library order
- * (see buildOrder: easy shapes first, categories taking turns) is cut into two halves; every cycle of (library
- * size) shape levels shows each shape exactly once: the first half's shapes, then the second half's (shapes
- * that need a board bigger than SHAPE_BOARD.lateSide always in the second half). A shape stays in its half
- * from cycle to cycle, so it never comes back within half a cycle, even across the end of a cycle.
- *
- * Inside a half the categories are mixed at random (seeded), with three rules (3.20.0):
- * - letters come in alphabetical order (A, B, C ... Z, then A again next cycle) and numbers in order (0 ... 9):
- *   the first half holds the first letters and numbers, the second half the rest
- * - two shapes in a row are never from the same category, also across the halves and from cycle to cycle
- *   (every cycle ends with a shape of one fixed category and never starts with one)
- * - other categories come in a seeded shuffle, mixed between the letters and numbers (never all in a row)
+ * Which shape each shape level shows (every third level from 6, see levels.js isShapeLevel). Shape levels come
+ * in slots of four, repeating (3.20.0): a letter, another shape, a number, another shape.
+ * - Letters go strictly A, B, C ... Z, then A again (the first shape level, level 6, is A).
+ * - Numbers go strictly 1, 2 ... 9, 0, then 1 again.
+ * - The other slots show every other shape (not a letter or number) once per cycle. Their library order is
+ *   cut into two halves (shapes that need a board bigger than SHAPE_BOARD.lateSide always in the second half);
+ *   a shape stays in its half from cycle to cycle, so it never comes back within half a cycle. Inside a half
+ *   the categories are mixed at random (seeded), never the same category twice in a row, also across the
+ *   halves and from cycle to cycle (every cycle ends with a shape of one fixed category and never starts with
+ *   one). A letter or number sits between any two of them anyway.
  * Deterministic: the same level always gets the same shape.
  */
 import { hashSeed, mulberry32 } from '../rng.js';
@@ -18,12 +16,12 @@ import { SHAPE_BOARD } from '../../config.js';
 import { minBoardSide } from '../masks.js';
 import { getShape } from './library.js';
 
-/** Categories shown in order (their ids sort in that order: letterA..letterZ, number0..number9). */
+/** Categories with their own slots, shown in order. */
 export const ORDERED_CATEGORIES = Object.freeze(['letters', 'numbers']);
 
-const cycles = new Map(); // cycle number -> shape ids (for the current library order)
+const cycles = new Map(); // cycle number -> other shape ids (for the current library order)
 let base = null;
-let halves = null; // [first half ids, second half ids, the category every cycle ends with]
+let parts = null; // {letters, numbers, others, halves: [first half, second half, end category]}
 
 /** Seeded Fisher-Yates shuffle (a copy). */
 function shuffled(ids, seed) {
@@ -38,34 +36,38 @@ function shuffled(ids, seed) {
 
 const categoryOf = (id) => getShape(id)?.category ?? 'others';
 
-/** The two halves of the library order (fixed for an order) and the category every cycle ends with. */
-function splitHalves(order) {
+/** Letters (A..Z), numbers (1..9, 0), and the halves of the other shapes, fixed for a library order. */
+function split(order) {
+  const of = (cat) => order.filter((id) => categoryOf(id) === cat).sort();
+  const letters = of('letters');
+  const digits = of('numbers'); // number0 .. number9
+  const numbers = [...digits.slice(1), ...digits.slice(0, 1)]; // 1 .. 9, then 0
+  const others = order.filter((id) => !ORDERED_CATEGORIES.includes(categoryOf(id)));
   // shapes that need a big board go to the second half, where boards are big anyway
   const big = (id) => minBoardSide(id) > SHAPE_BOARD.lateSide;
-  const sorted = [...order.filter((id) => !big(id)), ...order.filter(big)];
-  const half = Math.ceil(order.length / 2);
-  const parts = [sorted.slice(0, half), sorted.slice(half)];
-  // letters and numbers: the first half keeps as many as it had, but the alphabetically first ones
-  for (const cat of ORDERED_CATEGORIES) {
-    const all = order.filter((id) => categoryOf(id) === cat).sort();
-    const k = parts[0].filter((id) => categoryOf(id) === cat).length;
-    const pick = [all.slice(0, k), all.slice(k)];
-    parts.forEach((p, h) => {
-      const at = p.map((id, i) => (categoryOf(id) === cat ? i : -1)).filter((i) => i >= 0);
-      at.forEach((i, j) => (p[i] = pick[h][j]));
-    });
-  }
-  // every cycle ends with the most common other category of the second half (and never starts with it)
+  const sorted = [...others.filter((id) => !big(id)), ...others.filter(big)];
+  const half = Math.ceil(sorted.length / 2);
+  const second = sorted.slice(half);
+  // every cycle ends with the most common category of the second half (and never starts with it)
   const count = {};
-  for (const id of parts[1])
-    if (!ORDERED_CATEGORIES.includes(categoryOf(id))) count[categoryOf(id)] = (count[categoryOf(id)] || 0) + 1;
+  for (const id of second) count[categoryOf(id)] = (count[categoryOf(id)] || 0) + 1;
   const endCat = Object.keys(count).sort((a, b) => count[b] - count[a] || (a < b ? -1 : 1))[0];
-  return [parts[0], parts[1], endCat];
+  return { letters, numbers, others, halves: [sorted.slice(0, half), second, endCat] };
+}
+
+/** Parts of the current library order (recomputed when the order changes). */
+function partsOf(order) {
+  if (base !== order) {
+    base = order;
+    parts = split(order);
+    cycles.clear();
+  }
+  return parts;
 }
 
 /**
  * Arrange one half: categories drawn at random in proportion to the shapes left (seeded), never the same
- * category twice in a row. Letters and numbers come off their queue in order, others in a seeded shuffle.
+ * category twice in a row; each category in a seeded shuffle.
  * @param {string[]} ids
  * @param {() => number} rng
  * @param {{prev?: string, firstNot?: string, lastCat?: string}} rules
@@ -78,10 +80,7 @@ function arrange(ids, rng, rules) {
     if (!queues.has(c)) queues.set(c, []);
     queues.get(c).push(id);
   }
-  for (const [c, q] of queues) {
-    if (ORDERED_CATEGORIES.includes(c)) q.sort();
-    else queues.set(c, shuffled(q, Math.floor(rng() * 2 ** 31)));
-  }
+  for (const [c, q] of queues) queues.set(c, shuffled(q, Math.floor(rng() * 2 ** 31)));
   // the last shape is kept back (one of lastCat), so every cycle ends with that category
   const last = rules.lastCat && queues.get(rules.lastCat)?.length ? queues.get(rules.lastCat).pop() : null;
   const out = [];
@@ -111,17 +110,13 @@ function arrange(ids, rng, rules) {
 }
 
 /**
- * Shape ids of one cycle.
+ * The other shapes (not letters or numbers) of one cycle, in the order their slots show them.
  * @param {string[]} order library order (every shape once)
  * @param {number} cycle 0, 1, 2, ...
  * @returns {string[]}
  */
 export function cycleOrder(order, cycle) {
-  if (base !== order) {
-    base = order;
-    halves = splitHalves(order);
-    cycles.clear();
-  }
+  const { halves } = partsOf(order);
   if (!cycles.has(cycle)) {
     const [first, second, endCat] = halves;
     let ids = null;
@@ -146,12 +141,18 @@ export function cycleOrder(order, cycle) {
 }
 
 /**
- * Shape of the k-th shape level (k = 0 for the first one).
+ * Shape of the k-th shape level (k = 0 for the first one, level 6): slots of four, a letter (k = 0, 4, 8 ...),
+ * another shape, a number (k = 2, 6, 10 ...), another shape.
  * @param {string[]} order library order
  * @param {number} k
  * @returns {string}
  */
 export function shapeAt(order, k) {
-  const n = order.length;
-  return cycleOrder(order, Math.floor(k / n))[k % n];
+  const { letters, numbers, others } = partsOf(order);
+  if (k % 4 === 0 && letters.length) return letters[(k / 4) % letters.length];
+  if (k % 4 === 2 && numbers.length) return numbers[((k - 2) / 4) % numbers.length];
+  // the other slots: k = 1, 3, 5, 7 ... are the 0th, 1st, 2nd, 3rd ... other shape
+  const j = Math.floor(k / 2);
+  const n = others.length;
+  return cycleOrder(order, Math.floor(j / n))[j % n];
 }
