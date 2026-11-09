@@ -13,9 +13,8 @@ export const ZOOM = Object.freeze({
   targetCellPx: 46, // zoom in until a cell is about a fingertip wide
   zoomBelowPx: 18, // a level starts zoomed in only when fitted cells would be smaller than this...
   startCellPx: 22, // ...and then opens so a cell is about this wide
-  maxScale: 6,
+  maxScale: 20, // very dense boards fit in cells of 2-3px, so a pinch may go far to reach a fingertip-wide cell
   dragPx: 10, // movement that turns a tap into a drag
-  doubleTapMs: 350, // double tap on empty space resets the zoom
   sharpMs: 100, // the board redraws sharp this long after a pinch, pan or wheel zoom stops
   guideKey: 'arrowEscape:zoomGuide',
   guideTimes: 3, // the zoom guide shows on the first 3 zoomed levels, then only until the first pinch
@@ -107,7 +106,7 @@ export const ACHIEVEMENT_DEFS = Object.freeze([
     title: 'Shape Solver',
     desc: 'Finish {goal} shape levels',
     icon: 'shape-heart',
-    // every level from 4 is a shape level (3.13.0), so this is tiered; the old single step (5 levels, 3 diamonds)
+    // every third level from 6 is a shape level (3.20.0; every level from 4 was before), tiered; the old single step (5 levels, 3 diamonds)
     // counts as step I when a save claimed it (see RENAMED_CLAIMS in src/storage/schema.js)
     steps: [
       { goal: 25, reward: 2 },
@@ -351,7 +350,8 @@ export const LEVELS = Object.freeze({
     2: { cols: 5, rows: 6, arrows: [6, 8], rounds: [2, 4] },
     3: { cols: 6, rows: 8, arrows: [12, 16], rounds: [2, 3] },
   }),
-  shapeFrom: 4, // every level after the tutorial is a shape board (src/engine/shapes/plan.js)
+  shapeFrom: 4, // from here on: two plain boards, then one shape board, repeating (src/engine/shapes/plan.js)
+  shapeEvery: 3, // ...so levels 6, 9, 12, ... are shape levels (3.20.0; every level was a shape before)
   // the library order: categories take turns (first round in this order), easy shapes first
   shapeRotation: [
     'animals',
@@ -387,6 +387,9 @@ export const SNAKE = Object.freeze({
   longMin: 15, // long arrows: 15-40 cells
   longMax: 40,
   arrowsShare: 0.6, // a board needs at least this share of the old minimum arrow count (arrows are longer)
+  plainSeeds: 2, // plain boards start the fill from this many free arrows (the start-free floor allows 2)...
+  seedFar: 40, // ...the second one as far as possible from the first, so two fill fronts meet in the middle
+  plainRoundBias: 0.6, // plain boards build less behind the latest arrows (roundBias), so both fronts grow
   // direction mix while peeling (3.19.0, heads.js dirScore): cost when the arrow right in front points the
   // same way (a queue), bonus when it points across or against, cost per share of same-way heads within
   // `radius` cells, cost per share above 25% of the whole board's arrows pointing that way (a fill front
@@ -494,6 +497,7 @@ export const TIER_FLOORS = Object.freeze({
   }),
   'Super Hard': Object.freeze({
     arrowShape: Object.freeze({
+      plainArea: 1.1, // plain Super Hard boards: 1.1 x the cells, not shapeScale (Expert keeps the most arrows ahead)
       mediumShare: 0.85,
       turn: 0.68,
       follow: 6,
@@ -529,6 +533,8 @@ export const TIER_FLOORS = Object.freeze({
   }),
   Expert: Object.freeze({
     arrowShape: Object.freeze({
+      plainArea: 1, // plain Expert boards are deep enough without shapeScale (and faster)
+      plainDirPicks: 3, // plain boards are cheaper than Expert shape boards: more tries for the direction targets
       mediumShare: 0.9,
       turn: 0.66,
       follow: 5,

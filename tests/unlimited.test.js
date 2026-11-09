@@ -36,7 +36,9 @@ describe('unlimited levels', () => {
 
   it('level configs exist for any number', () => {
     for (const n of HUGE) {
-      expect(isShapeLevel(n)).toBe(true);
+      // two plain levels, then a shape level, all the way up
+      expect(isShapeLevel(n)).toBe((n - 4) % 3 === 2);
+      expect(isShapeLevel(n + (2 - ((n - 4) % 3)))).toBe(true);
       const c = getLevelConfig(n);
       expect(c.rows).toBeGreaterThan(0);
       expect(c.difficulty).toBe('Expert');

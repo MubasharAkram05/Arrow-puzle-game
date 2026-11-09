@@ -1,10 +1,11 @@
 /**
- * Credits (Settings > Credits): every open source the board shapes come from, with author, license and how
- * many shapes it gave. Read from the shape library, which records the source and license of each shape.
+ * Credits (a quiet link at the bottom of the Profile tab): every open source the board shapes come from, with
+ * author, license and how many shapes it gave. Read from the shape library, which records the source and
+ * license of each shape. The icon licenses (CC BY) need this attribution inside the app.
  */
 import { allShapes, loadShapeLibrary, shapeSources } from '../../engine/index.js';
 import { $ } from '../dom.js';
-import { openModal } from './modal.js';
+import { closeModals, onModalBack, openModal } from './modal.js';
 
 const LICENSES = {
   MIT: 'MIT License',
@@ -43,4 +44,11 @@ export function openCredits() {
   loadShapeLibrary()
     .then(render)
     .catch(() => ($('credits-list').innerHTML = '<li class="muted">Credits could not load. See CREDITS.md.</li>'));
+}
+
+/** Wire the credits link (Profile tab) and the way back. */
+export function bindCredits() {
+  $('btn-credits').addEventListener('click', openCredits);
+  $('btn-credits-back').addEventListener('click', closeModals);
+  onModalBack('modal-credits', closeModals);
 }

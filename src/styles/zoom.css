@@ -1,4 +1,4 @@
-/* Zoom guide (src/ui/zoomGuide.js): two hands pinching apart, one finger double-tapping. Never takes taps. */
+/* Zoom guide (src/ui/zoomGuide.js): two hands pinching apart, "Pinch to zoom". Never takes taps. */
 .zoom-guide {
   position: absolute;
   left: 50%;
@@ -83,38 +83,9 @@
   font-weight: 800;
   white-space: nowrap;
 }
-.zg-label.small {
-  font-size: 14px;
-  color: var(--muted);
-}
-.zg-tap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.zg-one {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  animation: zg-tap 1.6s ease-in-out infinite;
-}
-/* two quick presses, then a pause */
-@keyframes zg-tap {
-  0%,
-  20%,
-  40%,
-  100% {
-    transform: scale(1);
-  }
-  10%,
-  30% {
-    transform: scale(0.82);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .zg-left,
-  .zg-right,
-  .zg-one {
+  .zg-right {
     animation: none;
   }
 }

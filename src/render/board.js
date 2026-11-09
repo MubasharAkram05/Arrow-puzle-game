@@ -1,4 +1,5 @@
-import { BASE_CELL_PX, CELL, HEAD_L_PX, HEAD_W_PX, SMALL_BOARD_PX, STROKE_PX } from '../config.js';
+import { CELL, HEAD_L_PX, HEAD_W_PX, STROKE_PX } from '../config.js';
+import { fitCellPx } from '../input/zoomMath.js';
 import { DIRS } from '../engine/index.js';
 import { state } from '../game/state.js';
 import { $, svgEl } from '../ui/dom.js';
@@ -28,7 +29,7 @@ export function strokeMetrics(cellPx, k = 1) {
 }
 
 /**
- * On-screen cell size for a board inside a box: compact for small boards, shrinks to fit big ones.
+ * On-screen cell size for a board inside a box at zoom 1: the whole board always fits (see fitCellPx).
  * @param {number} rows
  * @param {number} cols
  * @param {number} w available width (px)
@@ -36,9 +37,7 @@ export function strokeMetrics(cellPx, k = 1) {
  * @returns {number}
  */
 export function cellSizeFor(rows, cols, w, h) {
-  const scale = clamp(window.innerWidth / 390, 1, 1.6); // tablets get a slightly bigger board
-  const target = Math.max(BASE_CELL_PX, SMALL_BOARD_PX / Math.max(rows, cols)) * scale;
-  return Math.max(6, Math.min(target, w / cols, h / rows));
+  return fitCellPx(rows, cols, w, h, window.innerWidth);
 }
 
 /**

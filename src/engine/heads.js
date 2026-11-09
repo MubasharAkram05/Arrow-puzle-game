@@ -56,6 +56,7 @@ export function createGrid(rows, cols, usable) {
   const near = DIRS.map(({ dc }) => new Int32Array(dc ? rows : cols));
   const dirOf = [];
   const dirCount = new Int32Array(4); // placed arrows per head direction
+  const seed = -1; // head cell of the first free arrow (plain boards place a second one far from it)
   const headDir = new Int8Array(rows * cols).fill(-1);
   // solve round of every placed arrow (1 = free at the start), and the latest so far
   const round = [];
@@ -78,6 +79,7 @@ export function createGrid(rows, cols, usable) {
     near,
     dirOf,
     dirCount,
+    seed,
     headDir,
     round,
     maxRound: 0,
@@ -174,7 +176,8 @@ function dirScore(grid, w, r, c, d, line) {
  * Scores (lower = better) push the board toward hard structure:
  * - roundBias: heads behind the latest arrows, so the solve becomes one long chain (few free moves at a time)
  * - decoyBias: heads with exactly one arrow in front (they look free but are not)
- * @returns {{any: object[], deep: object[]}} three best heads overall, and three best with arrows in front
+ * @returns {{any: object[], deep: object[], free: object[]}} three best heads overall, three best with arrows in
+ *   front, and three best with nothing in front
  */
 export function bestHeads(grid, cfg, rng, sidePenalty) {
   const { rows, cols, isFree, degree, first, ahead, top, solo, maxRound, dirtyRows, dirtyCols } = grid;
@@ -186,6 +189,7 @@ export function bestHeads(grid, cfg, rng, sidePenalty) {
   dirtyCols.fill(0);
   const any = [];
   const deep = [];
+  const free = [];
   for (let d = 0; d < 4; d++) {
     const { dr, dc } = DIRS[d];
     const lines = dc ? rows : cols;
@@ -198,16 +202,25 @@ export function bestHeads(grid, cfg, rng, sidePenalty) {
       const depth = ahead[d][line];
       const t = top[d][line];
       let score = degree(r, c) - depth * cfg.depthBias + rng() * 1.2;
-      if (depth) score += (maxRound - t) * (cfg.roundBias || 0) - (solo[d][line] ? cfg.decoyBias || 0 : 0);
-      if (depth && cfg.dirMix) score += dirScore(grid, cfg.dirMix, r, c, d, line);
-      // a free head next to a side can't be hidden later (see hideFreeMoves): keep chosen free heads off the sides
-      else if (grid.hidden === r * cols + c)
+      if (depth) {
+        score += (maxRound - t) * (cfg.roundBias || 0) - (solo[d][line] ? cfg.decoyBias || 0 : 0);
+        if (cfg.dirMix) score += dirScore(grid, cfg.dirMix, r, c, d, line);
+      } else if (grid.hidden === r * cols + c)
         score -= 1000; // the corridor's end: the hidden first move
-      else if (line < 2 || line > lines - 3) score += sidePenalty;
+      else {
+        // a free head next to a side can't be hidden later (see hideFreeMoves): keep chosen free heads off the sides
+        if (line < 2 || line > lines - 3) score += sidePenalty;
+        // a second fill seed (plain boards) starts far from the first one, so two fronts meet in the middle
+        if (grid.seed >= 0 && cfg.seedFar)
+          score -=
+            (cfg.seedFar * (Math.abs(r - Math.floor(grid.seed / cols)) + Math.abs(c - (grid.seed % cols)))) /
+            (rows + cols);
+      }
       const cand = { r, c, d, depth, top: t, score };
       keep3(any, cand);
       if (depth) keep3(deep, cand);
+      else keep3(free, cand);
     }
   }
-  return { any, deep };
+  return { any, deep, free };
 }

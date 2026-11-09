@@ -119,3 +119,25 @@
 .avatar-opt.on {
   box-shadow: 0 0 0 3px var(--primary);
 }
+
+/* Credits: a quiet text link at the very bottom of the Profile tab (the icon licenses need it in the app) */
+.credits-link {
+  display: block;
+  margin: 18px auto 4px;
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.8;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
+}
+.credits-link:hover,
+.credits-link:focus-visible {
+  opacity: 1;
+  color: var(--primary);
+}

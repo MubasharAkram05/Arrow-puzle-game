@@ -1,7 +1,25 @@
 /**
  * Pure zoom numbers (no DOM), so the default zoom can be unit tested.
  */
-import { ZOOM } from '../config.js';
+import { BASE_CELL_PX, SMALL_BOARD_PX, ZOOM } from '../config.js';
+
+/**
+ * Cell size (px) at zoom 1, the "fit" view: compact for small boards, and for big ones small enough that the
+ * whole grid fits the box, every arrow and all four edges (arrowheads stay inside their cell, see
+ * render/board.js strokeMetrics). There is no minimum: a board never gets cut off at the sides; dense boards
+ * open zoomed in instead (startScale), and the player can always pinch back out to this fit.
+ * @param {number} rows
+ * @param {number} cols
+ * @param {number} w available width (px), already without the margin
+ * @param {number} h available height (px)
+ * @param {number} screenW window width (tablets get a slightly bigger board)
+ * @returns {number}
+ */
+export function fitCellPx(rows, cols, w, h, screenW) {
+  const scale = Math.min(1.6, Math.max(1, screenW / 390));
+  const target = Math.max(BASE_CELL_PX, SMALL_BOARD_PX / Math.max(rows, cols)) * scale;
+  return Math.max(0.5, Math.min(target, w / cols, h / rows));
+}
 
 /**
  * Scale a level starts at: dense boards (cells under zoomBelowPx) open zoomed in so a cell is
