@@ -249,7 +249,7 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
   // boards finished (not dropped early) and early drops left: a level never builds much more than before
   let built = 0;
   // (plain boards only: shape boards rarely miss by much, and their attempts are the costly ones)
-  let earlyLeft = cfg.dirGoals && !cfg.mask ? picks : 0;
+  let earlyLeft = cfg.dirGoals && !cfg.mask ? Math.min(2, picks) : 0;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
     const level = buildLevel(cfg, rng, earlyLeft > 0);

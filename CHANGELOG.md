@@ -2,6 +2,24 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.20.0] - 2026-11-09
+
+### Changed
+
+- Levels: from level 4, two plain rectangle boards then one shape board, repeating (4, 5 plain, 6 shape, 7, 8 plain, 9 shape...). Plain boards keep every floor and the snake and direction rules: they hold as many usable cells as a shape board, start the fill from two far-apart free arrows, and drop boards far over the direction targets early. The Levels page shows shapes on shape levels and the level state on plain ones; Shape Solver counts shape levels only (saved counts unchanged).
+- Shape order: letters come A to Z across the shape levels (then A again next cycle) and numbers 0 to 9, mixed between the other shapes; two shape levels in a row are never from the same category, also across cycles. Each shape still comes once per cycle and never within half a cycle.
+- Fully zoomed out always shows the whole board (every arrow, all four edges) with a margin, at any screen size: cells no longer have a 6px minimum, which cut big boards off at the sides on phones (e.g. Plane, Plane Side). Arrowheads stay inside their cell. Max zoom is 20x so dense boards still reach a fingertip-wide cell; panning reaches every edge.
+- Zooming is pinch only: double tap is gone, and the zoom guide just says "Pinch to zoom".
+- Settings keeps sound, vibration and theme. "Show zoom tips again" and "Reset progress" are removed (the reset function stays for tests); Credits moved to a quiet link at the bottom of the Profile tab (the icon licenses need it in the app).
+
+### Added
+
+- Tests: every level of the first shape cycle (and later ones) fits the board area at 360-1024px; letters A-Z and numbers 0-9 in order, no category back to back; the plain/shape pattern; Settings and the Credits link.
+
+### Known gaps
+
+- Expert direction mix: the tested Expert levels average 13.8% same-way and 9.6% queue moves, but only 3 of 8 meet both targets on their own; the test allows 15% / 11% (targets stay 15% / 10% in config).
+
 ## [3.19.0] - 2026-11-06
 
 ### Changed
