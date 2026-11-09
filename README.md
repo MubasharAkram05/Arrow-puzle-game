@@ -12,11 +12,12 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Coins and diamonds: earned by playing (including a perfect-level diamond and a 7-day daily reward), spent on hints, heart refills, continues and cosmetics. The only way to the next level is to finish the current one
 - Cosmetics: escape effects, board backgrounds, arrowhead shapes, victory confetti, sound packs, premium avatars and frames
 - Shop with tabs (All, Offers, Hints, Styles, Effects, Profile), a free gift every 4 hours, a starter pack, coin exchange and a weekly sale
-- Pages: Home, Levels, Shop and Profile behind a bottom navigation bar
+- Pages: Home, Levels, Quests, Shop and Profile behind a bottom navigation bar
+- Weekly Quests: 6 quests a week (same for everyone, reset every Monday), a 0-100 points bar and 3 reward chests
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
 - Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and the Achievements list) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies)
-- Light, dark and auto theme, 4 arrow styles, 4 accent themes
+- Light, dark and auto theme, 6 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
 ## Requirements
@@ -89,15 +90,17 @@ src/
     cosmetics.js        owned/equipped cosmetics, buying, achievement unlocks (pure)
     offers.js           starter pack, gift timer, exchange, weekly sale picker (pure)
     offerActions.js     applies offers to the game state
+    quests.js           Weekly Quests: weeks, seeding, progress, points, chests, clock safety (pure)
+    questState.js       applies quest progress, claims and chests to the game state
   render/               canvas board (canvasBoard.js layers, canvasDraw.js arrows, canvasHeads.js heads),
                         HUD, pointing hand, animations, confetti; board.js keeps the small SVG boards
     effects/            escape effects (one file each) on a small particle canvas
   input/                board taps, pinch zoom and pan (zoomMath.js: pure zoom numbers), Android/browser back button
   audio/                Web Audio sounds and sound packs, vibration
   storage/
-    schema.js           v6 save format, validation, loading and backup (pure)
+    schema.js           v7 save format, validation, loading and backup (pure)
     validators.js       number, list, cosmetics, avatar and shape-id validators (pure)
-    migrate.js          v1 to v5 to v6 migrations, chapter-size conversion (pure)
+    migrate.js          v1 to v6 to v7 migrations, chapter-size conversion (pure)
     save.js             maps the game state to and from the save
   ui/                   navigation, theme, DOM helpers, zoom guide
     components/         icons, currency bar, bottom nav, avatars, toast, style preview
@@ -502,6 +505,54 @@ Opening the app on a new local day shows the Daily Reward popup on Home: a ribbo
 - Clock checks (`src/game/daily.js`): if the time is earlier than the latest time this device has seen (beyond 1 hour, so time zones and DST are fine) or earlier than the last claimed day, nothing is paid until real time catches up; a jump of more than 60 days ahead pays nothing that day. The save is never broken.
 - Resetting progress keeps the daily record, so today's reward can't be claimed twice.
 
+### Weekly Quests
+
+A **Quests** tab in the bottom navigation (clipboard icon, between Levels and Shop) opens the Weekly Quests screen (`src/ui/screens/quests.js`). A tab was chosen over a Home button so the red reminder dot is visible from every page.
+
+- **Banner**: "Weekly Quests" with a countdown to the reset ("5d 23h"). Quests reset every Monday at 00:00 local time.
+- **Points bar** from 0 to 100 with three chests. Claimed quests add their points; a chest opens with an animation when tapped once its points are reached.
+
+  | Chest      | Reward                 |
+  | ---------- | ---------------------- |
+  | 30 points  | 150 coins              |
+  | 60 points  | 300 coins + 1 hint     |
+  | 100 points | 500 coins + 3 diamonds |
+
+- **6 quests per week**, one per family, picked from the pool with the ISO week number as the seed: the same for everyone in a week, different each week. The draw repeats on the same seed until the week's points add up to 115-170, so 100 points never needs every quest. No quest asks for hints to be used.
+- **Rows** look like the achievements list: points on the left, icon and title, a bar with "x/y" inside, and the Claim button on the right (grey when not ready, blue when ready, "Claimed" after). A tap on a grey button shakes it and says what is left ("Complete 5 more levels first").
+- **Lost at the reset**: unclaimed quest points and unopened chests. A red dot on the Quests tab shows when a quest or chest can be claimed.
+- **Progress** counts only from the week's start: wins, perfect wins (no heart lost, no hint), shape levels, Hard-or-above and Super Hard-or-above levels, levels with no hint, wins with 1 heart left, first clears, arrows cleared, daily reward claims and coins spent.
+- **Clock safety** (`src/game/quests.js`): the quest week only ever moves forward. A clock moved back keeps the current week (no reset, no old week back, claimed quests and opened chests stay claimed). A clock jumped forward starts that later week once, and then no reset happens until real time has passed it, so there are never more resets than real weeks plus that one.
+- Permanent achievements are separate and never reset.
+- All numbers live in `QUESTS` in `src/config.js`.
+
+Quest pool:
+
+| Quest                               | Goal  | Points |
+| ----------------------------------- | ----- | ------ |
+| Complete 20 levels                  | 20    | 10     |
+| Complete 30 levels                  | 30    | 15     |
+| Complete 40 levels                  | 40    | 25     |
+| Finish 5 perfect levels             | 5     | 15     |
+| Finish 10 perfect levels            | 10    | 30     |
+| Finish 8 shape levels               | 8     | 15     |
+| Finish 15 shape levels              | 15    | 30     |
+| Clear 1,500 arrows                  | 1,500 | 10     |
+| Clear 3,000 arrows                  | 3,000 | 25     |
+| Claim the daily reward on 3 days    | 3     | 20     |
+| Claim the daily reward on 5 days    | 5     | 35     |
+| Win 3 levels with only 1 heart left | 3     | 20     |
+| Win 5 levels with only 1 heart left | 5     | 30     |
+| Finish 5 Hard-or-above levels       | 5     | 20     |
+| Finish 12 Hard-or-above levels      | 12    | 35     |
+| Finish 3 Super Hard-or-above levels | 3     | 25     |
+| Spend 1,500 coins                   | 1,500 | 20     |
+| Spend 3,000 coins                   | 3,000 | 35     |
+| Complete 10 levels without a hint   | 10    | 25     |
+| Complete 20 levels without a hint   | 20    | 40     |
+| Finish 10 new levels                | 10    | 20     |
+| Finish 20 new levels                | 20    | 35     |
+
 Currency from outside the game (rewarded ads, in-app purchases) should go through `grant()` in `economy.js` (via `credit()` in `rewards.js`) with source `'ad'` or `'purchase'`.
 
 ## Test mode
@@ -510,7 +561,8 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Saves
 
-- Key `arrowEscape:v6`, plus a backup copy in `arrowEscape:v6:backup` written on every save.
+- Key `arrowEscape:v7`, plus a backup copy in `arrowEscape:v7:backup` written on every save.
+- v7 (3.22.0) adds the Weekly Quests record `quests: { week, counts, claimed, chests }`. A v6 save keeps everything and starts with an empty record; the v6 keys are removed only after v7 is written and read back.
 - 3.16.0 adds two fields to v6 saves, filled in on load: `dailyDays` (days the daily reward was claimed, for the monthly trophies) and `seenBadges` (award badges already seen). An older save rebuilds the claim days from its current streak (a streak is a run of consecutive claimed days); earlier days are unknown and start at 0. Badges claimed before count as seen.
 - v6 removes the Shield and Extra Heart boosters. Any owned ones are refunded once on load (60 coins per Shield, 1 diamond per Extra Heart), a toast says "Boosters removed, refunded X coins / Y diamonds" once, and the inventory is dropped. Everything else is kept. The v5 keys are removed only after v6 is written and read back.
 - v5 adds the daily reward record and two stats (clean first clears, comebacks). A v4 save (or its backup) is migrated automatically and nothing is lost: progress, coins, diamonds, hints, items, shapes and claimed achievements are kept. The v4 keys are removed only after v5 is written and read back.

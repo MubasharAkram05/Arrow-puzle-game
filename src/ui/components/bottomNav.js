@@ -1,15 +1,17 @@
 /**
- * Bottom navigation bar (Home, Levels, Shop, Profile). Hidden during gameplay.
+ * Bottom navigation bar (Home, Levels, Quests, Shop, Profile). Hidden during gameplay.
  */
 import { achievementContext } from '../../game/rewards.js';
 import { claimableCount } from '../../game/achievements.js';
 import { giftStatus } from '../../game/offers.js';
+import { questReadyCount } from '../../game/quests.js';
 import { state } from '../../game/state.js';
 import { icon } from './icons.js';
 
 const TABS = [
   { screen: 'screen-home', label: 'Home', icon: 'home' },
   { screen: 'screen-levels', label: 'Levels', icon: 'levels' },
+  { screen: 'screen-quests', label: 'Quests', icon: 'clipboard' },
   { screen: 'screen-shop', label: 'Shop', icon: 'shop' },
   { screen: 'screen-profile', label: 'Profile', icon: 'user' },
 ];
@@ -56,12 +58,14 @@ export function updateBottomNav(screenId) {
   renderNavDots();
 }
 
-/** Red dots: Profile when an achievement can be claimed, Shop when the free gift is ready. */
+/** Red dots: Profile when an achievement can be claimed, Shop when the free gift is ready, Quests when a quest
+ * or a chest can be claimed. */
 export function renderNavDots() {
   const nav = document.getElementById('bottom-nav');
   if (!nav) return;
   nav.querySelector('[data-screen="screen-profile"] .nav-dot').hidden =
     claimableCount(achievementContext(), state.claimed) === 0;
+  nav.querySelector('[data-screen="screen-quests"] .nav-dot').hidden = questReadyCount(state.quests, Date.now()) === 0;
   nav.querySelector('[data-screen="screen-shop"] .nav-dot').hidden = !giftStatus(Date.now(), state.offers.giftLast)
     .ready;
 }

@@ -9,7 +9,7 @@ import {
   V4_KEY,
   V5_BACKUP_KEY,
   V5_KEY,
-  V6_KEY,
+  V7_KEY,
   defaultSave,
   migrateV2,
   migrateV3,
@@ -54,7 +54,7 @@ const V2 = {
 describe('v2 migration', () => {
   it('keeps all progress, coins, diamonds, items, achievements, profile and settings', () => {
     const d = migrateV2(V2);
-    expect(d.version).toBe(6);
+    expect(d.version).toBe(7);
     expect(d.progress).toMatchObject({ current: 23, unlocked: 24, perfect: [2, 5], chaptersRewarded: [1, 2] });
     expect(d.progress.completed).toHaveLength(22);
     expect(d.wallet).toEqual({ coins: 1234, diamonds: 17, hints: 4 });
@@ -97,15 +97,15 @@ describe('v2 migration', () => {
     expect(d).not.toHaveProperty('bogus');
   });
 
-  it('migrates on load, writes v6 and its backup, then removes the v2 keys', () => {
+  it('migrates on load, writes v7 and its backup, then removes the v2 keys', () => {
     const s = memoryStorage({ [V2_KEY]: JSON.stringify(V2), [V2_BACKUP_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v2');
     expect(res.data.wallet.coins).toBe(1234);
     expect(s.has(V2_KEY)).toBe(false);
     expect(s.has(V2_BACKUP_KEY)).toBe(false);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V6_KEY));
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V7_KEY));
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
   });
 
   it('falls back to the v2 backup when the v2 main key is corrupted', () => {
@@ -154,7 +154,7 @@ const V3 = {
 describe('v3 migration (shape collection)', () => {
   it('keeps everything and collects the shapes of finished shape levels (old order)', () => {
     const d = migrateV3(V3);
-    expect(d.version).toBe(6);
+    expect(d.version).toBe(7);
     expect(d.progress).toMatchObject({ current: 70, unlocked: 70, perfect: [6, 9], masks: [6, 9, 66] });
     expect(d.progress.completed).toHaveLength(69);
     // 2 Shields and 1 Extra Heart are paid back
@@ -204,14 +204,14 @@ describe('v3 migration (shape collection)', () => {
     expect(sanitize({ version: 4, progress: { completed: [6, 9], shapes: [] } }).progress.shapes).toEqual([]);
   });
 
-  it('migrates on load from v3 or its backup, writes v6, then removes the old keys', () => {
+  it('migrates on load from v3 or its backup, writes v7, then removes the old keys', () => {
     const s = memoryStorage({ [V3_KEY]: '{broken', [V3_BACKUP_KEY]: JSON.stringify(V3), [V2_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v3');
     expect(res.data.wallet.coins).toBe(1020);
     expect(res.data.progress.shapes).toContain('heart');
     for (const k of [V3_KEY, V3_BACKUP_KEY, V2_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
   });
 
   it('keeps the v3 keys when the v6 write fails', () => {
@@ -251,7 +251,7 @@ const V4 = {
 describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
   it('keeps progress, coins, diamonds, hints, items, shapes and claims; adds a fresh daily record', () => {
     const d = migrateV4(V4);
-    expect(d.version).toBe(6);
+    expect(d.version).toBe(7);
     expect(d.progress).toMatchObject({ current: 120, unlocked: 120, perfect: [3, 6, 9], masks: [6, 9, 12] });
     expect(d.progress.completed).toHaveLength(119);
     expect(d.progress.shapes).toEqual(['heart', 'cat', 'letterB']);
@@ -285,13 +285,13 @@ describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
     expect(s['big-spender'].claimed).toBe(true);
   });
 
-  it('migrates on load from v4 or its backup, writes v6, then removes the v4 keys', () => {
+  it('migrates on load from v4 or its backup, writes v7, then removes the v4 keys', () => {
     const s = memoryStorage({ [V4_KEY]: '{broken', [V4_BACKUP_KEY]: JSON.stringify(V4) });
     const res = readSave(s);
     expect(res.source).toBe('v4');
     expect(res.data.wallet.diamonds).toBe(35);
     for (const k of [V4_KEY, V4_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
   });
 
   it('keeps the v4 keys when the v6 write fails', () => {
@@ -329,7 +329,7 @@ const V5 = {
 describe('v5 to v6 migration (boosters removed)', () => {
   it('pays back 60 coins per Shield and 1 diamond per Extra Heart, keeps everything else', () => {
     const d = migrateV5(V5);
-    expect(d.version).toBe(6);
+    expect(d.version).toBe(7);
     expect(d.wallet).toEqual({ coins: 500 + 240, diamonds: 10 + 3, hints: 6 });
     expect(d.pendingRefund).toEqual({ coins: 240, diamonds: 3 });
     expect(d).not.toHaveProperty('boosters');
@@ -355,13 +355,13 @@ describe('v5 to v6 migration (boosters removed)', () => {
     expect(migrateV5({ ...V5, boosters: { shield: -3, extraHeart: 'x' } }).pendingRefund).toBeNull();
   });
 
-  it('migrates on load from v5 or its backup, writes v6, then removes the v5 keys', () => {
+  it('migrates on load from v5 or its backup, writes v7, then removes the v5 keys', () => {
     const s = memoryStorage({ [V5_KEY]: '{broken', [V5_BACKUP_KEY]: JSON.stringify(V5) });
     const res = readSave(s);
     expect(res.source).toBe('v5');
     expect(res.data.wallet.coins).toBe(740);
     for (const k of [V5_KEY, V5_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v6' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
   });
 
   it('keeps the v5 keys when the v6 write fails, so the refund is not lost', () => {

@@ -150,7 +150,7 @@ export function spend(wallet, price) {
 }
 
 /** Allowed sources for currency entering the wallet. 'ad' and 'purchase' are reserved for later. */
-export const CURRENCY_SOURCES = Object.freeze(['level', 'achievement', 'ad', 'purchase', 'gift', 'daily']);
+export const CURRENCY_SOURCES = Object.freeze(['level', 'achievement', 'ad', 'purchase', 'gift', 'daily', 'quest']);
 
 /**
  * Add currency. This is the single entry point for currency from outside the game loop

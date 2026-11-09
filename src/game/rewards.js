@@ -9,6 +9,7 @@ import { chapterLevels, chapterOf, grant, levelReward, spend } from './economy.j
 import { claimDaily, touchDaily } from './daily.js';
 import { MAX_DAILY_DAYS } from './trophies.js';
 import { recordWin, xpForWin } from './stats.js';
+import { questEvent } from './questState.js';
 import { state } from './state.js';
 
 /**
@@ -35,6 +36,7 @@ export function pay(price) {
   if (!res.ok) return { ok: false, missing: res.missing };
   setWallet(res.wallet);
   state.stats = { ...state.stats, coinsSpent: state.stats.coinsSpent + (price.coins || 0) };
+  questEvent({ spend: price.coins || 0 });
   return { ok: true };
 }
 
@@ -92,6 +94,17 @@ export function applyWin(n, difficulty, heartsLeft, maxHearts, arrows = 0) {
     firstClear: !wasCompleted,
     assisted: state.levelAssist.assisted,
     heartsLeft,
+  });
+  const hard = difficulty !== 'Normal';
+  questEvent({
+    wins: 1,
+    perfect: reward.perfect,
+    shapes: isShapeLevel(n),
+    hard,
+    superHard: hard && difficulty !== 'Hard',
+    clean: !state.levelAssist.assisted,
+    comeback: heartsLeft === 1,
+    newLevels: !wasCompleted,
   });
   return { reward, xp, before, newShape };
 }
@@ -195,6 +208,7 @@ export function buyCosmeticItem(cat, id, price) {
   setWallet(res.wallet);
   state.cosmetics = res.cos;
   state.stats = { ...state.stats, coinsSpent: state.stats.coinsSpent + spent };
+  questEvent({ spend: spent });
   return { ok: true };
 }
 
@@ -234,5 +248,6 @@ export function claimDailyReward(now = Date.now()) {
   );
   setWallet(grant(before, res.reward, 'daily'));
   state.hints += res.reward.hints || 0;
+  questEvent({ daily: 1 }, now);
   return { ...res, before };
 }

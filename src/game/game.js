@@ -30,6 +30,7 @@ import { applyWin, wallet } from './rewards.js';
 import { isTestPlay, testPlaySummary } from './unlock.js';
 import { newLevelAssist } from './assist.js';
 import { recordLoss } from './stats.js';
+import { questEvent } from './questState.js';
 import { state } from './state.js';
 
 /**
@@ -98,6 +99,7 @@ function escape(a, lvl) {
   if (state.pointerId === a.id) hidePointer();
   a.escaped = true;
   state.stats.arrowsCleared++;
+  questEvent({ arrows: 1 });
   clearArrow(state.occ, lvl.cols, a);
   state.remaining--;
   renderProgress();

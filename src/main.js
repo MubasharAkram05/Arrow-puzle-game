@@ -14,6 +14,7 @@ import { bindHome, goHome } from './ui/screens/home.js';
 import { bindLevels, openLevels } from './ui/screens/levels.js';
 import { bindProfile, openProfile } from './ui/screens/profileScreen.js';
 import { bindShop, openShop } from './ui/screens/shop/index.js';
+import { bindQuests, openQuests } from './ui/screens/quests.js';
 import { mountBottomNav } from './ui/components/bottomNav.js';
 import { startPlayClock } from './ui/screens/game.js';
 import { applyTheme, watchSystemTheme } from './ui/theme.js';
@@ -50,6 +51,7 @@ function boot() {
   bindLevels();
   bindShop();
   bindProfile();
+  bindQuests();
   bindSettings();
   bindGameOver();
   bindVictory();
@@ -60,6 +62,7 @@ function boot() {
   mountBottomNav({
     'screen-home': goHome,
     'screen-levels': () => openLevels(true),
+    'screen-quests': openQuests,
     'screen-shop': openShop,
     'screen-profile': openProfile,
   });
