@@ -2,6 +2,35 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.21.0] - 2026-11-09
+
+### Changed
+
+- Achievements list: every row now has a Claim button of the same size. Ready: blue with a glow pulse and a red dot, claims as before. Not ready: grey and flat with `aria-disabled="true"`; a tap shakes it and shows what is left (e.g. "Finish 5 more levels first"). Completed groups: a green "Claimed" pill with a check.
+- The progress count sits inside the progress bar ("4/5", centered), which is taller and readable over both the fill and the track.
+
+### Added
+
+- Tests for the three button states, their shared size and the not-ready toast text for every achievement group.
+
+## [3.20.0] - 2026-11-09
+
+### Changed
+
+- Levels: from level 4, two plain rectangle boards then one shape board, repeating (4, 5 plain, 6 shape, 7, 8 plain, 9 shape...). Plain boards keep every floor and the snake and direction rules: they hold as many usable cells as a shape board, start the fill from two far-apart free arrows, and drop boards far over the direction targets early. The Levels page shows shapes on shape levels and the level state on plain ones; Shape Solver counts shape levels only (saved counts unchanged).
+- Shape order: shape levels come in slots of four, repeating: a letter, another shape, a number, another shape. Letters go strictly A to Z, then A again (level 6 is A, Z is level 306); numbers strictly 1 to 9, then 0, then 1 again (1 is level 12, 0 is level 120). The other slots show every other shape once per cycle, never within half a cycle, and never the same category twice in a row.
+- Fully zoomed out always shows the whole board (every arrow, all four edges) with a margin, at any screen size: cells no longer have a 6px minimum, which cut big boards off at the sides on phones (e.g. Plane, Plane Side). Arrowheads stay inside their cell. Max zoom is 20x so dense boards still reach a fingertip-wide cell; panning reaches every edge.
+- Zooming is pinch only: double tap is gone, and the zoom guide just says "Pinch to zoom".
+- Settings keeps sound, vibration and theme. "Show zoom tips again" and "Reset progress" are removed (the reset function stays for tests); Credits moved to a quiet link at the bottom of the Profile tab (the icon licenses need it in the app).
+
+### Added
+
+- Tests: every level of the first shape cycle (and later ones) fits the board area at 360-1024px; letters A-Z and numbers 1-9, 0 in their slots for two full alphabet cycles; no category back to back; the plain/shape pattern; Settings and the Credits link.
+
+### Known gaps
+
+- Expert direction mix: the tested Expert levels average 13.8% same-way and 9.6% queue moves, but only 3 of 8 meet both targets on their own; the test allows 15% / 11% (targets stay 15% / 10% in config).
+
 ## [3.19.0] - 2026-11-06
 
 ### Changed

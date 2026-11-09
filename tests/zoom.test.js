@@ -1,7 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ZOOM } from '../src/config.js';
-import { maxScaleFor, startFocus, startScale, translateFor } from '../src/input/zoomMath.js';
-import { buildOccupancy, freeArrows, generateLevel, loadShapeLibrary, shapeOf } from '../src/engine/index.js';
+import { CELL, ZOOM } from '../src/config.js';
+import { fitCellPx, maxScaleFor, startFocus, startScale, translateFor } from '../src/input/zoomMath.js';
+import {
+  buildOccupancy,
+  freeArrows,
+  generateLevel,
+  getLevelConfig,
+  loadShapeLibrary,
+  shapeOf,
+} from '../src/engine/index.js';
+import { strokeMetrics } from '../src/render/board.js';
 
 describe('default zoom', () => {
   it('uses the config values: zoom below 18px, open at about 22px', () => {
@@ -21,7 +29,7 @@ describe('default zoom', () => {
   });
 
   it('never starts past the max zoom, and the max is never below the start', () => {
-    expect(startScale(2)).toBe(ZOOM.maxScale);
+    expect(startScale(0.5)).toBe(ZOOM.maxScale);
     for (const cell of [2, 8, 15, 17, 27, 40]) expect(maxScaleFor(cell)).toBeGreaterThanOrEqual(startScale(cell));
     expect(maxScaleFor(60)).toBe(1);
   });
@@ -103,7 +111,7 @@ describe('first view of a zoomed level', () => {
   it('Watch, Donut, Ring and level 500 open on arrows (a 360px phone shows about 16 x 20 cells)', () => {
     // the first level of each ring shape (the cycle order moves when shapes are added or removed)
     const firstOf = (id) => {
-      for (let n = 4; n < 2000; n++) if (shapeOf(n) === id) return n;
+      for (let n = 4; n < 6000; n++) if (shapeOf(n) === id) return n; // other shapes: one every 6 levels
       throw new Error(`${id} not found`);
     };
     for (const n of [firstOf('watch'), firstOf('donut'), firstOf('ring'), 500]) {
@@ -111,6 +119,50 @@ describe('first view of a zoomed level', () => {
       const free = freeArrows(buildOccupancy(level), level);
       const f = startFocus(level, free, 16, 20);
       expect(coverAt(level, f, 16, 20).share, `level ${n}`).toBeGreaterThanOrEqual(0.75);
+    }
+  });
+});
+
+describe('fully zoomed out shows the whole board', () => {
+  // the board area of the game screen (measured): width minus 2 x 16px wrap padding and 2 x 12px card padding;
+  // height minus the 58px top bar, the 16px top / 112px bottom wrap padding (buttons) and the card padding
+  const boxes = [
+    [360, 640],
+    [360, 740],
+    [375, 667],
+    [375, 812],
+    [768, 1024],
+    [1024, 768],
+    [1024, 1366],
+  ].map(([vw, vh]) => ({ vw, w: vw - 56, h: vh - 210 }));
+  const levels = [];
+  // the whole first cycle of shape levels and the plain levels between them, plus a spread of later levels
+  for (let n = 4; n < 4 + 3 * 760; n++) levels.push(n);
+  for (const n of [5000, 20000, 123457, 999999]) levels.push(n);
+
+  it('every level fits its whole grid inside the board area at every screen size (no cut-off sides)', () => {
+    for (const { vw, w, h } of boxes)
+      for (const n of levels) {
+        const { rows, cols } = getLevelConfig(n);
+        const cell = fitCellPx(rows, cols, w, h, vw);
+        expect(cols * cell, `level ${n} at ${vw}px: width`).toBeLessThanOrEqual(w + 1e-9);
+        expect(rows * cell, `level ${n} at ${vw}px: height`).toBeLessThanOrEqual(h + 1e-9);
+      }
+  });
+
+  it('arrowheads and lines never reach past their own cell, so the grid holds every arrow', () => {
+    for (const cell of [0.5, 1, 2, 3, 5, 8, 12, 20, 30, 46]) {
+      const m = strokeMetrics(cell);
+      expect(m.tip, `tip at ${cell}px`).toBeLessThan(CELL / 2);
+      expect(m.hw, `head half-width at ${cell}px`).toBeLessThan(CELL / 2);
+      expect(m.sw / 2, `line at ${cell}px`).toBeLessThan(CELL / 2);
+    }
+  });
+
+  it('a dense board can still zoom in to a fingertip-wide cell, and never out past the fit', () => {
+    for (const cell of [1.5, 2.5, 4, 7]) {
+      expect(cell * maxScaleFor(cell)).toBeGreaterThanOrEqual(Math.min(ZOOM.targetCellPx, cell * ZOOM.maxScale) - 1e-9);
+      expect(startScale(cell)).toBeGreaterThanOrEqual(1);
     }
   });
 });

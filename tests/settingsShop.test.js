@@ -36,10 +36,24 @@ describe('Settings', () => {
     expect(settings).not.toMatch(/More in the Shop/);
   });
 
-  it('keeps sound, vibration, theme, zoom tips, credits and reset', () => {
-    for (const id of ['sw-sound', 'sw-vibration', 'theme-seg', 'btn-zoom-tips', 'btn-credits', 'btn-reset'])
-      expect(settings, id).toContain(`id="${id}"`);
+  it('keeps sound, vibration and theme only', () => {
+    for (const id of ['sw-sound', 'sw-vibration', 'theme-seg']) expect(settings, id).toContain(`id="${id}"`);
     for (const opt of ['light', 'dark', 'auto']) expect(settings).toContain(`data-theme-opt="${opt}"`);
+  });
+
+  it('has no zoom tips, credits or reset buttons; the reset dialog is gone', () => {
+    for (const id of ['btn-zoom-tips', 'btn-credits', 'btn-reset']) expect(settings, id).not.toContain(`id="${id}"`);
+    expect(settings).not.toMatch(/Show zoom tips again|Reset progress/);
+    expect(html).not.toContain('id="modal-confirm"');
+    expect(html).not.toContain('btn-confirm-reset');
+  });
+
+  it('Credits stays in the app: a quiet link at the bottom of the Profile tab opens it', () => {
+    const profile = readFileSync(new URL('../src/ui/screens/profileScreen.js', import.meta.url), 'utf8');
+    expect(profile).toMatch(
+      /achievementsSkeleton\(\)\}\s*<button class="credits-link" id="btn-credits">Credits<\/button>/,
+    );
+    expect(html).toContain('id="modal-credits"');
   });
 });
 

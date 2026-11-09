@@ -1,5 +1,5 @@
 /**
- * Pinch to zoom and drag to pan the board. The board card gets a CSS transform
+ * Pinch to zoom and drag to pan the board (no double tap: pinching is the only way to zoom). The board card gets a CSS transform
  * (translate + scale), so taps, the hint hand and effects keep working through getBoundingClientRect.
  */
 import { ZOOM } from '../config.js';
@@ -13,7 +13,6 @@ const pointers = new Map(); // pointerId -> {x, y}
 let view = { s: 1, x: 0, y: 0 };
 let maxScale = 1;
 let gesture = null; // {kind: 'pinch'|'pan', ...start values}
-let lastEmptyTap = 0;
 
 let sharpTimer = 0;
 
@@ -211,23 +210,6 @@ export function releaseIsTap(e) {
   if (!pointers.size) gesture = null;
   if (!p || wasGesture) return false;
   return Math.hypot(e.clientX - p.x0, e.clientY - p.y0) <= ZOOM.dragPx;
-}
-
-/** Back to the whole board (double-tap on empty space). */
-function fit() {
-  view = { s: 1, x: 0, y: 0 };
-  apply();
-}
-
-/** A tap that hit no arrow: a quick second one resets the zoom. */
-export function emptyTap() {
-  const now = Date.now();
-  if (view.s > 1 && now - lastEmptyTap < ZOOM.doubleTapMs) {
-    fit();
-    lastEmptyTap = 0;
-    return;
-  }
-  lastEmptyTap = now;
 }
 
 /** Ctrl/trackpad wheel zoom for desktop browsers. */

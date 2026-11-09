@@ -140,12 +140,6 @@
             ></span>
           </div>
           <div class="zg-label">Pinch to zoom</div>
-          <div class="zg-tap">
-            <span class="zg-hand zg-one"
-              ><svg viewBox="0 0 64 64"><use href="#glove-art" /></svg
-            ></span>
-            <span class="zg-label small">Double-tap to see full board</span>
-          </div>
         </div>
       </div>
       <div class="fab-row">
@@ -192,19 +186,10 @@
             <svg class="icon"><use href="#i-auto" /></svg>Auto
           </button>
         </div>
-        <button class="link-btn" id="btn-zoom-tips">
-          <svg class="icon"><use href="#i-pinch" /></svg>Show zoom tips again
-        </button>
-        <button class="link-btn" id="btn-credits">
-          <svg class="icon"><use href="#i-image" /></svg>Credits
-        </button>
-        <button class="btn danger" id="btn-reset">
-          <svg class="icon"><use href="#i-trash" /></svg>Reset progress
-        </button>
       </div>
     </div>
 
-    <!-- Credits: open sources of the board shapes (filled from the shape library) -->
+    <!-- Credits: open sources of the board shapes (filled from the shape library), opened from the Profile tab -->
     <div class="modal" id="modal-credits">
       <div class="card">
         <div class="card-head">
@@ -218,7 +203,7 @@
         </p>
         <ul class="credits-list" id="credits-list"></ul>
         <button class="link-btn" id="btn-credits-back">
-          <svg class="icon"><use href="#i-back" /></svg>Back to settings
+          <svg class="icon"><use href="#i-back" /></svg>Back to profile
         </button>
       </div>
     </div>
@@ -248,19 +233,6 @@
           </button>
         </div>
         <div id="badge-sheet-body"></div>
-      </div>
-    </div>
-
-    <!-- Reset confirm -->
-    <div class="modal" id="modal-confirm">
-      <div class="card center">
-        <svg class="icon big-icon warn"><use href="#i-trash" /></svg>
-        <h3>Reset progress?</h3>
-        <p class="muted">This clears your levels, coins, diamonds, items and achievements. It can't be undone.</p>
-        <div class="stack">
-          <button class="btn danger-solid" id="btn-confirm-reset">Reset</button>
-          <button class="btn" id="btn-cancel-reset">Cancel</button>
-        </div>
       </div>
     </div>
 

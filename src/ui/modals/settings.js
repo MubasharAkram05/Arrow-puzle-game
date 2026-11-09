@@ -1,13 +1,9 @@
 import { state } from '../../game/state.js';
 import { vibrate } from '../../audio/haptics.js';
-import { resetProgress, saveProgress } from '../../storage/save.js';
+import { saveProgress } from '../../storage/save.js';
 import { $ } from '../dom.js';
-import { toast } from '../components/toast.js';
-import { resetZoomGuide } from '../zoomGuide.js';
-import { goHome } from '../screens/home.js';
 import { applyTheme } from '../theme.js';
-import { onModalBack, openModal } from './modal.js';
-import { openCredits } from './credits.js';
+import { openModal } from './modal.js';
 
 /** Sync every settings control with the state. */
 function renderSettings() {
@@ -31,7 +27,10 @@ function changed() {
   renderSettings();
 }
 
-/** Wire all settings controls and the reset confirmation. Styles and cosmetics are equipped in the Shop. */
+/**
+ * Wire the settings controls: sound, vibration and theme. Styles and cosmetics are equipped in the Shop; Credits
+ * is a link at the bottom of the Profile tab.
+ */
 export function bindSettings() {
   $('sw-sound').addEventListener('click', () => {
     state.sound = !state.sound;
@@ -48,19 +47,4 @@ export function bindSettings() {
     state.theme = b.dataset.themeOpt;
     changed();
   });
-  $('btn-zoom-tips').addEventListener('click', () => {
-    resetZoomGuide();
-    toast('Zoom tips will show again');
-  });
-  $('btn-credits').addEventListener('click', openCredits);
-  $('btn-credits-back').addEventListener('click', openSettings);
-  onModalBack('modal-credits', openSettings);
-  $('btn-reset').addEventListener('click', () => openModal('modal-confirm'));
-  $('btn-cancel-reset').addEventListener('click', openSettings);
-  $('btn-confirm-reset').addEventListener('click', () => {
-    resetProgress();
-    applyTheme();
-    goHome();
-  });
-  onModalBack('modal-confirm', openSettings);
 }

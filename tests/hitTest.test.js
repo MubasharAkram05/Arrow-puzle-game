@@ -8,7 +8,7 @@ vi.mock('../src/render/canvasBoard.js', () => ({
   startMoving: () => {},
   stopMoving: () => {},
 }));
-vi.mock('../src/input/zoom.js', () => ({ bindZoom: () => {}, emptyTap: () => {}, releaseIsTap: () => true }));
+vi.mock('../src/input/zoom.js', () => ({ bindZoom: () => {}, releaseIsTap: () => true }));
 
 const { arrowAt } = await import('../src/input/board-input.js');
 const { arrowGeometry, strokeMetrics } = await import('../src/render/board.js');

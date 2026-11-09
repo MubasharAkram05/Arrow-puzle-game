@@ -14,21 +14,23 @@ export const MAX_LEN = LEVELS.maxLen;
 export const MIN_FILL = LEVELS.minFill;
 
 /**
- * Is level n a shape level? Every level after the tutorial is. Works without the library.
+ * Is level n a shape level? From level 4: two plain boards, then one shape (levels 6, 9, 12, ...). Works without
+ * the library.
  * @param {number} n
  * @returns {boolean}
  */
-export const isShapeLevel = (n) => n >= LEVELS.shapeFrom;
+export const isShapeLevel = (n) =>
+  n >= LEVELS.shapeFrom && (n - LEVELS.shapeFrom) % LEVELS.shapeEvery === LEVELS.shapeEvery - 1;
 
 /**
- * Board shape id of a level (null for the tutorial). Every cycle of (library size) levels shows each shape
- * once, in a seeded shuffle (see shapes/plan.js); later cycles get bigger boards. Needs the shape library.
+ * Board shape id of a level (null for the tutorial and plain levels). Every cycle of (library size) shape
+ * levels shows each shape once (see shapes/plan.js); later cycles get bigger boards. Needs the shape library.
  * @param {number} n
  * @returns {string|null}
  */
 export function shapeOf(n) {
   if (!isShapeLevel(n)) return null;
-  return shapeAt(shapeOrder(), n - LEVELS.shapeFrom);
+  return shapeAt(shapeOrder(), Math.floor((n - LEVELS.shapeFrom) / LEVELS.shapeEvery));
 }
 
 const sizeCache = new Map();
@@ -131,10 +133,12 @@ export function getLevelConfig(n, shape, grow = 0) {
   // Expert boards get boardGrow more cells on each side, but never past growUpTo (a board already
   // bigger than that keeps its own size)
   const grown = (side) => Math.max(side, Math.min(side + d.boardGrow, d.growUpTo));
-  // snake arrows are longer (fewer per board): boards hold boardScale x the cells, so the depth stays
+  // snake arrows are longer (fewer per board): boards hold boardScale x the cells, so the depth stays; plain
+  // boards (3.20.0) hold as many usable cells as a shape board of the level (shapeScale), so they are as hard
   const scale = d.arrowShape.boardScale || 1;
-  let rows = grown(Math.round(d.gridH * Math.sqrt(scale)));
-  let cols = grown(Math.round(d.gridW * Math.sqrt(scale)));
+  const plain = d.arrowShape.plainArea ?? d.shapeScale;
+  let rows = grown(Math.round(d.gridH * Math.sqrt(scale * plain)));
+  let cols = grown(Math.round(d.gridW * Math.sqrt(scale * plain)));
   // shape boards are square and grow until the shape holds shapeScale x the plain board's cells
   if (mask) cols = rows = grown(shapeSize(mask, d.gridW, Math.round(d.gridW * d.gridH * d.shapeScale * scale))) + grow;
   const goals = {
@@ -164,11 +168,9 @@ export function getLevelConfig(n, shape, grow = 0) {
       maxEdgeFreeRatio: 1,
     });
   // direction mix targets (3.19.0): no same-way queues. Up to the tier's dirPicks boards that meet every floor
-  // are tried for one under both targets (see generator.js). Every level is a shape board; plain boards
-  // (engine tests only) fill as one front across a rectangle and can't mix their directions this well
-  const dirGoals = mask
-    ? { maxSameDirBlock: d.arrowShape.maxSameDirBlock, maxQueueMoves: d.arrowShape.maxQueueMoves }
-    : null;
+  // are tried for one under both targets (see generator.js). Plain boards too (3.20.0): they start the fill
+  // from several free arrows (plainSeeds), so it doesn't sweep the board as one front
+  const dirGoals = { maxSameDirBlock: d.arrowShape.maxSameDirBlock, maxQueueMoves: d.arrowShape.maxQueueMoves };
   return {
     ...base,
     tier: d.tier,
@@ -199,9 +201,13 @@ export function getLevelConfig(n, shape, grow = 0) {
     arrowsMin: Math.floor(d.targetArrows * LEVELS.curve.minArrowsShare * SNAKE.arrowsShare),
     goals,
     dirGoals,
-    dirPicks: d.arrowShape.dirPicks,
+    dirPicks: (!mask && d.arrowShape.plainDirPicks) || d.arrowShape.dirPicks,
+    plainSeeds: SNAKE.plainSeeds,
+    seedFar: mask ? 0 : SNAKE.seedFar,
     floorFallback: d.floorFallback,
     ...LEVELS.curve.hardness,
+    // plain boards: less pull to build behind the latest arrows, so the two fill fronts both grow (fewer queues)
+    ...(mask ? {} : { roundBias: SNAKE.plainRoundBias }),
     // snake boards refill cut cells (fill.js), so a decoy cut may take a whole long tail
     deepen: { ...LEVELS.curve.hardness.deepen, maxCut: SNAKE.longMax },
   };

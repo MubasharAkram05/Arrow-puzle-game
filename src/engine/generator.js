@@ -6,6 +6,8 @@ import { analyzeLevel } from './difficulty.js';
 import { joinLongArrows } from './longArrows.js';
 import { bestHeads, createGrid } from './heads.js';
 import { carveCorridor, hardenBoard, repairBoard } from './hardBoard.js';
+import { buildOccupancy, rayArrows, rayBlocker } from './board.js';
+import { dirMetrics } from './dirMetrics.js';
 
 const MAX_ATTEMPTS = 500;
 
@@ -35,7 +37,7 @@ function shapeFor(cfg, rng, hide, deep, done = 0.5) {
  * @param {() => number} rng
  * @returns {object} level, or {rejected: true} when its first moves already miss the floors
  */
-export function buildLevel(cfg, rng) {
+export function buildLevel(cfg, rng, early = false) {
   const { rows, cols } = cfg;
   const usable = makeMask(cfg.mask, rows, cols);
   // hard plain boards: one short empty corridor from an edge, so the first free arrow sits inside
@@ -53,25 +55,33 @@ export function buildLevel(cfg, rng) {
     : cfg.deepen && !g.maxStartFreeShare
       ? 1
       : Math.max(g.maxStartFree, Math.ceil((g.maxStartFreeShare || 0) * (cfg.arrowsMin || 0)));
+  // plain boards (3.20.0): a few more free arrows while peeling start the fill in several places (a single
+  // front points every head the same way); joinLongArrows joins the extra ones into neighbours afterwards
+  const peelFree = cfg.deepen && !cfg.mask && cfg.plainSeeds ? Math.max(freeLimit, cfg.plainSeeds) : freeLimit;
   for (;;) {
-    const { any, deep } = bestHeads(grid, cfg, rng, startFree === 0 ? cfg.sidePenalty || 0 : 0);
+    const { any, deep, free } = bestHeads(grid, cfg, rng, startFree === 0 ? cfg.sidePenalty || 0 : 0);
     if (!any.length) break;
     // hard boards leave the last few pockets to neighbouring tails (or empty) instead of adding free
     // arrows there: no arrow's way out crosses a cell that is still free, so no arrow gets freed by it
     if (
       cfg.deepen &&
-      startFree >= freeLimit &&
+      startFree >= peelFree &&
       !deep.length &&
       grid.left <= (1 - (cfg.minFill ?? MIN_FILL)) * total * 0.5
     )
       break;
     // a head with nothing in front stays free at the start: once the tier's limit is used up,
     // only take one when nothing else can be placed
-    const top3 = startFree >= freeLimit && deep.length ? deep : any;
+    // plain boards: the second fill seed goes down right after the first, far from it (see plainSeeds)
+    const seedNow = peelFree > freeLimit && startFree > 0 && startFree < peelFree && free.length;
+    const top3 = seedNow ? free : startFree >= peelFree && deep.length ? deep : any;
     // pick at random among the best heads (only those close to the best one, when pickWindow is set)
     const cands = cfg.pickWindow === undefined ? top3 : top3.filter((k) => k.score <= top3[0].score + cfg.pickWindow);
     const pick = cands[Math.floor(rng() * cands.length)];
-    if (!pick.depth) startFree++;
+    if (!pick.depth) {
+      startFree++;
+      if (grid.seed < 0) grid.seed = pick.r * cols + pick.c;
+    }
     grid.round[arrows.length] = pick.depth ? pick.top + 1 : 1;
     if (grid.round[arrows.length] > grid.maxRound) grid.maxRound = grid.round[arrows.length];
     // a free arrow starts straight, so hideFreeMoves can pull its head in from the edge
@@ -92,6 +102,10 @@ export function buildLevel(cfg, rng) {
   }
   absorbLeftovers(grid, cfg, arrows);
   let joined = joinLongArrows({ rows, cols, arrows }, { ...cfg, freeLimit }, rng);
+  // direction mix (3.20.0): a board far over the direction targets right after peeling stays over them, so
+  // it is dropped before the costly hard-board passes (only while the caller allows it: `early`)
+  if (early && cfg.dirGoals && peeledDirExcess({ rows, cols, arrows: joined }, cfg.dirGoals) > EARLY_DIR_EXCESS)
+    return { rejected: true, early: true };
   if (cfg.deepen) {
     const board = { rows, cols, mask: cfg.mask ? usable : null, arrows: joined };
     if (!hardenBoard(board, cfg, rng, total)) return { rejected: true };
@@ -168,6 +182,17 @@ export function dirExcess(report, dirGoals) {
   return over(report.sameDirBlock, dirGoals.maxSameDirBlock) + over(report.queueMoves, dirGoals.maxQueueMoves);
 }
 
+/** How far over the direction targets (see dirExcess) a peeled board may be and still be finished. */
+const EARLY_DIR_EXCESS = 0.25;
+
+/** dirExcess of a board straight after peeling (its own blockers and queue moves, no full analysis). */
+function peeledDirExcess(board, dirGoals) {
+  const occ = buildOccupancy(board);
+  const deps = board.arrows.map((a) => rayArrows(occ, board, a));
+  const nearest = board.arrows.map((a) => rayBlocker(occ, board.rows, board.cols, a.path[0], a.dir)?.id ?? null);
+  return dirExcess(dirMetrics(board, deps, nearest), dirGoals);
+}
+
 /** The floors a floor fallback may relax, and which way each one is checked. */
 const RELAXABLE = { maxFreePerRound: 1, minDecoyRatio: -1, minLongestChain: -1 };
 const REPORT_KEY = { maxFreePerRound: 'freePerRound', minDecoyRatio: 'decoyRatio', minLongestChain: 'longestChain' };
@@ -221,9 +246,18 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
     level.attempt = attempt;
     return level;
   };
+  // boards finished (not dropped early) and early drops left: a level never builds much more than before
+  let built = 0;
+  // (plain boards only: shape boards rarely miss by much, and their attempts are the costly ones)
+  let earlyLeft = cfg.dirGoals && !cfg.mask ? Math.min(2, picks) : 0;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const rng = mulberry32(hashSeed(cfg.seed, attempt));
-    const level = buildLevel(cfg, rng);
+    const level = buildLevel(cfg, rng, earlyLeft > 0);
+    if (level.early) {
+      earlyLeft--;
+      continue;
+    }
+    built++;
     if (level.rejected || !meetsConstraints(level, cfg)) continue;
     let report = analyzeLevel(level);
     // a hard board just under a floor is repaired instead of thrown away
@@ -235,9 +269,9 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
       // wins, else the best of `picks` boards (closest to the direction targets, then deepest)
       if ((!aim || report.avgDepth >= aim) && !dirExcess(report, cfg.dirGoals)) return done(level, report, attempt);
       if (!pick || better(report, pick.report)) pick = { level, report, attempt };
-      // without a depth aim the extra boards stop at attempt `picks` (a level that needed many attempts for
-      // its floors pays nothing more for the direction targets)
-      if (++passed >= picks || (!aim && attempt + 1 >= picks)) return done(pick.level, pick.report, pick.attempt);
+      // without a depth aim the extra boards stop once `picks` boards are built (a level that needed many
+      // attempts for its floors pays nothing more for the direction targets)
+      if (++passed >= picks || (!aim && built >= picks)) return done(pick.level, pick.report, pick.attempt);
       continue;
     }
     if (relaxed && meetsGoals(report, relaxed)) {
@@ -248,11 +282,11 @@ export function generateFromConfig(cfg, maxAttempts = MAX_ATTEMPTS) {
         (missed.length === best.missed.length && report.freePerRound < best.report.freePerRound);
       if (better) best = { level, report, attempt, missed };
     }
-    // a board that met every floor is kept once `picks` attempts are done (failed attempts count too)
-    if (pick && !aim && attempt + 1 >= picks) return done(pick.level, pick.report, pick.attempt);
+    // a board that met every floor is kept once `picks` boards are built (failed ones count too)
+    if (pick && !aim && built >= picks) return done(pick.level, pick.report, pick.attempt);
     // a board that met every floor (only short of the aims above) beats one that missed a floor
-    if (pick && fb && attempt + 1 >= fb.after) return done(pick.level, pick.report, pick.attempt);
-    if (best && attempt + 1 >= fb.after) {
+    if (pick && fb && built >= Math.max(fb.after, picks)) return done(pick.level, pick.report, pick.attempt);
+    if (best && built >= fb.after) {
       best.level.relaxed = best.missed;
       return done(best.level, best.report, best.attempt);
     }

@@ -3,7 +3,7 @@ import { state } from '../game/state.js';
 import { tapArrow } from '../game/game.js';
 import { notePress, requestFrame, startMoving, stopMoving } from '../render/canvasBoard.js';
 import { $ } from '../ui/dom.js';
-import { bindZoom, emptyTap, releaseIsTap } from './zoom.js';
+import { bindZoom, releaseIsTap } from './zoom.js';
 
 /**
  * Squared distance from a point to a segment.
@@ -90,7 +90,7 @@ function unpress() {
 
 /**
  * Taps on the board. Feedback is instant: the arrow under the finger lights up on pointerdown and acts on
- * pointerup, with no wait for a double tap (double tap only zooms out on empty space). A release counts
+ * pointerup (there is no double tap: zooming is by pinch only, so nothing waits). A release counts
  * as a tap when the finger moved less than TAP.movePx and stayed under TAP.maxMs; anything else is a pan
  * or pinch. The next arrow can be tapped while the previous one is still sliding out.
  */
@@ -121,7 +121,6 @@ export function bindBoardInput() {
     unpress();
     if (!tap || state.locked || state.hearts <= 0) return;
     if (a && !a.escaped && !a.busy) tapArrow(a);
-    else if (!a) emptyTap();
   });
   wrap.addEventListener('pointercancel', unpress);
 }

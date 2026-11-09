@@ -1,6 +1,7 @@
 /**
  * Profile, in two tabs (profile/tabs.js). Profile: avatar, editable name, player level/XP, stats, (hidden)
- * shape collection and the Achievements list. Awards: the award badges and the monthly trophies.
+ * shape collection, the Achievements list and a quiet Credits link at the bottom. Awards: the award badges and
+ * the monthly trophies.
  */
 import { state } from '../../game/state.js';
 import { playerLevel, validateName } from '../../game/stats.js';
@@ -14,6 +15,7 @@ import { updateBottomNav } from '../components/bottomNav.js';
 import { icon } from '../components/icons.js';
 import { $ } from '../dom.js';
 import { openSettings } from '../modals/settings.js';
+import { bindCredits } from '../modals/credits.js';
 import { achievementsSkeleton, bindAchievements, renderAchievements } from './profile/achievementsList.js';
 import {
   awardsPageSkeleton,
@@ -49,7 +51,8 @@ function buildSkeleton() {
     <div class="avatar-picker" id="avatar-picker" hidden>${picker}</div>
     ${statsSkeleton()}
     ${SHOW_SHAPE_COLLECTION ? collectionSkeleton() : ''}
-    ${achievementsSkeleton()}`;
+    ${achievementsSkeleton()}
+    <button class="credits-link" id="btn-credits">Credits</button>`;
   $('profile-body').innerHTML = tabsSkeleton(profile, awardsPageSkeleton());
 }
 
@@ -171,5 +174,6 @@ export function bindProfile() {
     }
   });
   if (SHOW_SHAPE_COLLECTION) bindCollection();
+  bindCredits();
   onReturn('screen-profile', () => renderProfile());
 }

@@ -191,7 +191,8 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
   /** Start-free cap of a shape level: the level's cap + 12, or 14% of its arrows if that is more. */
   const freeCap = (n) => {
     const g = getLevelConfig(n).goals;
-    return Math.max(g.maxStartFree, Math.ceil(g.maxStartFreeShare * get(n).level.arrows.length));
+    // shape boards may start with more free arrows (their jagged edge); plain boards keep the level's cap
+    return Math.max(g.maxStartFree, Math.ceil((g.maxStartFreeShare || 0) * get(n).level.arrows.length));
   };
 
   /** Mean of a metric over levels in a range (step to keep it quick). */
@@ -205,7 +206,7 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
     const depth = mean(101, 500, 7, (x) => x.report.avgDepth);
     expect(depth).toBeGreaterThanOrEqual(45.8 * 1.4);
     expect(difficultyFor(101).minAvgDepth).toBeGreaterThanOrEqual(26 * 1.4);
-    // every level is a shape board: the start-free cap is the level's cap + 12 (see getLevelConfig)
+    // the start-free cap: the level's cap, wider on shape boards (see getLevelConfig)
     for (let n = 101; n <= 500; n += 7) expect(get(n).report.startFree).toBeLessThanOrEqual(freeCap(n));
   });
 
@@ -253,11 +254,15 @@ describe('harder Super Hard and Expert', { timeout: 60000 }, () => {
 });
 
 describe('shapes', () => {
-  it('every level after the tutorial is a shape (see tests/shapePlan.test.js for the order)', () => {
+  it('from level 4 two plain boards, then a shape (see tests/shapePlan.test.js for the order)', () => {
     expect([1, 2, 3].map(shapeOf)).toEqual([null, null, null]);
-    expect([4, 5, 6, 7, 8].every(isShapeLevel)).toBe(true);
-    const levels = Array.from({ length: 20 }, (_, i) => 4 + i);
-    expect(new Set(levels.map((n) => generateLevel(n).shape)).size).toBe(20);
+    expect([4, 5, 7, 8].some(isShapeLevel)).toBe(false);
+    expect([6, 9, 12].every(isShapeLevel)).toBe(true);
+    const levels = Array.from({ length: 30 }, (_, i) => 4 + i);
+    const shapes = levels.map((n) => generateLevel(n).shape);
+    expect(shapes.filter(Boolean)).toHaveLength(10);
+    expect(new Set(shapes.filter(Boolean)).size).toBe(10);
+    levels.forEach((n, i) => expect(!!shapes[i], `level ${n}`).toBe(isShapeLevel(n)));
   });
 
   it('the 20 original shapes are still in the game (same ids)', () => {
