@@ -59,12 +59,12 @@ export const REWARDS = Object.freeze({
   milestoneDiamonds: 1, // ...gives a diamond on its first clear
 });
 
-/** Prices. Each price is { coins } or { diamonds }. */
+/** Prices (3.22.0: hint 50 -> 90, pack 200 -> 350, refill 80 -> 150, continue 2 -> 3). */
 export const PRICES = Object.freeze({
-  hint: Object.freeze({ coins: 50 }),
-  hintPack: Object.freeze({ coins: 200, count: 5 }), // 5 hints for the price of 4
-  heartRefill: Object.freeze({ coins: 80 }),
-  continueGame: Object.freeze({ diamonds: 2 }),
+  hint: Object.freeze({ coins: 90 }),
+  hintPack: Object.freeze({ coins: 350, count: 5 }), // 5 hints for a bit less than 4
+  heartRefill: Object.freeze({ coins: 150 }),
+  continueGame: Object.freeze({ diamonds: 3 }),
 });
 /**
  * Achievements. A group with several steps shows only its next unclaimed step; each step pays once.
@@ -206,18 +206,22 @@ export const MAX_REFILLS_PER_LEVEL = 2;
 /** XP per level win and per heart left. */
 export const XP = Object.freeze({ perLevel: 10, perHeart: 5 });
 
-/** Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start. */
+/**
+ * Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start.
+ * 3.22.0 prices: coin items about x2 (400-900 coins), diamond items about x1.5 (4-15 diamonds). Items already
+ * owned stay owned (ownership is stored by id, never by price).
+ */
 export const SHOP_STYLES = Object.freeze([
   { id: 'classic', name: 'Classic', price: null },
-  { id: 'slate', name: 'Dark Slate', price: { coins: 300 } },
-  { id: 'olive', name: 'Olive', price: { coins: 300 } },
-  { id: 'mint', name: 'Soft Mint', price: { diamonds: 5 } },
+  { id: 'slate', name: 'Dark Slate', price: { coins: 600 } },
+  { id: 'olive', name: 'Olive', price: { coins: 600 } },
+  { id: 'mint', name: 'Soft Mint', price: { diamonds: 8 } },
 ]);
 export const SHOP_THEMES = Object.freeze([
   { id: 'blue', name: 'Ocean Blue', price: null, color: '#1877F2' },
-  { id: 'purple', name: 'Royal Purple', price: { coins: 400 }, color: '#7C4DFF' },
-  { id: 'teal', name: 'Lagoon Teal', price: { coins: 400 }, color: '#0E9F8E' },
-  { id: 'coral', name: 'Sunset Coral', price: { diamonds: 8 }, color: '#F0574A' },
+  { id: 'purple', name: 'Royal Purple', price: { coins: 800 }, color: '#7C4DFF' },
+  { id: 'teal', name: 'Lagoon Teal', price: { coins: 800 }, color: '#0E9F8E' },
+  { id: 'coral', name: 'Sunset Coral', price: { diamonds: 12 }, color: '#F0574A' },
 ]);
 
 /**
@@ -227,48 +231,48 @@ export const SHOP_THEMES = Object.freeze([
 export const COSMETICS = Object.freeze({
   effect: [
     { id: 'default', name: 'Classic Slide', price: null },
-    { id: 'spark', name: 'Spark Trail', price: { coins: 250 } },
-    { id: 'comet', name: 'Comet Glow', price: { coins: 400 } },
-    { id: 'burst', name: 'Burst', price: { diamonds: 3 } },
-    { id: 'rocket', name: 'Rocket Flame', price: { diamonds: 6 } },
+    { id: 'spark', name: 'Spark Trail', price: { coins: 500 } },
+    { id: 'comet', name: 'Comet Glow', price: { coins: 800 } },
+    { id: 'burst', name: 'Burst', price: { diamonds: 5 } },
+    { id: 'rocket', name: 'Rocket Flame', price: { diamonds: 9 } },
   ],
   board: [
     { id: 'plain', name: 'Plain', price: null },
-    { id: 'paper', name: 'Soft Paper', price: { coins: 200 } },
-    { id: 'sky', name: 'Gradient Sky', price: { coins: 300 } },
-    { id: 'chalk', name: 'Chalkboard', price: { diamonds: 4 } },
-    { id: 'stars', name: 'Night Stars', price: { diamonds: 6 } },
+    { id: 'paper', name: 'Soft Paper', price: { coins: 400 } },
+    { id: 'sky', name: 'Gradient Sky', price: { coins: 600 } },
+    { id: 'chalk', name: 'Chalkboard', price: { diamonds: 6 } },
+    { id: 'stars', name: 'Night Stars', price: { diamonds: 9 } },
   ],
   head: [
     { id: 'triangle', name: 'Triangle', price: null },
-    { id: 'chevron', name: 'Chevron', price: { coins: 200 } },
-    { id: 'round', name: 'Round', price: { coins: 250 } },
-    { id: 'feather', name: 'Feather', price: { diamonds: 3 } },
+    { id: 'chevron', name: 'Chevron', price: { coins: 400 } },
+    { id: 'round', name: 'Round', price: { coins: 500 } },
+    { id: 'feather', name: 'Feather', price: { diamonds: 5 } },
   ],
   confetti: [
     { id: 'classic', name: 'Classic', price: null },
-    { id: 'hearts', name: 'Hearts', price: { coins: 150 } },
-    { id: 'coins', name: 'Coins', price: { coins: 200 } },
-    { id: 'stars', name: 'Stars', price: { coins: 250 } },
+    { id: 'hearts', name: 'Hearts', price: { coins: 400 } },
+    { id: 'coins', name: 'Coins', price: { coins: 450 } },
+    { id: 'stars', name: 'Stars', price: { coins: 500 } },
   ],
   sound: [
     { id: 'soft', name: 'Soft', price: null },
-    { id: 'retro', name: 'Retro 8-bit', price: { coins: 300 } },
-    { id: 'nature', name: 'Nature', price: { diamonds: 3 } },
+    { id: 'retro', name: 'Retro 8-bit', price: { coins: 600 } },
+    { id: 'nature', name: 'Nature', price: { diamonds: 5 } },
   ],
   avatar: [
-    { id: 'p1', name: 'King', price: { diamonds: 2 } },
-    { id: 'p2', name: 'Cool Cat', price: { diamonds: 2 } },
-    { id: 'p3', name: 'Star Eyes', price: { diamonds: 2 } },
-    { id: 'p4', name: 'Astronaut', price: { diamonds: 2 } },
-    { id: 'p5', name: 'Wizard', price: { diamonds: 2 } },
-    { id: 'p6', name: 'Ninja', price: { diamonds: 2 } },
+    { id: 'p1', name: 'King', price: { diamonds: 4 } },
+    { id: 'p2', name: 'Cool Cat', price: { diamonds: 4 } },
+    { id: 'p3', name: 'Star Eyes', price: { diamonds: 4 } },
+    { id: 'p4', name: 'Astronaut', price: { diamonds: 4 } },
+    { id: 'p5', name: 'Wizard', price: { diamonds: 4 } },
+    { id: 'p6', name: 'Ninja', price: { diamonds: 4 } },
   ],
   frame: [
     { id: 'none', name: 'No Frame', price: null },
-    { id: 'silver', name: 'Silver', price: { coins: 500 }, achievement: 'perfectionist' },
+    { id: 'silver', name: 'Silver', price: { coins: 800 }, achievement: 'perfectionist' },
     { id: 'gold', name: 'Gold', price: { coins: 1000 }, achievement: 'chapter-master' },
-    { id: 'diamond', name: 'Diamond', price: { diamonds: 10 } },
+    { id: 'diamond', name: 'Diamond', price: { diamonds: 15 } },
   ],
 });
 

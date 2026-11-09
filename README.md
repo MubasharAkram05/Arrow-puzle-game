@@ -381,16 +381,18 @@ All numbers live in `src/config.js`.
 
 ### Spending
 
-| Item                                  | Price      |
-| ------------------------------------- | ---------- |
-| Hint (once free hints run out)        | 50 coins   |
-| 5-hint pack                           | 200 coins  |
-| Refill 1 heart (max 2 per level)      | 80 coins   |
-| Continue after game over, full hearts | 2 diamonds |
-| Arrow styles: Dark Slate, Olive       | 300 coins  |
-| Arrow style: Soft Mint                | 5 diamonds |
-| Themes: Royal Purple, Lagoon Teal     | 400 coins  |
-| Theme: Sunset Coral                   | 8 diamonds |
+Prices went up in 3.22.0 (coin items about x2, diamond items about x1.5). Items already owned stay owned.
+
+| Item                                  | Price       |
+| ------------------------------------- | ----------- |
+| Hint (once free hints run out)        | 90 coins    |
+| 5-hint pack                           | 350 coins   |
+| Refill 1 heart (max 2 per level)      | 150 coins   |
+| Continue after game over, full hearts | 3 diamonds  |
+| Arrow styles: Dark Slate, Olive       | 600 coins   |
+| Arrow style: Soft Mint                | 8 diamonds  |
+| Themes: Royal Purple, Lagoon Teal     | 800 coins   |
+| Theme: Sunset Coral                   | 12 diamonds |
 
 ### Hints
 
@@ -405,30 +407,30 @@ Each category has a free default. Owned items are equipped only in the Shop: eve
 | Category         | Item                             | Price           |
 | ---------------- | -------------------------------- | --------------- |
 | Escape effect    | Classic Slide (default)          | Free            |
-| Escape effect    | Spark Trail                      | 250 coins       |
-| Escape effect    | Comet Glow                       | 400 coins       |
-| Escape effect    | Burst                            | 3 diamonds      |
-| Escape effect    | Rocket Flame                     | 6 diamonds      |
+| Escape effect    | Spark Trail                      | 500 coins       |
+| Escape effect    | Comet Glow                       | 800 coins       |
+| Escape effect    | Burst                            | 5 diamonds      |
+| Escape effect    | Rocket Flame                     | 9 diamonds      |
 | Board background | Plain (default)                  | Free            |
-| Board background | Soft Paper                       | 200 coins       |
-| Board background | Gradient Sky                     | 300 coins       |
-| Board background | Chalkboard                       | 4 diamonds      |
-| Board background | Night Stars                      | 6 diamonds      |
+| Board background | Soft Paper                       | 400 coins       |
+| Board background | Gradient Sky                     | 600 coins       |
+| Board background | Chalkboard                       | 6 diamonds      |
+| Board background | Night Stars                      | 9 diamonds      |
 | Arrowhead        | Triangle (default)               | Free            |
-| Arrowhead        | Chevron                          | 200 coins       |
-| Arrowhead        | Round                            | 250 coins       |
-| Arrowhead        | Feather                          | 3 diamonds      |
+| Arrowhead        | Chevron                          | 400 coins       |
+| Arrowhead        | Round                            | 500 coins       |
+| Arrowhead        | Feather                          | 5 diamonds      |
 | Victory confetti | Classic (default)                | Free            |
-| Victory confetti | Hearts                           | 150 coins       |
-| Victory confetti | Coins                            | 200 coins       |
-| Victory confetti | Stars                            | 250 coins       |
+| Victory confetti | Hearts                           | 400 coins       |
+| Victory confetti | Coins                            | 450 coins       |
+| Victory confetti | Stars                            | 500 coins       |
 | Sound pack       | Soft (default)                   | Free            |
-| Sound pack       | Retro 8-bit                      | 300 coins       |
-| Sound pack       | Nature                           | 3 diamonds      |
-| Avatar           | 6 premium avatars                | 2 diamonds each |
-| Avatar frame     | Silver (free with Perfectionist) | 500 coins       |
+| Sound pack       | Retro 8-bit                      | 600 coins       |
+| Sound pack       | Nature                           | 5 diamonds      |
+| Avatar           | 6 premium avatars                | 4 diamonds each |
+| Avatar frame     | Silver (free with Perfectionist) | 800 coins       |
 | Avatar frame     | Gold (free with Chapter Master)  | 1000 coins      |
-| Avatar frame     | Diamond                          | 10 diamonds     |
+| Avatar frame     | Diamond                          | 15 diamonds     |
 
 Escape effects use transform, opacity and a small particle canvas, and are skipped with `prefers-reduced-motion`. Sound packs are generated with the Web Audio API (no audio files). Arrowhead shapes only change the drawing, not hit detection.
 

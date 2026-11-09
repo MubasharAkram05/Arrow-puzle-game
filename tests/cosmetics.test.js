@@ -25,12 +25,12 @@ describe('cosmetics (pure)', () => {
 
   it('buys with enough coins or diamonds, refuses without', () => {
     const c = newCosmetics();
-    const ok = buyCosmetic({ coins: 300, diamonds: 0 }, c, 'effect', 'spark');
+    const ok = buyCosmetic({ coins: 550, diamonds: 0 }, c, 'effect', 'spark');
     expect(ok.ok).toBe(true);
     expect(ok.wallet).toEqual({ coins: 50, diamonds: 0 });
     expect(isOwned(ok.cos, 'effect', 'spark')).toBe(true);
     const no = buyCosmetic({ coins: 0, diamonds: 2 }, c, 'board', 'chalk');
-    expect(no).toMatchObject({ ok: false, reason: 'funds', missing: { coins: 0, diamonds: 2 } });
+    expect(no).toMatchObject({ ok: false, reason: 'funds', missing: { coins: 0, diamonds: 4 } });
     expect(buyCosmetic({ coins: 999, diamonds: 9 }, ok.cos, 'effect', 'spark').reason).toBe('owned');
     expect(buyCosmetic({ coins: 999, diamonds: 9 }, c, 'effect', 'laser').reason).toBe('unknown');
   });
@@ -70,7 +70,7 @@ describe('cosmetics in the game state', () => {
   it('tracks coins spent on cosmetics', () => {
     state.coins = 500;
     expect(buyCosmeticItem('confetti', 'hearts').ok).toBe(true);
-    expect(state.stats.coinsSpent).toBe(150);
+    expect(state.stats.coinsSpent).toBe(400);
     expect(buyCosmeticItem('frame', 'diamond').ok).toBe(false);
   });
 });
