@@ -2,7 +2,7 @@
 
 A "Tap Away Arrows" style puzzle game. Tap an arrow: if nothing is in front of its head it slides out of the board, otherwise it bumps and you lose a heart. Clear every arrow to win.
 
-The game was called Arrow Escape until 3.24.0. The Android app id (`com.arrowescape.game`) and the save keys (`arrowEscape:*`) keep the old name on purpose: changing them would break app updates and lose players' saves.
+The game was called Arrow Escape until 3.24.0. The package ID is `com.sussal.arrowexpert` (`capacitor.config.json`). The save keys (`arrowEscape:*`) keep the old name on purpose: changing them would lose players' saves.
 
 Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is packaged for Android with Capacitor.
 
@@ -22,18 +22,31 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Light, dark and auto theme, 6 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
-## Brand images
+## Brand images and store assets
 
-`brand-images/` holds the app art (made with an image AI):
+`brand-images/` holds the source art (made with an image AI). It is processed, never redrawn:
 
-| File                  | What                                                                                  | Size      |
-| --------------------- | ------------------------------------------------------------------------------------- | --------- |
-| `icon-full.png`       | full square icon (logo on the blue gradient)                                          | 1254x1254 |
-| `icon-foreground.png` | the logo on a transparent background (adaptive icon)                                  | 1254x1254 |
-| `icon-background.png` | the blue gradient only (adaptive icon)                                                | 1254x1254 |
-| `icon-mono.png`       | black logo silhouette on transparent (themed icon)                                    | 1254x1254 |
-| `splash-light.png`    | splash for light mode (blue)                                                          | 1024x1536 |
-| `splash-dark.png`     | splash for dark mode (navy), made by `scripts/make-splash-dark.py` from the light one | 1024x1536 |
+| Source                | What                                         | Used for                                                                            |
+| --------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `icon-full.png`       | full square icon (logo on the blue gradient) | Play Store icon, web icons, favicon, apple-touch-icon, Home logo                    |
+| `icon-foreground.png` | the logo on a transparent background         | adaptive icon foreground, Android 12+ splash icon, maskable icon                    |
+| `icon-background.png` | the blue gradient only                       | adaptive icon background, maskable background                                       |
+| `icon-mono.png`       | black logo silhouette on transparent         | adaptive monochrome (themed) icon                                                   |
+| `splash-light.png`    | splash for light mode (blue)                 | splash screens; the dark one (deep navy #0B1020 to dark royal blue) is made from it |
+
+- `npm run assets` (`scripts/assets.py`, needs Python 3 with Pillow and numpy) writes every size:
+  - the Play Store icon and the Android `res/` files (adaptive icons, launcher icons, Android 12+ splash icon and colours, legacy splash images) in `store-assets/`
+  - the web icons, favicon and manifest icons in `public/`
+  - `store-assets/README.md`, a table of every file with its Play Store slot and a check
+- Clean-up: alpha noise and stray specks away from the art are removed, and transparent edges are resized premultiplied (no dark fringe). The colours were already strongly saturated, so they are not changed.
+- At 48 px the icon stays readable: the orange S-arrow and the white arrows are clear. The inner white loop gets busy, and the round adaptive version is a little smaller because of the 66 dp safe zone.
+- `npm run screenshots` (`scripts/store-screenshots.cjs`, Playwright) captures the store screenshots from the real game, each with a caption banner: 8 phone (1080 x 1920), 4 7-inch (1200 x 1920) and 4 10-inch (1600 x 2560). It turns `TEST_UNLOCK_ALL` off only while capturing, so no "TEST MODE" badge shows, then puts it back.
+- Store text: `store-assets/listing.md`.
+- Splash screens:
+  - **Web:** a quick loading screen (logo on the brand gradient, navy in dark mode) fades into Home in about 250 ms.
+  - **Android 12+:** the system splash shows the icon foreground on royal blue (light) or deep navy (dark).
+  - **Older Android:** `@capacitor/splash-screen` shows the full splash, light or dark. The app hides it once Home is ready (`src/ui/bootSplash.js`).
+- In-app: the Home logo and the Credits title use the app icon.
 
 ## Requirements
 

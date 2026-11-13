@@ -6,11 +6,24 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ### Changed
 
-- The game is now called Arrow Expert (page title, Home screen title, Capacitor app name, package name, README, credits). The Android app id `com.arrowescape.game` and the save keys `arrowEscape:*` stay as they are, so app updates and saves keep working.
+- The game is now called Arrow Expert: page title, web manifest, Home title, Capacitor app name, package name, README and credits. Package ID `com.sussal.arrowexpert`. The save keys `arrowEscape:*` stay, so saves keep loading.
+- Home logo and the Credits title use the new app icon.
 
 ### Added
 
-- Brand images in `brand-images/`: full icon, adaptive icon foreground and background, monochrome icon, and light and dark splash screens (the dark one made from the light one by `scripts/make-splash-dark.py`).
+- App icons made from the source art in `brand-images/`:
+  - Play Store icon (512 x 512)
+  - Android adaptive icon (foreground, background and monochrome, every density) and square and round launcher icons
+  - web icons (192, 512, maskable 512), favicon and apple-touch-icon
+- Splash screens:
+  - light (as provided) and dark (made from it: deep navy to dark royal blue)
+  - Android 12+ SplashScreen colours and icon
+  - `@capacitor/splash-screen` images for older Android
+  - a web loading screen that fades into Home in about 250 ms
+- `npm run assets` regenerates every size (Python with Pillow and numpy).
+- `npm run screenshots` captures 8 phone and 4 + 4 tablet store screenshots from the real game, with caption banners.
+- `store-assets/listing.md` (store text) and `store-assets/README.md` (every file, its slot and a check).
+- Tests for the name, package ID, manifest, icon sizes, splash setup and store text limits.
 
 ## [3.23.0] - 2026-11-09
 

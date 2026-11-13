@@ -115,3 +115,15 @@
 #modal-exit p {
   margin: 0 0 18px;
 }
+
+/* Credits title with the app icon (3.24.0) */
+.credits-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.credits-title img {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}

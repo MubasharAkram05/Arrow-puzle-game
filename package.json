@@ -19,11 +19,14 @@
     "format": "prettier --write . && eslint --fix .",
     "shapes:sources": "npm --prefix scripts/shape-sources ci",
     "shapes:build": "node scripts/build-shapes.mjs",
-    "shapes:sheet": "node scripts/shape-sheet.mjs"
+    "shapes:sheet": "node scripts/shape-sheet.mjs",
+    "assets": "python3 scripts/assets.py && prettier --write store-assets/README.md",
+    "screenshots": "node scripts/store-screenshots.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",
-    "@capacitor/core": "^8.5.3"
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/splash-screen": "^8.0.2"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.3",
