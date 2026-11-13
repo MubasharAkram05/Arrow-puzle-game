@@ -49,8 +49,9 @@ jobs:
           java-version: '21'
           cache: gradle
       - uses: android-actions/setup-android@v3
-      - name: Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+        with:
+          # the action's default list includes the old 'tools' package, which no longer exists
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - run: npm ci
 
       - name: What to build
