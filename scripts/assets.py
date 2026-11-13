@@ -246,11 +246,12 @@ def main():
         f'    <color name="splash_background">{BRAND_DARK}</color>\n</resources>\n',
     )
 
-    # @capacitor/splash-screen (Android 11 and older): drawable(-night)-(port|land)-<density>/splash.png
+    # @capacitor/splash-screen (Android 11 and older): drawable-(port|land)(-night)-<density>/splash.png
+    # (Android wants the qualifiers in this order: orientation, then night mode, then density)
     for d, (w, h) in PORT_SPLASH.items():
         for night, src in (('', light), ('-night', dark)):
-            out(os.path.join(RES, f'drawable{night}-port-{d}', 'splash.png'), fit_splash(src, w, h))
-            out(os.path.join(RES, f'drawable{night}-land-{d}', 'splash.png'), fit_splash(src, h, w))
+            out(os.path.join(RES, f'drawable-port{night}-{d}', 'splash.png'), fit_splash(src, w, h))
+            out(os.path.join(RES, f'drawable-land{night}-{d}', 'splash.png'), fit_splash(src, h, w))
     out(os.path.join(RES, 'drawable', 'splash.png'), fit_splash(light, 480, 800))
     out(os.path.join(RES, 'drawable-night', 'splash.png'), fit_splash(dark, 480, 800))
 

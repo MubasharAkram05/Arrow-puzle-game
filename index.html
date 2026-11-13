@@ -248,8 +248,27 @@
           Board shapes are silhouettes made from these open icon sets and fonts (filled, resized and trimmed for play).
         </p>
         <ul class="credits-list" id="credits-list"></ul>
+        <button class="link-btn privacy-link" id="btn-privacy">
+          <svg class="icon"><use href="#i-shield" /></svg>Privacy policy
+        </button>
         <button class="link-btn" id="btn-credits-back">
           <svg class="icon"><use href="#i-back" /></svg>Back to profile
+        </button>
+      </div>
+    </div>
+
+    <!-- Privacy policy (public/privacy.html, also served on the web at /privacy.html) -->
+    <div class="modal" id="modal-privacy">
+      <div class="card privacy-card">
+        <div class="card-head">
+          <h3>Privacy policy</h3>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <iframe class="privacy-frame" id="privacy-frame" title="Privacy policy"></iframe>
+        <button class="link-btn" id="btn-privacy-back">
+          <svg class="icon"><use href="#i-back" /></svg>Back to credits
         </button>
       </div>
     </div>

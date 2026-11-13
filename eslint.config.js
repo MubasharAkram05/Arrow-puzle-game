@@ -8,7 +8,8 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      globals: { ...globals.browser },
+      // __TEST_UNLOCK_ALL__ is replaced at build time (vite.config.js define)
+      globals: { ...globals.browser, __TEST_UNLOCK_ALL__: 'readonly' },
     },
     rules: {
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

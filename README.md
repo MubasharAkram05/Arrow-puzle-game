@@ -40,7 +40,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
   - `store-assets/README.md`, a table of every file with its Play Store slot and a check
 - Clean-up: alpha noise and stray specks away from the art are removed, and transparent edges are resized premultiplied (no dark fringe). The colours were already strongly saturated, so they are not changed.
 - At 48 px the icon stays readable: the orange S-arrow and the white arrows are clear. The inner white loop gets busy, and the round adaptive version is a little smaller because of the 66 dp safe zone.
-- `npm run screenshots` (`scripts/store-screenshots.cjs`, Playwright) captures the store screenshots from the real game, each with a caption banner: 8 phone (1080 x 1920), 4 7-inch (1200 x 1920) and 4 10-inch (1600 x 2560). It turns `TEST_UNLOCK_ALL` off only while capturing, so no "TEST MODE" badge shows, then puts it back.
+- `npm run screenshots` (`scripts/store-screenshots.cjs`, Playwright) captures the store screenshots from the real game, each with a caption banner: 8 phone (1080 x 1920), 4 7-inch (1200 x 1920) and 4 10-inch (1600 x 2560). Its dev server runs with `ARROW_TEST_UNLOCK=0`, so `TEST_UNLOCK_ALL` is off and no "TEST MODE" badge shows.
 - Store text: `store-assets/listing.md`.
 - Splash screens:
   - **Web:** a quick loading screen (logo on the brand gradient, navy in dark mode) fades into Home in about 250 ms.
@@ -591,7 +591,17 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Test mode
 
-`TEST_UNLOCK_ALL` in `src/config.js` opens every level on the Levels page for testing (no locks, no "Complete level X first"). Home shows a red **TEST MODE** badge while it is on. It never changes the save: a level that isn't really unlocked pays no coins, diamonds or XP when won, doesn't move the current level, and records no stats. Set it to `false` before a release and the normal lock state is back exactly as it was.
+`TEST_UNLOCK_ALL` in `src/config.js` opens every level on the Levels page for testing (no locks, no "Complete level X first"). Home shows a red **TEST MODE** badge while it is on. It never changes the save: a level that isn't really unlocked pays no coins, diamonds or XP when won, doesn't move the current level, and records no stats. It is set at build time (3.25.0, `scripts/build-flags.mjs`):
+
+| Build                                 | `TEST_UNLOCK_ALL`                  |
+| ------------------------------------- | ---------------------------------- |
+| dev server (`npm run dev`), tests     | on                                 |
+| Vercel preview deployments            | on                                 |
+| Vercel production (the live web game) | off                                |
+| `npm run build:release` (Android)     | always off: nothing can turn it on |
+| plain `npm run build`                 | off                                |
+
+`ARROW_TEST_UNLOCK=0` or `1` forces it off or on, except in release and Vercel production builds. Each build records the value in `dist/index.html` (`<meta name="arrow-build" content="test-unlock=...">`), and `tests/releaseFlag.test.js` builds in release mode and checks it is off.
 
 ## Saves
 
@@ -617,44 +627,41 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 On Android this uses `@capacitor/app`. In a browser it falls back to `history`/`popstate`.
 
-## Build the Android APK with Capacitor
+## Android app (Capacitor)
 
-Capacitor 8 is already in `package.json`, and `capacitor.config.json` points at `dist/`.
+The native project is in `android/`. It was created with `npx cap add android`, package ID `com.sussal.arrowexpert`.
 
-### Google Play target SDK
+| Setting            | Value                                                          |
+| ------------------ | -------------------------------------------------------------- |
+| `targetSdkVersion` | 36 (Android 16), `compileSdkVersion` 36, `minSdkVersion` 24    |
+| `versionName`      | `version` in `package.json`                                    |
+| `versionCode`      | `androidVersionCode` in `package.json` (raise by 1 per upload) |
+| Orientation        | portrait (Android 16 ignores it on screens over 600 dp)        |
+| Icons, splash      | from `npm run assets` (copies `store-assets/android/res`)      |
+| Build tools        | AGP 8.13, Gradle 8.14, Java 21                                 |
 
-Capacitor 8's Android template sets:
+- The screen stays on only during a level (Screen Wake Lock API, `src/ui/wakeLock.js`).
+- The Android back button works as in the web app (`@capacitor/app`, `src/input/back-button.js`).
+- Google Play needs target API 36 or higher (since 31 August 2026). Raise `targetSdkVersion` in `android/variables.gradle` when Google moves the requirement.
 
-| Setting             | Value                              |
-| ------------------- | ---------------------------------- |
-| `targetSdkVersion`  | 36 (Android 16)                    |
-| `compileSdkVersion` | 36                                 |
-| `minSdkVersion`     | 24 (Android 7.0)                   |
-| Build tools         | AGP 8.13.0, Gradle 8.14.3, Java 21 |
+**Release builds** come from the **android-release** GitHub Actions workflow:
 
-Google Play requires new apps and app updates to target API level 36 or higher since 31 August 2026, so the default meets it. The values live in `android/variables.gradle` after `npx cap add android`. Raise `targetSdkVersion` there when Google moves the requirement (usually every August).
+- It builds the web app in release mode, syncs Capacitor, and builds a signed AAB plus a debug APK.
+- Signing uses the upload key from GitHub Secrets. No keystore is ever committed.
+- Step-by-step guide: **[docs/RELEASE.md](docs/RELEASE.md)** (making the key, adding the secrets, running the workflow, the next version).
 
-```bash
-npm install
-npm run build
-npx cap add android        # first time only, creates android/
-npx cap sync android       # copy dist/ and plugins into the Android project
-npx cap open android       # opens Android Studio
-```
-
-In Android Studio: **Build > Build App Bundle(s) / APK(s) > Build APK(s)**. The debug APK lands in `android/app/build/outputs/apk/debug/`.
-
-Command line instead of Android Studio:
+Local debug build (needs the Android SDK):
 
 ```bash
-cd android
-./gradlew assembleDebug
+npm run build:release      # or: npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug    # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
-After any code change: `npm run build && npx cap sync android`, then rebuild.
+## Privacy policy
 
-For a Play Store release, create a signing key and use **Generate Signed Bundle / APK** in Android Studio.
+`public/privacy.html` is served at https://arrow-puzle-game.vercel.app/privacy.html (the URL for Google Play), and the app shows the same page from Credits > Privacy policy. It says what the app does today: no account, ads, purchases or analytics, and progress saved only on the device. Replace `CONTACT_EMAIL` with the real address before publishing, and update the page if any of that changes.
 
 ## CI
 
-`.github/workflows/ci.yml` runs `npm ci`, lint, test and build on Node 22 (from `.nvmrc`) for every push and pull request.
+`.github/workflows/ci.yml` runs `npm ci`, lint, test and build on Node 22 (from `.nvmrc`) for every push and pull request. `.github/workflows/android-release.yml` builds the Android app: by hand or on a `v*` tag (signed AAB and debug APK), and the debug APK on pull requests that touch `android/`.

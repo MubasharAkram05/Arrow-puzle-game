@@ -2,6 +2,28 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.25.0] - 2026-11-13
+
+### Added
+
+- **Android project** (`android/`, Capacitor):
+  - package ID `com.sussal.arrowexpert`, target SDK 36
+  - versionName from `package.json`, versionCode from `androidVersionCode` (1)
+  - portrait only
+  - the generated icons and splash, with the splash theme merged into `styles.xml`
+- **Workflow android-release:** run by hand or on `v*` tags.
+  - It builds the web app in release mode, syncs Capacitor, builds a release AAB signed with the upload key from GitHub Secrets, and builds a debug APK. Both are uploaded as artifacts.
+  - Pull requests that touch `android/` build the debug APK, to check the build.
+  - Guide: `docs/RELEASE.md`.
+- **Privacy policy** at `/privacy.html` (also in the app: Credits > Privacy policy). No account, ads, purchases or analytics, and progress saved only on the device. The contact email is a placeholder.
+- **Screen stays on** during a level (Screen Wake Lock API).
+
+### Changed
+
+- `TEST_UNLOCK_ALL` is set at build time: on in the dev server, tests and Vercel previews, and always off in release (`npm run build:release`) and Vercel production builds. The TEST MODE badge is hidden whenever it is off.
+- The store screenshots turn it off with `ARROW_TEST_UNLOCK=0` instead of editing `src/config.js`.
+- `*.jks` and `*.keystore` are ignored by git, and the `android/` folder is now committed.
+
 ## [3.24.0] - 2026-11-13
 
 ### Changed

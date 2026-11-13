@@ -27,9 +27,10 @@ export const HEAD_L_PX = 14;
 /**
  * Testing only: every level on the Levels page is playable. Progress is never changed by it
  * (wins on levels that aren't really unlocked pay nothing). Home shows a TEST MODE badge.
- * Set to false before release.
+ * Set at build time (3.25.0, scripts/build-flags.mjs): on in the dev server, tests and Vercel preview builds;
+ * always off in release (Android) and Vercel production builds.
  */
-export const TEST_UNLOCK_ALL = true;
+export const TEST_UNLOCK_ALL = typeof __TEST_UNLOCK_ALL__ === 'boolean' ? __TEST_UNLOCK_ALL__ : false;
 /**
  * Shape Collection on the Profile page and the "New shape collected" toast. Collected shapes are always saved,
  * so turning this back on shows the full collection.

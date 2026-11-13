@@ -4,7 +4,7 @@
   Android 12+ shows the system SplashScreen: the icon foreground (drawable/splash_icon) centred on
   @color/splash_background, which is royal blue #0250F7 in light mode and deep navy #0B1020 in dark mode
   (values/ and values-night/ splash_colors.xml). Older Android shows @drawable/splash through
-  @capacitor/splash-screen (drawable[-night]-port|land-<density>/splash.png).
+  @capacitor/splash-screen (drawable-port|land[-night]-<density>/splash.png).
   Needs implementation "androidx.core:core-splashscreen:1.0.1" (Capacitor's Android template includes it).
 -->
 <resources>

@@ -1,6 +1,7 @@
 {
   "name": "arrow-expert",
-  "version": "3.24.0",
+  "version": "3.25.0",
+  "androidVersionCode": 1,
   "private": true,
   "description": "Tap Away Arrows style puzzle game. Vanilla JS + Vite, packaged for Android with Capacitor.",
   "type": "module",
@@ -10,6 +11,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:release": "vite build --mode release",
     "preview": "vite preview",
     "test": "npm run test:unit && npm run test:timing",
     "test:unit": "vitest run --exclude tests/generator.test.js --exclude tests/shapeBoards.test.js --exclude tests/hitTest.test.js",

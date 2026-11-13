@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Arrow Expert</string>
+    <string name="title_activity_main">Arrow Expert</string>
+    <string name="package_name">com.sussal.arrowexpert</string>
+    <string name="custom_url_scheme">com.sussal.arrowexpert</string>
+</resources>
