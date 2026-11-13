@@ -1,8 +1,9 @@
 /**
  * Ads (3.26.0): Google AdMob on Android (test IDs unless RELEASE_ADS, see src/config.js ADS), simulated ads on
  * the dev server, none on the web. This module decides when ads may show; the rules live in policy.js.
- *  - rewarded: free hint, refill a heart, continue after game over, 2x coins; a reward only on the reward event,
- *    at most ADS.rewardedPerDay a day; buttons only while an ad is loaded
+ *  - rewarded: free hint, refill a heart, +1 heart after game over, 2x coins, and the Shop "Watch ad" rewards
+ *    (+1 diamond, +1 hint, +40 coins, each with its own daily limit in ADS.earn); a reward only on the reward
+ *    event, at most ADS.rewardedPerDay a day in all
  *  - interstitial: only when the player leaves a victory screen (policy.js interstitialDue)
  *  - banner: only on Home, Levels, Shop and Tasks, never with a popup open, in a slot reserved at startup
  * The per-device ad record (daily count, last interstitial, launches) is kept in localStorage.
@@ -14,6 +15,7 @@ import {
   adUnitIds,
   bannerAllowed,
   countRewarded,
+  earnOffer,
   interstitialDue,
   newAdRecord,
   noteInterstitial,
@@ -24,6 +26,7 @@ import {
   sanitizeAdRecord,
 } from './policy.js';
 import { admobProvider, noneProvider, simProvider } from './providers.js';
+import { adLog, setAdStatus } from './status.js';
 
 const KEY = 'arrowEscape:ads';
 let provider = noneProvider();
@@ -67,15 +70,18 @@ export async function initAds() {
   rec = noteLaunch(load());
   save();
   const ids = adUnitIds(ADS.ids, __ADS_REAL_ALLOWED__);
-  if (Capacitor.isNativePlatform() && ids.mode !== 'off') provider = admobProvider(ids, changed);
+  adLog(`init: native=${Capacitor.isNativePlatform()} ids=${ids.mode} app=${ids.appId || '-'}`);
+  if (Capacitor.isNativePlatform() && ids.mode !== 'off') provider = admobProvider(ids, changed, ADS.retry);
   else if (__ADS_SIMULATED__) provider = simProvider(changed);
+  else setAdStatus('provider', ids.mode === 'off' ? 'none (real IDs not filled in)' : 'none (web build)');
   if (provider.bannerSlot) {
     document.body.classList.add('ad-slot');
     document.documentElement.style.setProperty('--ad-slot', `${ADS.bannerHeight + ADS.bannerGap}px`);
   }
   try {
     await provider.init();
-  } catch {
+  } catch (e) {
+    adLog(`init failed, no ads this session: ${e && e.message ? e.message : e}`);
     provider = { ...noneProvider(), bannerSlot: provider.bannerSlot }; // the slot stays, so nothing moves
   }
   syncBanner();
@@ -88,13 +94,28 @@ export function rewardedAvailable() {
 }
 
 /**
+ * State of a "Watch ad" button with its own daily limit (ADS.earn): 'ready', 'noad' or 'limit', and x of y today.
+ * @param {'diamond'|'hint'|'coins'} kind
+ * @returns {{state: 'ready'|'noad'|'limit', used: number, cap: number}}
+ */
+export function earnState(kind) {
+  return earnOffer(rec, { now: Date.now(), kind, ready: !busy && provider.rewardedReady() }, ADS);
+}
+
+export const NO_AD_MSG = 'No ad right now, try again in a moment';
+export const LIMIT_MSG = 'Daily limit reached, come back tomorrow';
+
+/**
  * Show a rewarded ad. Resolves true only when the ad reported its reward; otherwise the player gets a friendly
  * message and nothing else.
+ * @param {'diamond'|'hint'|'coins'} [kind] a reward with its own daily limit (ADS.earn)
  * @returns {Promise<boolean>}
  */
-export async function watchRewardedAd() {
-  if (!rewardedAvailable()) {
-    toast('No ad available right now. Please try again later.');
+export async function watchRewardedAd(kind) {
+  const offer = earnOffer(rec, { now: Date.now(), kind, ready: !busy && provider.rewardedReady() }, ADS);
+  if (offer.state !== 'ready') {
+    toast(offer.state === 'limit' ? LIMIT_MSG : NO_AD_MSG);
+    if (offer.state === 'noad' && provider.retryNow) provider.retryNow();
     return false;
   }
   busy = true;
@@ -103,6 +124,7 @@ export async function watchRewardedAd() {
   provider.afterRewarded();
   busy = false;
   if (!res.rewarded) {
+    adLog(`rewarded${kind ? ` (${kind})` : ''}: no reward, ${res.reason}`);
     toast(
       res.reason === 'failed'
         ? "The ad couldn't play. No reward this time."
@@ -111,11 +133,17 @@ export async function watchRewardedAd() {
     changed();
     return false;
   }
-  rec = countRewarded(rec, Date.now());
+  rec = countRewarded(rec, Date.now(), kind);
+  adLog(`rewarded${kind ? ` (${kind})` : ''}: reward earned, ${rec.rewardedToday}/${ADS.rewardedPerDay} today`);
   rewardedThisLevel = true;
   save();
   changed();
   return true;
+}
+
+/** Try failed ad loads again now (Ad debug panel). */
+export function retryAdsNow() {
+  if (provider.retryNow) provider.retryNow();
 }
 
 /** A level started (the "rewarded ad during this level" mark is cleared). */

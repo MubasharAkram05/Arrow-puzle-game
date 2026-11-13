@@ -1,5 +1,6 @@
 /**
- * Hints tab: single hints and the hint pack, plus how many hints the player has.
+ * Hints tab: "Watch ad: +1 hint" first (the main way to get a hint), then single hints and the hint pack, plus how
+ * many hints the player has.
  */
 import { PRICES } from '../../../config.js';
 import { buyHints } from '../../../game/rewards.js';
@@ -7,6 +8,7 @@ import { state } from '../../../game/state.js';
 import { icon } from '../../components/icons.js';
 import { buyFlow } from './actions.js';
 import { card, section } from './cards.js';
+import { earnRow, onEarn } from './adEarn.js';
 
 /** @returns {string[]} keys for the tab's "New" dot (hints are never new) */
 export const keys = () => [];
@@ -35,12 +37,13 @@ export function render() {
       price: PRICES.hintPack,
     }),
   ];
-  return inventory() + section('Hints', hints);
+  return inventory() + `<h3 class="section-title">Free hint</h3>${earnRow('hint')}` + section('Buy hints', hints);
 }
 
 /** Handle a card tap in this tab. */
 export function onCard(el) {
   const { kind, id } = el.dataset;
+  if (kind === 'adearn') return onEarn(el);
   if (kind !== 'hint') return;
   const price = id === 'pack' ? PRICES.hintPack : PRICES.hint;
   const n = price.count || 1;

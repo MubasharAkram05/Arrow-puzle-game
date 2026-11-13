@@ -47,5 +47,8 @@ if grep -q "^testOnly" "$TMP/badging.txt"; then
 fi
 
 echo "== merged manifest (exported / testOnly)"
-"$BT/aapt2" dump xmltree --file AndroidManifest.xml "$APK" | python3 "$(dirname "$0")/check-apk-manifest.py"
+# EXPECT_ADMOB_APP_ID: the AdMob App ID the manifest must carry (Google's test App ID for debug APKs)
+META=()
+[ -n "${EXPECT_ADMOB_APP_ID:-}" ] && META+=("com.google.android.gms.ads.APPLICATION_ID=$EXPECT_ADMOB_APP_ID")
+"$BT/aapt2" dump xmltree --file AndroidManifest.xml "$APK" | python3 "$(dirname "$0")/check-apk-manifest.py" "${META[@]}"
 echo "== $APK: OK"

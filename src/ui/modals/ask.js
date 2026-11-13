@@ -4,7 +4,7 @@
  */
 import { canAfford, missingLabel, priceLabel, shortfall } from '../../game/economy.js';
 import { wallet } from '../../game/rewards.js';
-import { rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
+import { earnState, rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
 import { $ } from '../dom.js';
 import { closeModals, openModal } from './modal.js';
 
@@ -36,10 +36,11 @@ export function missingText(price) {
 
 /**
  * Open the dialog.
- * @param {{title: string, message: string, icon?: string, price?: object, blocked?: string, okLabel?: string, onOk: () => void, onCancel?: () => void, ad?: {label: string, onReward: () => void}}} opts
+ * @param {{title: string, message: string, icon?: string, price?: object, blocked?: string, okLabel?: string, onOk: () => void, onCancel?: () => void, ad?: {label: string, onReward: () => void, kind?: 'diamond'|'hint'|'coins', main?: boolean}}} opts
  *   blocked: reason the action is not possible right now (shown instead of the price check)
  *   ad: a "Watch ad" alternative (3.26.0), shown only while a rewarded ad is loaded; onReward runs only once the
- *   ad has reported its reward
+ *   ad has reported its reward. kind: counts toward that kind's daily limit (ADS.earn). main: the ad is the main
+ *   (first, filled) button and is always shown; with no ad or the limit reached a tap says so and the dialog stays
  */
 export function ask(opts) {
   pending = opts;
@@ -51,8 +52,12 @@ export function ask(opts) {
   $('ask-error').textContent = missing;
   $('btn-ask-ok').textContent = opts.okLabel || 'Confirm';
   $('btn-ask-ok').disabled = !!missing;
-  const ad = opts.ad && !opts.blocked && rewardedAvailable();
+  const main = !!(opts.ad && opts.ad.main && !opts.blocked);
+  const ad = main || (opts.ad && !opts.blocked && rewardedAvailable());
   $('btn-ask-ad').hidden = !ad;
+  $('btn-ask-ad').classList.toggle('primary', main);
+  $('btn-ask-ad').classList.toggle('ad-main', main);
+  $('btn-ask-ok').classList.toggle('primary', !main);
   if (ad) $('ask-ad-label').textContent = opts.ad.label;
   openModal('modal-ask');
 }
@@ -67,9 +72,11 @@ export function bindAsk() {
   });
   $('btn-ask-ad').addEventListener('click', async () => {
     const p = pending;
+    // no ad loaded yet, or the daily limit: say so and keep the dialog open
+    if (p && p.ad && p.ad.kind && earnState(p.ad.kind).state !== 'ready') return watchRewardedAd(p.ad.kind);
     pending = null;
     closeModals();
-    if (p && p.ad && (await watchRewardedAd())) p.ad.onReward();
+    if (p && p.ad && (await watchRewardedAd(p.ad.kind))) p.ad.onReward();
   });
   $('btn-ask-cancel').addEventListener('click', () => {
     const p = pending;

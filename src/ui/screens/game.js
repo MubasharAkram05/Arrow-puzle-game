@@ -1,4 +1,5 @@
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../../config.js';
+import { earnState } from '../../ads/index.js';
 import { restart, resumePlay } from '../../game/game.js';
 import { adHint, adRefillHeart, buyHints, refillHeart } from '../../game/rewards.js';
 import { updateTutorial, useHint } from '../../game/hints.js';
@@ -12,15 +13,16 @@ import { ask } from '../modals/ask.js';
 import { onReturn } from '../navigation.js';
 import { openLevels } from './levels.js';
 
-/** Hint button: use a free hint, or offer to buy one when none are left. */
+/** Hint button: use a free hint, or offer one for an ad (the main option) or coins when none are left. */
 function onHint() {
   if (state.locked || state.hintId !== -1) return;
   if (state.hints > 0) {
     useHint();
     return;
   }
+  const hintAds = earnState('hint');
   ask({
-    title: 'Buy a hint?',
+    title: 'Get a hint?',
     message: 'Highlights an arrow that can escape right now.',
     icon: 'bulb',
     price: PRICES.hint,
@@ -32,7 +34,9 @@ function onHint() {
       saveProgress();
     },
     ad: {
-      label: 'Watch ad: free hint',
+      label: `Watch ad: +1 hint (${hintAds.used}/${hintAds.cap} today)`,
+      kind: 'hint',
+      main: true,
       onReward: () => {
         adHint();
         useHint();

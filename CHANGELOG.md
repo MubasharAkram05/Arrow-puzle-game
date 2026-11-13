@@ -51,6 +51,9 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - The 3-diamond Game Over option now gives +1 heart instead of full hearts (`PRICES.gameOverHeart`, was `continueGame`).
 - Android debug APK: one fixed debug key (`android/app/debug.keystore`), so a new debug APK installs over the old one and keeps the progress. The release AAB still uses the upload key.
 - CI checks every debug APK (`scripts/verify-apk.sh`): zip, `apksigner` v2 signature and the expected debug certificate, `aapt2` badging, no testOnly, `android:exported` on every component with an intent-filter. It prints the APK's size and SHA-256, and a second job downloads the artifact again and compares it.
+- Shop "Watch ad" rewards: +1 diamond (5 a day, "x/5 today"), +1 hint (10 a day, also the main option in a level's hint dialog), +40 coins (10 a day, replaces "Coming soon"). Always visible; "No ad right now, try again in a moment" / "Daily limit reached, come back tomorrow". Overall rewarded cap 10 -> 30 a day. All numbers in `ADS.earn`.
+- AdMob fixes: a failed Google consent check (offline, or the test App ID's "publisher misconfiguration") no longer turns ads off; ads are then requested as non-personalised. Only a required consent that was not given blocks ads. Failed loads retry with backoff (5 s doubling up to 5 min).
+- Debug builds: hidden "Ad debug" panel (Settings, tap the version 7 times): SDK initialized, consent, and banner / interstitial / rewarded loading / loaded / failed with Google's error code and message. The same lines go to logcat with the tag `ArrowAds` (native ArrowLogPlugin). CI checks the debug APK's AdMob App ID is Google's test App ID.
 - Levels and difficulty are unchanged.
 
 ## [3.25.0] - 2026-11-13

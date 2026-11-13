@@ -211,3 +211,138 @@ body.ad-slot .toast {
     animation: none;
   }
 }
+
+/* Settings: version line (tap 7 times for Ad debug in debug builds) */
+.app-version {
+  margin: 14px 0 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ad debug panel (debug builds only) */
+.ad-debug {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.ad-debug dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+.ad-debug dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ad-debug dd[data-state='loaded'],
+.ad-debug dd[data-state='showing'] {
+  color: #16a34a;
+}
+.ad-debug dd[data-state='failed'],
+.ad-debug dd[data-state='blocked'] {
+  color: var(--error);
+}
+.ad-debug dd[data-state='loading'] {
+  color: #d97706;
+}
+.ad-debug-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+
+/* Shop "Watch ad" rows (3.26.0): +1 diamond, +1 hint, +40 coins; always visible */
+.earn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  transition:
+    transform 0.12s ease,
+    opacity 0.2s ease;
+}
+.earn-row:active {
+  transform: scale(0.98);
+}
+.earn-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--pill);
+}
+.earn-icon .cur-icon,
+.earn-icon .icon {
+  width: 26px;
+  height: 26px;
+}
+.earn-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.earn-text b {
+  font-size: 15px;
+}
+.earn-text small,
+.earn-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+.earn-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+.earn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd54a, #f5b400);
+  color: #3a2600;
+  font-size: 13px;
+  font-weight: 800;
+}
+.earn-pill .icon {
+  width: 16px;
+  height: 16px;
+}
+.earn-row[data-state='noad'] .earn-pill {
+  background: var(--pill);
+  color: var(--muted);
+}
+.earn-row[data-state='limit'] {
+  opacity: 0.6;
+}
+.earn-row[data-state='limit'] .earn-pill {
+  background: var(--pill);
+  color: var(--muted);
+}
+
+/* Ask dialog: a "Watch ad" that is the main option (the hint) comes first */
+#modal-ask .ad-main {
+  order: -1;
+}

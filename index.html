@@ -235,6 +235,22 @@
             <svg class="icon"><use href="#i-auto" /></svg>Auto
           </button>
         </div>
+        <p class="app-version" id="app-version">Version</p>
+      </div>
+    </div>
+
+    <!-- Ad debug (debug builds only): Settings > tap the version 7 times. Live AdMob status, src/ui/modals/adDebug.js -->
+    <div class="modal" id="modal-addebug">
+      <div class="card">
+        <div class="card-head">
+          <h3>Ad debug</h3>
+          <button class="icon-btn" data-close aria-label="Close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <dl class="ad-debug" id="ad-debug"></dl>
+        <button class="btn" id="btn-ad-retry">Retry failed loads now</button>
+        <p class="muted ad-debug-hint">Same lines in logcat: <code>adb logcat -s ArrowAds</code></p>
       </div>
     </div>
 

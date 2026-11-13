@@ -10,6 +10,7 @@ import { icon } from '../../components/icons.js';
 import { $ } from '../../dom.js';
 import { currentScreen, onReturn, openTab } from '../../navigation.js';
 import { onShopChange } from './actions.js';
+import { onAdsChange } from '../../../ads/index.js';
 import * as all from './allTab.js';
 import * as hints from './hintsTab.js';
 import { hasNew, markShownSeen } from './cards.js';
@@ -155,8 +156,12 @@ export function bindShop() {
     if (b) selectTab(b.dataset.tab);
   });
   $('shop-panel').addEventListener('click', (e) => {
-    const el = e.target.closest('.shop-card');
+    const el = e.target.closest('.shop-card, .earn-row');
     if (el) TABS.find((t) => t.id === active).mod.onCard(el, e);
+  });
+  // "Watch ad" rows show whether an ad is loaded and x/N today: redraw when that changes
+  onAdsChange(() => {
+    if (currentScreen() === 'screen-shop' && $('shop-panel').querySelector('.earn-row')) renderShop();
   });
   bindSwipe($('shop-panel'));
   onShopChange(() => renderShop());

@@ -113,7 +113,7 @@ describe('rewarded ads: a reward only on the reward event', () => {
 
 describe('daily cap', () => {
   it(`at most ${ADS.rewardedPerDay} rewarded ads a day, fresh the next local day`, () => {
-    expect(ADS.rewardedPerDay).toBe(10);
+    expect(ADS.rewardedPerDay).toBe(30);
     let rec = newAdRecord();
     expect(rewardedLeft(rec, NOW, 10)).toBe(10);
     for (let i = 0; i < 10; i++) rec = countRewarded(rec, NOW + i * MIN);

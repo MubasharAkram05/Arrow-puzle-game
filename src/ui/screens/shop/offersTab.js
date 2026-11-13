@@ -1,5 +1,5 @@
 /**
- * Offers tab: starter pack, free gift, weekly sale, coin exchange, "get more coins" placeholder.
+ * Offers tab: starter pack, free gift, weekly sale, "Watch ad: +1 diamond", coin exchange, "Watch ad: +40 coins".
  */
 import { OFFERS } from '../../../config.js';
 import {
@@ -17,6 +17,7 @@ import { toast } from '../../components/toast.js';
 import { renderNavDots } from '../../components/bottomNav.js';
 import { buyFlow, cosmeticTap, done } from './actions.js';
 import { card, section } from './cards.js';
+import { earnRow, onEarn } from './adEarn.js';
 
 const SALE_ICON = {
   styles: 'palette',
@@ -110,14 +111,16 @@ export function render() {
   return [
     section('Daily', [giftCard(), starterCard()].filter(Boolean)),
     section('Weekly Sale', [saleCard]),
+    `<h3 class="section-title">Free diamonds</h3>${earnRow('diamond')}`,
     section('Exchange', exchange),
-    `<h3 class="section-title">Get more coins</h3><div class="soon-card">${icon('coin')}<div><b>Coin packs and rewarded videos</b><small>Coming soon</small></div><span class="soon-tag">Soon</span></div>`,
+    `<h3 class="section-title">Get more coins</h3>${earnRow('coins')}`,
   ].join('');
 }
 
 /** Handle a card tap in this tab. */
 export function onCard(el) {
   const { kind, id } = el.dataset;
+  if (kind === 'adearn') return onEarn(el);
   if (kind === 'gift') {
     const before = state.coins;
     const res = claimFreeGift();

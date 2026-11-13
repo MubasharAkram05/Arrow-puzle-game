@@ -214,6 +214,18 @@ earn less.
    more reliable long term.
 4. AdMob checks it within about 24 hours (Apps > app-ads.txt shows the status).
 
+### Checking test ads on a phone (debug APK)
+
+- **Ad debug panel:** Settings, tap the version line ("Version 3.26.0") 7 times. It shows the SDK start, the
+  consent status, and for banner / interstitial / rewarded: loading, loaded or failed with Google's error code and
+  message, plus the next retry. "Retry failed loads now" tries again at once. Only in debug builds.
+- **Logcat:** with USB debugging on, `adb logcat -s ArrowAds` shows the same lines (for example
+  `consent NOT_REQUIRED canRequest=true npa=false`, `rewarded loaded`, `banner failed code=3 "No fill."`).
+  Google's own SDK messages: `adb logcat -s Ads`.
+- Common error codes: 0 internal error, 1 invalid request (wrong ad unit ID), 2 network error, 3 no fill (no ad
+  to show right now, normal now and then).
+- Test ads say "Test Ad". The banner shows only on Home, Levels, Shop and Tasks.
+
 ## Notes
 
 - **Release build:** the web app is built with `npm run build:release`. TEST_UNLOCK_ALL is always off

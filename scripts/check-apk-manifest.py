@@ -3,6 +3,8 @@ Check the compiled AndroidManifest of an APK (the output of `aapt2 dump xmltree 
 read from stdin). Android 12+ refuses to install an APK when:
   - an <activity>, <activity-alias>, <service> or <receiver> with an <intent-filter> has no android:exported
   - android:testOnly is true (only `adb install -t` installs it)
+Optional arguments NAME=VALUE require an <application> <meta-data> with that value, e.g.
+  com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713 (the debug APK's AdMob App ID)
 Prints every component and exits 1 on any problem.
 """
 import re
@@ -60,6 +62,17 @@ def main():
         print(f"  {n['tag']:<15} exported={exported or '-':<12} intent-filter={'yes' if has_filter else 'no ':<3} {name}")
         if has_filter and exported is None:
             problems.append(f"{n['tag']} {name} has an intent-filter but no android:exported")
+    metas = {
+        n["attrs"].get("android:name"): n["attrs"].get("android:value")
+        for n in nodes
+        if n["tag"] == "meta-data" and "android:value" in n["attrs"]
+    }
+    for arg in sys.argv[1:]:
+        name, _, want = arg.partition("=")
+        got = metas.get(name)
+        print(f"  meta-data {name} = {got}")
+        if got != want:
+            problems.append(f"meta-data {name} is {got!r}, expected {want!r}")
     if not any(n["tag"] == "application" for n in nodes):
         problems.append("no <application> found (not a valid manifest dump)")
     for p in problems:

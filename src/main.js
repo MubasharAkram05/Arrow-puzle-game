@@ -3,6 +3,7 @@ import { initBackButton } from './input/back-button.js';
 import { mountCurrencyBars } from './ui/components/currencyBar.js';
 import { mountIcons } from './ui/components/icons.js';
 import { bindAsk } from './ui/modals/ask.js';
+import { bindAdDebug } from './ui/modals/adDebug.js';
 import { bindBoardInput } from './input/board-input.js';
 import { loadSave } from './storage/save.js';
 import { bindGameOver } from './ui/modals/gameover.js';
@@ -55,6 +56,7 @@ function boot() {
   bindProfile();
   bindTasks();
   bindSettings();
+  bindAdDebug();
   bindGameOver();
   bindVictory();
   bindAsk();

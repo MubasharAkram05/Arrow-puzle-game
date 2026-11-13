@@ -441,7 +441,16 @@ export const BOOSTER_REFUND = Object.freeze({ shield: { coins: 60 }, extraHeart:
 export const RELEASE_ADS = ADS_IDS.releaseAds === true;
 export const ADS = Object.freeze({
   ids: ADS_IDS,
-  rewardedPerDay: 10, // rewarded ads a player can watch per local day
+  rewardedPerDay: 30, // rewarded ads a player can watch per local day (all kinds together)
+  // Shop "Watch ad" rewards (3.26.0): what one ad gives, and how many of each kind a day (inside rewardedPerDay).
+  // 'hint' also counts the free-hint ad in a level.
+  earn: Object.freeze({
+    diamond: Object.freeze({ amount: 1, perDay: 5 }),
+    hint: Object.freeze({ amount: 1, perDay: 10 }),
+    coins: Object.freeze({ amount: 40, perDay: 10 }),
+  }),
+  // a failed ad load is tried again after 5 s, 10 s, 20 s ... up to 5 minutes between tries
+  retry: Object.freeze({ baseMs: 5000, maxMs: 5 * 60 * 1000 }),
   interstitial: Object.freeze({
     fromLevel: 10, // never before this level
     everyLevels: 3, // at most once every 3 level wins

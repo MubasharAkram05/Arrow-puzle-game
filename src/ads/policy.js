@@ -30,6 +30,10 @@ const pick = (o) => Object.fromEntries(UNITS.map((k) => [k, o[k]]));
 export const newAdRecord = () => ({
   day: 0,
   rewardedToday: 0,
+  // per-kind counts for today (shop rewards, ADS.earn), reset with rewardedToday
+  earnDiamond: 0,
+  earnHint: 0,
+  earnCoins: 0,
   lastInterstitialAt: 0,
   winsSinceInterstitial: 0,
   launches: 0,
@@ -54,11 +58,77 @@ export function rewardedLeft(rec, now, cap) {
   return dayNumber(now) > rec.day ? cap : Math.max(0, cap - rec.rewardedToday);
 }
 
-/** Count one finished rewarded ad. */
-export function countRewarded(rec, now) {
+/** Record field for a reward kind's daily count. */
+const EARN_FIELD = { diamond: 'earnDiamond', hint: 'earnHint', coins: 'earnCoins' };
+
+/**
+ * Count one finished rewarded ad (and its kind, for the per-kind limits). A new local day starts every count again.
+ * @param {ReturnType<typeof newAdRecord>} rec
+ * @param {number} now
+ * @param {'diamond'|'hint'|'coins'} [kind] a kind with its own daily limit (ADS.earn)
+ */
+export function countRewarded(rec, now, kind) {
   const today = dayNumber(now);
-  if (today > rec.day) return { ...rec, day: today, rewardedToday: 1 };
-  return { ...rec, rewardedToday: rec.rewardedToday + 1 };
+  const fresh = today > rec.day;
+  const base = fresh ? { ...rec, day: today, rewardedToday: 0, earnDiamond: 0, earnHint: 0, earnCoins: 0 } : rec;
+  const out = { ...base, rewardedToday: base.rewardedToday + 1 };
+  if (kind && EARN_FIELD[kind]) out[EARN_FIELD[kind]] = base[EARN_FIELD[kind]] + 1;
+  return out;
+}
+
+/**
+ * Ads of one kind watched today (0 on a new day).
+ * @param {ReturnType<typeof newAdRecord>} rec
+ * @param {number} now
+ * @param {'diamond'|'hint'|'coins'} kind
+ */
+export function earnedToday(rec, now, kind) {
+  return dayNumber(now) > rec.day ? 0 : rec[EARN_FIELD[kind]] || 0;
+}
+
+/**
+ * What a "Watch ad" button for a reward kind should do right now.
+ *  'limit': this kind's daily limit, or the overall daily cap, is reached ("Daily limit reached")
+ *  'noad':  no ad is loaded yet ("No ad right now")
+ *  'ready': tap plays the ad
+ * @param {ReturnType<typeof newAdRecord>} rec
+ * @param {{now: number, kind?: 'diamond'|'hint'|'coins', ready: boolean}} o ready: an ad is loaded and not playing
+ * @param {{rewardedPerDay: number, earn: object}} cfg ADS
+ * @returns {{state: 'ready'|'noad'|'limit', used: number, cap: number}}
+ */
+export function earnOffer(rec, o, cfg) {
+  const cap = o.kind ? cfg.earn[o.kind].perDay : cfg.rewardedPerDay;
+  const used = o.kind
+    ? earnedToday(rec, o.now, o.kind)
+    : cfg.rewardedPerDay - rewardedLeft(rec, o.now, cfg.rewardedPerDay);
+  const overall = rewardedLeft(rec, o.now, cfg.rewardedPerDay);
+  const state = used >= cap || overall <= 0 ? 'limit' : o.ready ? 'ready' : 'noad';
+  return { state, used, cap };
+}
+
+/**
+ * Wait before trying a failed ad load again: base, 2x base, 4x base ... capped at maxMs.
+ * @param {number} attempt 1 for the first retry
+ * @param {{baseMs: number, maxMs: number}} cfg ADS.retry
+ * @returns {number} ms
+ */
+export function retryDelay(attempt, cfg) {
+  const n = Math.max(1, Math.floor(attempt));
+  return Math.min(cfg.maxMs, cfg.baseMs * 2 ** Math.min(n - 1, 20));
+}
+
+/**
+ * May ads be requested after Google UMP? Only a REQUIRED consent that was not given blocks them (EEA, UK). When
+ * the consent check itself fails (offline, or Google's test App ID, which UMP reports as "publisher
+ * misconfiguration"), ads are still requested, as non-personalised ads.
+ * @param {{status?: string, canRequestAds?: boolean}|null} info null when requestConsentInfo failed
+ * @returns {{canRequest: boolean, npa: boolean}}
+ */
+export function consentDecision(info) {
+  if (!info) return { canRequest: true, npa: true };
+  if (info.canRequestAds) return { canRequest: true, npa: false };
+  if (info.status === 'REQUIRED') return { canRequest: false, npa: false };
+  return { canRequest: true, npa: true }; // UNKNOWN without an answer: non-personalised ads only
 }
 
 /** The app started (interstitials never show in the first session). */
