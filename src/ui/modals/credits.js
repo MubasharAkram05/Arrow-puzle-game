@@ -13,7 +13,7 @@ const LICENSES = {
   'CC-BY-4.0': 'CC BY 4.0',
   'CC-BY-3.0': 'CC BY 3.0',
   'OFL-1.1': 'SIL Open Font License 1.1',
-  project: 'Made for Arrow Escape',
+  project: 'Made for Arrow Expert',
 };
 
 /** Escape text from the library before it goes into markup. */

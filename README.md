@@ -1,6 +1,8 @@
-# Arrow Escape
+# Arrow Expert
 
 A "Tap Away Arrows" style puzzle game. Tap an arrow: if nothing is in front of its head it slides out of the board, otherwise it bumps and you lose a heart. Clear every arrow to win.
+
+The game was called Arrow Escape until 3.24.0. The Android app id (`com.arrowescape.game`) and the save keys (`arrowEscape:*`) keep the old name on purpose: changing them would break app updates and lose players' saves.
 
 Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is packaged for Android with Capacitor.
 
@@ -19,6 +21,19 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and a "View achievements" link) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies, show-off only)
 - Light, dark and auto theme, 6 arrow styles, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
+
+## Brand images
+
+`brand-images/` holds the app art (made with an image AI):
+
+| File                  | What                                                                                  | Size      |
+| --------------------- | ------------------------------------------------------------------------------------- | --------- |
+| `icon-full.png`       | full square icon (logo on the blue gradient)                                          | 1254x1254 |
+| `icon-foreground.png` | the logo on a transparent background (adaptive icon)                                  | 1254x1254 |
+| `icon-background.png` | the blue gradient only (adaptive icon)                                                | 1254x1254 |
+| `icon-mono.png`       | black logo silhouette on transparent (themed icon)                                    | 1254x1254 |
+| `splash-light.png`    | splash for light mode (blue)                                                          | 1024x1536 |
+| `splash-dark.png`     | splash for dark mode (navy), made by `scripts/make-splash-dark.py` from the light one | 1024x1536 |
 
 ## Requirements
 

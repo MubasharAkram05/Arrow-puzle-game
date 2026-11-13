@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.24.0] - 2026-11-13
+
+### Changed
+
+- The game is now called Arrow Expert (page title, Home screen title, Capacitor app name, package name, README, credits). The Android app id `com.arrowescape.game` and the save keys `arrowEscape:*` stay as they are, so app updates and saves keep working.
+
+### Added
+
+- Brand images in `brand-images/`: full icon, adaptive icon foreground and background, monochrome icon, and light and dark splash screens (the dark one made from the light one by `scripts/make-splash-dark.py`).
+
 ## [3.23.0] - 2026-11-09
 
 ### Changed
