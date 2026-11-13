@@ -13,8 +13,7 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 - **Consent:** the Google UMP consent form shows where required (EEA, UK). Settings gets "Privacy options" when UMP requires it.
 - **Rewarded ads:** watch an ad for:
   - 1 free hint
-  - refill 1 heart
-  - Continue after Game Over (instead of 3 diamonds)
+  - refill 1 heart (tapping the hearts during play, or +1 heart on Game Over)
   - 2x coins on the victory screen
 
   The reward comes only on the ad's reward event; closing early or a failed ad gives nothing, with a friendly message. There are at most 10 a day. Ad buttons carry an ad icon and show only while an ad is loaded.
@@ -32,7 +31,15 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
   - Play Console "Contains ads", Advertising ID and Data safety
   - `app-ads.txt`
 - The privacy page shows the contact email as the link text (it showed `CONTACT_EMAIL`).
-- Coin and diamond prices, levels and difficulty are unchanged.
+- Out of Hearts popup, now three rows of the same height, each on one line at 375px:
+  1. "+1 heart" for 3 diamonds, with "Need X more diamonds" under it when short
+  2. "Watch ad: +1 heart": only while an ad is loaded and the daily cap allows it, and it counts toward the 2 refills per level
+  3. "Try Again"
+
+  Each heart continues the level. "Refill heart" for coins and "Continue (full hearts)" are gone from this popup; buying a heart with coins by tapping the hearts during a level is unchanged.
+
+- The 3-diamond Game Over option now gives +1 heart instead of full hearts (`PRICES.gameOverHeart`, was `continueGame`).
+- Levels and difficulty are unchanged.
 
 ## [3.25.0] - 2026-11-13
 

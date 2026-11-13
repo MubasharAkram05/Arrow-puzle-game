@@ -66,7 +66,8 @@ export const PRICES = Object.freeze({
   hint: Object.freeze({ coins: 90 }),
   hintPack: Object.freeze({ coins: 350, count: 5 }), // 5 hints for a bit less than 4
   heartRefill: Object.freeze({ coins: 150 }),
-  continueGame: Object.freeze({ diamonds: 3 }),
+  // Game Over: +1 heart and keep playing (3.26.0; it was "Continue with full hearts" before)
+  gameOverHeart: Object.freeze({ diamonds: 3 }),
 });
 /**
  * Achievements. A group with several steps shows only its next unclaimed step; each step pays once.

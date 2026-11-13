@@ -201,3 +201,17 @@ describe('banner', () => {
     );
   });
 });
+
+describe('Out of Hearts popup (3.26.0)', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const popup = html.slice(html.indexOf('id="modal-gameover"'), html.indexOf('<!-- Victory -->'));
+
+  it('three options in order: +1 heart for diamonds, watch ad for +1 heart, try again', () => {
+    const ids = [...popup.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toEqual(['btn-heart-gems', 'btn-heart-ad', 'btn-tryagain']);
+    expect(popup).toContain('+1 heart');
+    expect(popup).toContain('Watch ad: +1 heart');
+    expect(popup).not.toContain('Refill heart');
+    expect(popup).not.toContain('Continue');
+  });
+});

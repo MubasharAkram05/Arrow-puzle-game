@@ -78,7 +78,7 @@ describe('TEST_UNLOCK_ALL (game state)', () => {
     g.state.refillsUsed = 0;
     expect(g.rewards.skipLevel).toBeUndefined();
     g.rewards.refillHeart();
-    g.rewards.buyContinue();
+    g.rewards.buyGameOverHeart();
     g.rewards.buyHints({ coins: 50 });
     expect(g.state.progress.unlocked).toBe(4);
     expect(g.isPlayable(5, g.state.progress)).toBe(false);

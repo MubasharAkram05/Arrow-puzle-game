@@ -39,7 +39,7 @@ Earn coins and diamonds by playing, then unlock arrow styles, board backgrounds,
 Play your way
 Light and dark themes, pinch to zoom on big boards, hints when you are stuck, and full offline play.
 
-No in-app purchases: everything is earned by playing. The game is free and shows ads; you can also choose to watch a short ad for a hint, a heart, a continue or double coins.
+No in-app purchases: everything is earned by playing. The game is free and shows ads; you can also choose to watch a short ad for a hint, a heart or double coins.
 
 ## Category
 

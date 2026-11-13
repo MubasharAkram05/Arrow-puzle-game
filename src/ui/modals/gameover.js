@@ -1,8 +1,8 @@
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../../config.js';
 import { canAfford } from '../../game/economy.js';
 import { restart, resumePlay } from '../../game/game.js';
-import { rewardedAvailable, watchRewardedAd, onAdsChange } from '../../ads/index.js';
-import { adContinue, adRefillHeart, buyContinue, refillHeart, wallet } from '../../game/rewards.js';
+import { onAdsChange, rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
+import { adRefillHeart, buyGameOverHeart, wallet } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
 import { renderCurrency } from '../components/currencyBar.js';
 import { $ } from '../dom.js';
@@ -11,63 +11,42 @@ import { missingText, priceHTML } from './ask.js';
 import { closeModals, onModalBack, openModal } from './modal.js';
 
 /**
- * Enable a paid button or disable it with the reason shown under it.
- * @param {string} id button id
- * @param {string} noteId note element id
- * @param {object} price
- * @param {string} [blocked] reason that wins over the price check
+ * Out of Hearts (3.26.0): three choices, in this order.
+ *  1. "+1 heart" for diamonds (PRICES.gameOverHeart); disabled with "Need X more diamonds" when short
+ *  2. "Watch ad: +1 heart"; only while a rewarded ad is loaded and the daily cap allows it, and within the
+ *     per-level refill limit (it counts as a refill)
+ *  3. "Try Again"
+ * Each heart continues the level. Buying a heart with coins stays on the hearts during play (game screen).
  */
-function setBuyButton(id, noteId, price, blocked = '') {
-  const reason = blocked || (canAfford(wallet(), price) ? '' : missingText(price));
-  $(id).disabled = !!reason;
-  $(noteId).textContent = reason;
-}
-
-/** Show the out-of-hearts dialog with the current prices and limits. */
 export function showGameOver() {
-  $('refill-price').innerHTML = priceHTML(PRICES.heartRefill);
-  $('continue-price').innerHTML = priceHTML(PRICES.continueGame);
-  const limit =
-    state.refillsUsed >= MAX_REFILLS_PER_LEVEL ? `Limit reached: ${MAX_REFILLS_PER_LEVEL} refills per level.` : '';
-  setBuyButton('btn-refill', 'refill-note', PRICES.heartRefill, limit);
-  setBuyButton('btn-continue', 'continue-note', PRICES.continueGame);
-  renderAdButtons();
+  $('heart-gems-price').innerHTML = priceHTML(PRICES.gameOverHeart);
+  const short = canAfford(wallet(), PRICES.gameOverHeart) ? '' : missingText(PRICES.gameOverHeart);
+  $('btn-heart-gems').disabled = !!short;
+  $('heart-gems-note').textContent = short;
+  renderAdButton();
   openModal('modal-gameover');
 }
 
-/** "Watch ad" buttons: only while a rewarded ad is loaded (the refill one also within the per-level limit). */
-function renderAdButtons() {
-  const ad = rewardedAvailable();
-  $('btn-refill-ad').hidden = !ad || state.refillsUsed >= MAX_REFILLS_PER_LEVEL;
-  $('btn-continue-ad').hidden = !ad;
+/** The ad row: only with an ad ready and refills left this level. */
+function renderAdButton() {
+  $('btn-heart-ad').hidden = !rewardedAvailable() || state.refillsUsed >= MAX_REFILLS_PER_LEVEL;
 }
 
 /** Wire the game-over buttons. Back leaves the finished level. */
 export function bindGameOver() {
   $('btn-tryagain').addEventListener('click', restart);
-  $('btn-refill').addEventListener('click', () => {
-    if (!refillHeart().ok) return showGameOver();
+  $('btn-heart-gems').addEventListener('click', () => {
+    if (!buyGameOverHeart().ok) return showGameOver();
     renderCurrency();
     resumePlay();
   });
-  $('btn-continue').addEventListener('click', () => {
-    if (!buyContinue().ok) return showGameOver();
-    renderCurrency();
-    resumePlay();
-  });
-  $('btn-refill-ad').addEventListener('click', async () => {
+  $('btn-heart-ad').addEventListener('click', async () => {
+    // the heart comes only once the ad has reported its reward
     if (!(await watchRewardedAd()) || !adRefillHeart().ok) return showGameOver();
-    closeModals();
-    resumePlay();
-  });
-  $('btn-continue-ad').addEventListener('click', async () => {
-    if (!(await watchRewardedAd())) return showGameOver();
-    adContinue();
-    closeModals();
     resumePlay();
   });
   onAdsChange(() => {
-    if ($('modal-gameover').classList.contains('open')) renderAdButtons();
+    if ($('modal-gameover').classList.contains('open')) renderAdButton();
   });
   onModalBack('modal-gameover', () => {
     closeModals();

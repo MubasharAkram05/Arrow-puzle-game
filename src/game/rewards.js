@@ -124,12 +124,12 @@ export function refillHeart() {
 }
 
 /**
- * Continue after game over with full hearts.
+ * Game Over: +1 heart for diamonds, and the level goes on (3.26.0). Not limited per level (like the old Continue).
  * @returns {{ok: boolean, missing?: object}}
  */
-export function buyContinue() {
-  const res = pay(PRICES.continueGame);
-  if (res.ok) state.hearts = state.maxHearts;
+export function buyGameOverHeart() {
+  const res = pay(PRICES.gameOverHeart);
+  if (res.ok) state.hearts = Math.min(state.maxHearts, state.hearts + 1);
   return res;
 }
 
@@ -269,11 +269,6 @@ export function adRefillHeart() {
   state.refillsUsed++;
   state.hearts++;
   return { ok: true };
-}
-
-/** A rewarded ad continues the level with full hearts (instead of paying diamonds). */
-export function adContinue() {
-  state.hearts = state.maxHearts;
 }
 
 /**

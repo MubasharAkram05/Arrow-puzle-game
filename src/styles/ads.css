@@ -122,3 +122,22 @@ body.ad-slot .toast {
 .ad-btn .buy-price {
   white-space: nowrap;
 }
+
+/* Out of Hearts (3.26.0): three rows of the same height, each on one line */
+#modal-gameover .btn {
+  min-height: 52px;
+  white-space: nowrap;
+}
+#modal-gameover .buy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+#modal-gameover .buy-label .icon {
+  width: 20px;
+  height: 20px;
+  color: #ff4f7b;
+}
+#modal-gameover .btn.primary .buy-label .icon {
+  color: #ffffff;
+}
