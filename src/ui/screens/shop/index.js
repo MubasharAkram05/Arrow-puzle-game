@@ -65,6 +65,12 @@ function renderTabs() {
  * @param {number} [dir] -1 / 1 slide direction for the transition, 0 for none
  */
 function renderShop(dir = 0) {
+  // the header pills are buttons here (they jump to Free rewards)
+  document.querySelectorAll('#screen-shop .tab-head .cur').forEach((pill) => {
+    pill.setAttribute('role', 'button');
+    pill.setAttribute('tabindex', '0');
+    pill.setAttribute('aria-label', `Get more ${pill.dataset.cur}`);
+  });
   const tab = TABS.find((t) => t.id === active);
   const panel = $('shop-panel');
   panel.innerHTML = tab.mod.render();
@@ -79,6 +85,20 @@ function renderShop(dir = 0) {
   // keep the active tab fully in view in the scrolling tab row
   const on = $('shop-tabs').querySelector('.on');
   if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+
+/**
+ * Show the Free rewards row for a reward (from the header pills): switch to Offers unless All or Offers is open.
+ * @param {'coins'|'diamond'} kind
+ */
+function jumpToEarn(kind) {
+  if (active !== 'all' && active !== 'offers') selectTab('offers');
+  const row = $('shop-panel').querySelector(`.earn-row[data-id="${kind}"]`);
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
 }
 
 /** Switch tab with a slide in the right direction. */
@@ -156,9 +176,20 @@ export function bindShop() {
     if (b) selectTab(b.dataset.tab);
   });
   $('shop-panel').addEventListener('click', (e) => {
-    const el = e.target.closest('.shop-card, .earn-row');
+    const el = e.target.closest('.shop-card, .earn-row, .starter-card, .sale-card, .exchange-card');
     if (el) TABS.find((t) => t.id === active).mod.onCard(el, e);
   });
+  // the coin / diamond pills in the header jump to the Free rewards row that earns them (delegated: the pills are
+  // filled in by mountCurrencyBars, possibly after this runs)
+  const head = document.querySelector('#screen-shop .tab-head');
+  const pillGo = (e) => {
+    const pill = e.target.closest('.cur[data-cur]');
+    if (!pill) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    jumpToEarn(pill.dataset.cur === 'coins' ? 'coins' : 'diamond');
+  };
+  head.addEventListener('click', pillGo);
+  head.addEventListener('keydown', pillGo);
   // "Watch ad" rows show whether an ad is loaded and x/N today: redraw when that changes
   onAdsChange(() => {
     if (currentScreen() === 'screen-shop' && $('shop-panel').querySelector('.earn-row')) renderShop();

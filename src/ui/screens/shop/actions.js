@@ -6,7 +6,9 @@ import { buyCosmeticItem, buyItem } from '../../../game/rewards.js';
 import { equipShopItem, isEquipped, ownsShopItem, shopItem } from '../../../game/shopEquip.js';
 import { state } from '../../../game/state.js';
 import { saveProgress } from '../../../storage/save.js';
-import { renderCurrency } from '../../components/currencyBar.js';
+import { flySpend, renderCurrency } from '../../components/currencyBar.js';
+import { canAfford } from '../../../game/economy.js';
+import { wallet } from '../../../game/rewards.js';
 import { toast } from '../../components/toast.js';
 import { ask, missingText } from '../../modals/ask.js';
 import { applyTheme } from '../../theme.js';
@@ -32,10 +34,23 @@ export function saleFor(cat, id) {
   return s.cat === cat && s.id === id ? s.sale : undefined;
 }
 
+const cardEl = (kind, id) => document.querySelector(`#shop-body [data-kind="${kind}"][data-id="${id}"]`);
+
 /** Pulse the card after a purchase or equip. */
 function celebrate(kind, id) {
-  const el = document.querySelector(`#shop-body [data-kind="${kind}"][data-id="${id}"]`);
+  const el = cardEl(kind, id);
   if (el) el.classList.add('bought');
+}
+
+/** Not enough money: shake the card and say how much is missing (no confirm sheet). */
+function tooExpensive(kind, id, price) {
+  const el = cardEl(kind, id);
+  if (el) {
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  }
+  toast(missingText(price));
 }
 
 /**
@@ -44,11 +59,16 @@ function celebrate(kind, id) {
  * @param {string} id
  * @param {string} message toast text
  */
-export function done(kind, id, message) {
+export function done(kind, id, message, spent) {
   saveProgress();
   renderCurrency();
   rerender();
   celebrate(kind, id);
+  if (spent) {
+    const el = cardEl(kind, id);
+    if (spent.coins) flySpend('coins', el);
+    if (spent.diamonds) flySpend('diamonds', el);
+  }
   if (message) toast(message);
 }
 
@@ -57,7 +77,9 @@ export function done(kind, id, message) {
  * @param {{kind: string, id: string, title: string, message: string, icon: string, price: object, okLabel?: string, buy: () => {ok: boolean, missing?: object}, success: string, after?: () => void}} o
  */
 export function buyFlow(o) {
+  if (o.price && !canAfford(wallet(), o.price)) return tooExpensive(o.kind, o.id, o.price);
   ask({
+    sheet: true,
     title: o.title,
     message: o.message,
     icon: o.icon,
@@ -67,7 +89,7 @@ export function buyFlow(o) {
       const res = o.buy();
       if (!res.ok) return toast(res.missing ? missingText(o.price) : 'Could not buy this item');
       if (o.after) o.after();
-      done(o.kind, o.id, o.success);
+      done(o.kind, o.id, o.success, o.price);
     },
   });
 }

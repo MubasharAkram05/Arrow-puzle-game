@@ -146,3 +146,35 @@ export function flyCurrency(from, kind, start, amount, delay = 0) {
   }
   later(() => countUp(to, start, start + amount, flight), delay + flight * 0.6);
 }
+
+/**
+ * Spending animation (shop purchases): a few coins or diamonds fly from the counter to the item that was bought.
+ * Purely visual: the counter already shows the new wallet.
+ * @param {'coins'|'diamonds'} kind
+ * @param {Element} to the card that was bought
+ */
+export function flySpend(kind, to) {
+  const from = target(kind);
+  if (!from || !to || reducedMotion() || typeof document.body.animate !== 'function') return;
+  const a = from.getBoundingClientRect();
+  const b = to.getBoundingClientRect();
+  for (let i = 0; i < 4; i++) {
+    const el = document.createElement('div');
+    el.className = 'fly-icon';
+    el.innerHTML = `<svg class="cur-icon"><use href="#i-${ICON[kind]}" /></svg>`;
+    el.style.left = `${a.left + 8}px`;
+    el.style.top = `${a.top + a.height / 2 - 12}px`;
+    document.body.appendChild(el);
+    const dx = b.left + b.width / 2 - a.left - 20 + (Math.random() - 0.5) * 30;
+    const dy = b.top + b.height / 2 - a.top - a.height / 2;
+    const anim = el.animate(
+      [
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.6)`, opacity: 0 },
+      ],
+      { duration: 520, delay: i * 70, easing: 'cubic-bezier(0.5, 0, 0.3, 1)', fill: 'backwards' },
+    );
+    anim.onfinish = () => el.remove();
+    anim.oncancel = () => el.remove();
+  }
+}

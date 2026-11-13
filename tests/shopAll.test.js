@@ -23,7 +23,16 @@ describe('shop "All" tab', () => {
     expect(heads).toEqual(['Offers', 'Hints', 'Styles', 'Effects', 'Profile items']);
     const order = [...html.matchAll(/class="body-(\w+)"/g)].map((m) => m[1]);
     expect(order).toEqual(['offers', 'hints', 'styles', 'effects', 'profile']);
-    expect(html.match(/data-part="(\w+)"/g)).toHaveLength(5);
+    // the Free rewards card comes first (its taps go to Offers), then the five sections
+    expect(html.match(/data-part="(\w+)"/g)).toEqual([
+      'data-part="offers"',
+      'data-part="offers"',
+      'data-part="hints"',
+      'data-part="styles"',
+      'data-part="effects"',
+      'data-part="profile"',
+    ]);
+    expect(html.indexOf('Free rewards')).toBeLessThan(html.indexOf('class="shop-part-head"'));
   });
 
   it('carries the "New" keys of every section', () => {

@@ -100,13 +100,14 @@ describe('rewards (only after the ad completed)', () => {
 describe('shop rows', () => {
   const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
-  it('Offers has +1 diamond and +40 coins (no more "Coming soon"); Hints has +1 hint first', () => {
+  it('Free rewards (top of All and Offers) has +1 diamond, +1 hint, +40 coins; no more "Coming soon"', () => {
     const offers = src('ui/screens/shop/offersTab.js');
-    expect(offers).toContain("earnRow('diamond')");
-    expect(offers).toContain("earnRow('coins')");
+    expect(offers).toContain("o.inAll ? '' : freeRewardsCard()");
     expect(offers).not.toContain('Coming soon');
+    expect(src('ui/screens/shop/allTab.js')).toContain('freeRewardsCard()');
+    expect(src('ui/screens/shop/adEarn.js')).toContain("export const EARN_ORDER = ['diamond', 'hint', 'coins'];");
     const hints = src('ui/screens/shop/hintsTab.js');
-    expect(hints.indexOf("earnRow('hint')")).toBeLessThan(hints.indexOf("section('Buy hints'"));
+    expect(hints.indexOf("earnRow('hint', { featured: true })")).toBeLessThan(hints.indexOf("section('Buy hints'"));
   });
 
   it('the two messages', () => {

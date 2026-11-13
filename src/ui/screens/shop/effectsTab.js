@@ -34,9 +34,12 @@ function cards(cat, preview) {
 /** @returns {string} tab content */
 export function render() {
   return [
-    section('Escape Effects', cards('effect', effectPreview)),
-    section('Victory Confetti', cards('confetti', confettiPreview)),
-    section('Sound Packs', cards('sound', soundPreview)),
+    section('Escape Effects', cards('effect', effectPreview), '', { icon: 'sparkle', sub: 'When an arrow flies out' }),
+    section('Victory Confetti', cards('confetti', confettiPreview), '', {
+      icon: 'sparkle',
+      sub: 'On every level you win',
+    }),
+    section('Sound Packs', cards('sound', soundPreview), '', { icon: 'music', sub: 'Tap play to hear one first' }),
   ].join('');
 }
 

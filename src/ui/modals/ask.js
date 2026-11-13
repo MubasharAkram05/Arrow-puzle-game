@@ -38,12 +38,15 @@ export function missingText(price) {
  * Open the dialog.
  * @param {{title: string, message: string, icon?: string, price?: object, blocked?: string, okLabel?: string, onOk: () => void, onCancel?: () => void, ad?: {label: string, onReward: () => void, kind?: 'diamond'|'hint'|'coins', main?: boolean}}} opts
  *   blocked: reason the action is not possible right now (shown instead of the price check)
+ *   sheet: show as a bottom sheet (the shop's purchase confirm)
  *   ad: a "Watch ad" alternative (3.26.0), shown only while a rewarded ad is loaded; onReward runs only once the
  *   ad has reported its reward. kind: counts toward that kind's daily limit (ADS.earn). main: the ad is the main
  *   (first, filled) button and is always shown; with no ad or the limit reached a tap says so and the dialog stays
  */
 export function ask(opts) {
   pending = opts;
+  // the shop confirms in a sheet that slides up from the bottom; everything else stays a centered card
+  $('modal-ask').classList.toggle('sheet', !!opts.sheet);
   $('ask-icon').innerHTML = `<use href="#i-${opts.icon || 'check'}" />`;
   $('ask-title').textContent = opts.title;
   $('ask-message').textContent = opts.message;

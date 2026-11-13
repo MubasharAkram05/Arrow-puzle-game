@@ -31,18 +31,38 @@ export function render() {
     section(
       'Arrow Styles',
       cards('styles', SHOP_STYLES, (s) => stylePreview(s.id)),
+      '',
+      {
+        icon: 'palette',
+        sub: 'How the arrows look',
+      },
     ),
     section(
       'Themes',
       cards('themes', SHOP_THEMES, (t) => themePreview(t.color)),
+      '',
+      {
+        icon: 'palette',
+        sub: 'The accent color of the game',
+      },
     ),
     section(
       'Board Backgrounds',
       cards('board', COSMETICS.board, (b) => boardPreview(b.id)),
+      '',
+      {
+        icon: 'image',
+        sub: 'Behind every level',
+      },
     ),
     section(
       'Arrowheads',
       cards('head', COSMETICS.head, (h) => headPreview(h.id)),
+      '',
+      {
+        icon: 'nav',
+        sub: 'The tip of every arrow',
+      },
     ),
   ].join('');
 }
