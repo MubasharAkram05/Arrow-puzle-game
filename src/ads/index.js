@@ -141,6 +141,15 @@ export async function watchRewardedAd(kind) {
   return true;
 }
 
+/**
+ * Ad debug panel: run the consent check again (after the EEA switch changed). reset: forget the stored consent
+ * first, so the form shows again where it is required.
+ * @param {boolean} [reset]
+ */
+export async function recheckConsent(reset = false) {
+  if (provider.recheckConsent) await provider.recheckConsent(reset);
+}
+
 /** Try failed ad loads again now (Ad debug panel). */
 export function retryAdsNow() {
   if (provider.retryNow) provider.retryNow();

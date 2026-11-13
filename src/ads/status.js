@@ -16,7 +16,19 @@ export const adStatus = {
   mode: '',
   sdk: 'not started', // 'not started' | 'starting' | 'ready' | 'failed'
   sdkError: '',
-  consent: { status: 'unknown', canRequest: false, npa: false, error: '' },
+  // the UMP answer (status, formAvailable, canRequestAds, privacy) and what the game decided (canRequest, npa)
+  consent: {
+    status: 'not checked',
+    formAvailable: null,
+    canRequestAds: null,
+    privacy: '',
+    canRequest: false,
+    npa: false,
+    error: '',
+    attempt: 0,
+    decision: '',
+    geography: 'off',
+  },
   banner: fmt(),
   interstitial: fmt(),
   rewarded: fmt(),
@@ -62,4 +74,32 @@ export function adError(e) {
   if (!e) return { code: null, message: 'unknown error' };
   const code = Number.isFinite(e.code) ? e.code : Number.isFinite(Number(e.code)) ? Number(e.code) : null;
   return { code, message: String(e.message || e.errorMessage || e) };
+}
+
+const DEBUG_KEY = 'arrowEscape:adDebug';
+
+/**
+ * Ad debug settings (debug builds only): the UMP debug geography ('off' | 'eea' | 'not_eea') and the test device
+ * hashed ID UMP needs before it applies a debug geography on a real phone (logcat tag UserMessagingPlatform).
+ * @returns {{geography: 'off'|'eea'|'not_eea', deviceId: string}}
+ */
+export function adDebugSettings() {
+  try {
+    const v = JSON.parse(localStorage.getItem(DEBUG_KEY)) || {};
+    return {
+      geography: ['eea', 'not_eea'].includes(v.geography) ? v.geography : 'off',
+      deviceId: typeof v.deviceId === 'string' ? v.deviceId.trim() : '',
+    };
+  } catch {
+    return { geography: 'off', deviceId: '' };
+  }
+}
+
+/** @param {{geography?: string, deviceId?: string}} patch */
+export function saveAdDebugSettings(patch) {
+  try {
+    localStorage.setItem(DEBUG_KEY, JSON.stringify({ ...adDebugSettings(), ...patch }));
+  } catch {
+    // storage blocked: the setting lasts until the panel closes
+  }
 }

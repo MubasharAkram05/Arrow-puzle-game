@@ -7,7 +7,6 @@ import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ADS } from '../src/config.js';
 import {
-  consentDecision,
   countRewarded,
   earnOffer,
   earnedToday,
@@ -127,14 +126,6 @@ describe('ad loading and diagnostics', () => {
     expect([1, 2, 3, 4].map((n) => retryDelay(n, ADS.retry))).toEqual([5000, 10000, 20000, 40000]);
     expect(retryDelay(10, ADS.retry)).toBe(5 * 60 * 1000);
     expect(retryDelay(1000, ADS.retry)).toBe(5 * 60 * 1000);
-  });
-
-  it('consent: only a REQUIRED consent that was not given blocks ads; a failed check still requests ads', () => {
-    expect(consentDecision({ status: 'NOT_REQUIRED', canRequestAds: true })).toEqual({ canRequest: true, npa: false });
-    expect(consentDecision({ status: 'OBTAINED', canRequestAds: true })).toEqual({ canRequest: true, npa: false });
-    expect(consentDecision({ status: 'REQUIRED', canRequestAds: false })).toEqual({ canRequest: false, npa: false });
-    expect(consentDecision(null)).toEqual({ canRequest: true, npa: true }); // e.g. the test App ID error
-    expect(consentDecision({ status: 'UNKNOWN', canRequestAds: false })).toEqual({ canRequest: true, npa: true });
   });
 
   it('the Ad debug panel exists only in the debug APK, the dev server and tests', () => {

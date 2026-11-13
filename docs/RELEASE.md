@@ -222,6 +222,15 @@ earn less.
 - **Logcat:** with USB debugging on, `adb logcat -s ArrowAds` shows the same lines (for example
   `consent NOT_REQUIRED canRequest=true npa=false`, `rewarded loaded`, `banner failed code=3 "No fill."`).
   Google's own SDK messages: `adb logcat -s Ads`.
+- **Consent:** the panel shows Google UMP's answer (status, form available, canRequestAds, the error if the
+  request failed or did not answer within 8 s) and what the game decided. Test builds never let a failed or
+  UNKNOWN consent check block ads (non-personalised test ads); release builds try 3 times, then fall back to
+  non-personalised ads. A REQUIRED consent that was not given always blocks ads.
+- **Testing the consent form (EEA):** UMP applies a debug geography only on a test device. Run
+  `adb logcat -s UserMessagingPlatform`, open the app, and copy the ID from the line
+  `Use new ConsentDebugSettings.Builder().addTestDeviceHashedId("…")`. In the panel, paste it into
+  "Test device ID", pick **EEA**, then tap **Reset consent & show form**: the consent form should appear. Pick
+  **Not EEA** (or Off) and reset again to go back.
 - Common error codes: 0 internal error, 1 invalid request (wrong ad unit ID), 2 network error, 3 no fill (no ad
   to show right now, normal now and then).
 - Test ads say "Test Ad". The banner shows only on Home, Levels, Shop and Tasks.

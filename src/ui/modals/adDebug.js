@@ -3,8 +3,8 @@
  * Settings > tap the version 7 times. Shows the live AdMob status from src/ads/status.js: SDK start, consent, and
  * for banner / interstitial / rewarded: loading / loaded / failed with Google's error code and message.
  */
-import { retryAdsNow } from '../../ads/index.js';
-import { adStatus, onAdStatus } from '../../ads/status.js';
+import { recheckConsent, retryAdsNow } from '../../ads/index.js';
+import { adDebugSettings, adStatus, onAdStatus, saveAdDebugSettings } from '../../ads/status.js';
 import { toast } from '../components/toast.js';
 import { $ } from '../dom.js';
 import { onModalBack, closeModals, openModal } from './modal.js';
@@ -26,7 +26,9 @@ function render() {
   $('ad-debug').innerHTML = [
     `<dt>Provider</dt><dd>${esc(adStatus.provider)}</dd>`,
     `<dt>SDK initialized</dt><dd data-state="${adStatus.sdk === 'ready' ? 'loaded' : adStatus.sdk === 'failed' ? 'failed' : 'loading'}">${adStatus.sdk === 'ready' ? 'yes' : esc(adStatus.sdk)}${adStatus.sdkError ? `: ${esc(adStatus.sdkError)}` : ''}</dd>`,
-    `<dt>Consent</dt><dd>${esc(c.status)}, ads ${c.canRequest ? 'allowed' : 'blocked'}${c.npa ? ' (non-personalised)' : ''}${c.error ? `<br><small>${esc(c.error)}</small>` : ''}</dd>`,
+    `<dt>Consent (UMP)</dt><dd data-state="${c.status === 'check failed' ? 'failed' : c.status === 'checking' ? 'loading' : ''}">${esc(c.status)}${c.attempt > 1 ? ` (try ${c.attempt})` : ''}<br><small>form available: ${esc(c.formAvailable)}, canRequestAds: ${esc(c.canRequestAds)}${c.privacy ? `, privacy options: ${esc(c.privacy)}` : ''}</small>${c.error ? `<br><small class="ad-debug-err">${esc(c.error)}</small>` : ''}</dd>`,
+    `<dt>Ads</dt><dd data-state="${c.decision ? (c.canRequest ? 'loaded' : 'blocked') : 'loading'}">${c.decision ? `${c.canRequest ? 'allowed' : 'blocked'}${c.npa ? ', non-personalised' : ''}<br><small>${esc(c.decision)}</small>` : 'waiting for consent'}</dd>`,
+    `<dt>Geography</dt><dd>${esc(c.geography)}</dd>`,
     fmtRow('Banner', adStatus.banner),
     fmtRow('Interstitial', adStatus.interstitial),
     fmtRow('Rewarded', adStatus.rewarded),
@@ -53,6 +55,24 @@ export function bindAdDebug() {
       toast(`${left} more tap${left === 1 ? '' : 's'} for Ad debug`);
     }
   });
+  const geo = () => {
+    const g = adDebugSettings().geography;
+    $('ad-geo')
+      .querySelectorAll('[data-geo]')
+      .forEach((x) => x.setAttribute('aria-checked', String(x.dataset.geo === g)));
+  };
+  $('ad-device-id').value = adDebugSettings().deviceId;
+  geo();
+  $('ad-geo').addEventListener('click', (e) => {
+    const x = e.target.closest('[data-geo]');
+    if (!x) return;
+    saveAdDebugSettings({ geography: x.dataset.geo });
+    geo();
+    toast('Saved. Tap "Reset consent & show form" to apply');
+  });
+  $('ad-device-id').addEventListener('change', (e) => saveAdDebugSettings({ deviceId: e.target.value }));
+  $('btn-ad-consent').addEventListener('click', () => recheckConsent(false));
+  $('btn-ad-consent-reset').addEventListener('click', () => recheckConsent(true));
   $('btn-ad-retry').addEventListener('click', () => {
     retryAdsNow();
     toast('Retrying failed ad loads');

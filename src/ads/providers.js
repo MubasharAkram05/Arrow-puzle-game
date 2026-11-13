@@ -6,8 +6,9 @@
  * showRewarded reports events with emit('rewarded' | 'dismissed' | 'failed'); the reward is decided from those
  * events only (policy.js runRewarded). retryNow() (optional) tries failed ad loads again at once.
  */
-import { consentDecision, retryDelay } from './policy.js';
-import { adError, adStatus, setAdStatus } from './status.js';
+import { ADS } from '../config.js';
+import { DEBUG_GEOGRAPHY, consentOutcome, retryDelay, withTimeout } from './policy.js';
+import { adDebugSettings, adError, adLog, adStatus, setAdStatus } from './status.js';
 
 /** No ads (web and Vercel builds, or ads switched off). */
 export function noneProvider() {
@@ -30,8 +31,9 @@ export function noneProvider() {
 /**
  * Google AdMob through @capacitor-community/admob (Android).
  * Every step is reported to the ad status (src/ads/status.js: the debug panel and the ArrowAds log). A failed
- * load is tried again with backoff (ADS.retry); the consent check never blocks ads unless consent is REQUIRED and
- * was not given (policy.js consentDecision).
+ * load is tried again with backoff (ADS.retry). Consent (Google UMP) follows policy.js consentOutcome: only a
+ * REQUIRED consent that was not given blocks ads; a check that fails or never answers (timeout) does not block
+ * test builds, and is tried again in release builds before falling back to non-personalised ads.
  * @param {{mode: 'test'|'real', banner: string, interstitial: string, rewarded: string}} ids
  * @param {() => void} changed called when an ad becomes ready or is used
  * @param {{baseMs: number, maxMs: number}} retry ADS.retry
@@ -121,6 +123,73 @@ export function admobProvider(ids, changed, retry) {
     placeBanner();
   }
 
+  /** One UMP request (with the debug geography in debug builds), then the form where it is required. */
+  async function askConsent() {
+    const opts = {};
+    const dbg = __AD_DEBUG__ && isTesting ? adDebugSettings() : null;
+    if (dbg && dbg.geography !== 'off') {
+      opts.debugGeography = DEBUG_GEOGRAPHY[dbg.geography];
+      if (dbg.deviceId) opts.testDeviceIdentifiers = [dbg.deviceId];
+    }
+    let info = await withTimeout(AdMob.requestConsentInfo(opts), ADS.consent.timeoutMs);
+    setAdStatus('consent', consentFields(info));
+    if (info.status === M.AdmobConsentStatus.REQUIRED && info.isConsentFormAvailable) {
+      adLog('consent form: showing');
+      info = await AdMob.showConsentForm();
+      setAdStatus('consent', consentFields(info));
+    }
+    return info;
+  }
+  const consentFields = (info) => ({
+    status: info.status,
+    formAvailable: info.isConsentFormAvailable ?? null,
+    canRequestAds: info.canRequestAds ?? null,
+    privacy: info.privacyOptionsRequirementStatus || '',
+    error: '',
+  });
+
+  /** Check consent (retrying in release builds), then allow or block ads and load everything that is allowed. */
+  async function resolveConsent() {
+    const geography = __AD_DEBUG__ && isTesting ? adDebugSettings().geography : 'off';
+    for (let attempt = 1; ; attempt++) {
+      setAdStatus('consent', { status: 'checking', attempt, geography, decision: '', error: '' });
+      let info = null;
+      try {
+        info = await askConsent();
+      } catch (e) {
+        const err = adError(e);
+        setAdStatus('consent', {
+          status: 'check failed',
+          formAvailable: null,
+          canRequestAds: null,
+          error: `${err.code !== null ? `code ${err.code}: ` : e && e.code === 'TIMEOUT' ? 'timeout: ' : ''}${err.message}`,
+        });
+      }
+      const out = consentOutcome(info, { testing: isTesting, attempt, attempts: ADS.consent.attempts });
+      if (out.action === 'retry') {
+        await new Promise((r) => setTimeout(r, retryDelay(attempt, { baseMs: ADS.consent.retryBaseMs, maxMs: 60000 })));
+        continue;
+      }
+      privacyRequired = !!info && info.privacyOptionsRequirementStatus === M.PrivacyOptionsRequirementStatus.REQUIRED;
+      canRequest = out.action === 'allow';
+      npa = out.npa;
+      setAdStatus('consent', { canRequest, npa, decision: out.reason });
+      if (!canRequest) {
+        banner.made = false;
+        await AdMob.removeBanner().catch(() => {});
+        ready.rewarded = ready.interstitial = false;
+        for (const f of ['banner', 'interstitial', 'rewarded'])
+          setAdStatus(f, { state: 'blocked', message: out.reason, retryAt: 0 });
+      }
+      changed();
+      // consent settled: load every format now
+      loadRewarded();
+      loadInterstitial();
+      placeBanner();
+      return;
+    }
+  }
+
   const listenShow = (event, fn) => AdMob.addListener(event, fn).then((h) => showHandles.push(h));
   const unlistenShow = () => {
     showHandles.forEach((h) => h.remove());
@@ -152,28 +221,13 @@ export function admobProvider(ids, changed, retry) {
       );
       AdMob.addListener(M.BannerAdPluginEvents.Loaded, () => loaded('banner'));
       AdMob.addListener(M.BannerAdPluginEvents.FailedToLoad, (e) => failed('banner', e, retryBanner));
-      // Google UMP: the form shows only where consent is required (EEA, UK). If the check fails (offline, or
-      // the test App ID), ads are still requested, non-personalised (policy.js consentDecision).
-      let info = null;
-      let error = '';
-      try {
-        info = await AdMob.requestConsentInfo();
-        if (info.status === M.AdmobConsentStatus.REQUIRED && info.isConsentFormAvailable)
-          info = await AdMob.showConsentForm();
-      } catch (e) {
-        error = adError(e).message;
-      }
-      ({ canRequest, npa } = consentDecision(info));
-      privacyRequired = !!info && info.privacyOptionsRequirementStatus === M.PrivacyOptionsRequirementStatus.REQUIRED;
-      setAdStatus('consent', { status: info ? info.status : 'check failed', canRequest, npa, error });
-      if (!canRequest) {
-        for (const f of ['banner', 'interstitial', 'rewarded'])
-          setAdStatus(f, { state: 'blocked', message: 'consent required and not given' });
-      }
-      changed();
-      loadRewarded();
-      loadInterstitial();
-      placeBanner();
+      await resolveConsent();
+    },
+    /** Ad debug panel: check consent again (after changing the EEA switch); reset first to see the form again. */
+    async recheckConsent(reset) {
+      if (!AdMob) return;
+      if (reset) await AdMob.resetConsentInfo().catch((e) => adLog(`resetConsentInfo failed: ${adError(e).message}`));
+      await resolveConsent();
     },
     rewardedReady: () => ready.rewarded,
     interstitialReady: () => ready.interstitial,
@@ -283,7 +337,16 @@ export function simProvider(changed) {
     async init() {
       setAdStatus('provider', 'simulated (dev server)');
       setAdStatus('sdk', 'ready');
-      setAdStatus('consent', { status: 'NOT_REQUIRED', canRequest: true, npa: false, error: '' });
+      setAdStatus('consent', {
+        status: 'NOT_REQUIRED',
+        formAvailable: false,
+        canRequestAds: true,
+        canRequest: true,
+        npa: false,
+        error: '',
+        attempt: 1,
+        decision: 'simulated ads',
+      });
       reload();
     },
     rewardedReady: () => ready,

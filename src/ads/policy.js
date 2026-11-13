@@ -118,18 +118,51 @@ export function retryDelay(attempt, cfg) {
 }
 
 /**
- * May ads be requested after Google UMP? Only a REQUIRED consent that was not given blocks them (EEA, UK). When
- * the consent check itself fails (offline, or Google's test App ID, which UMP reports as "publisher
- * misconfiguration"), ads are still requested, as non-personalised ads.
- * @param {{status?: string, canRequestAds?: boolean}|null} info null when requestConsentInfo failed
- * @returns {{canRequest: boolean, npa: boolean}}
+ * What to do after a Google UMP consent check.
+ *  - OBTAINED or NOT_REQUIRED (or UMP says ads may be requested): ads allowed, personalised as UMP decides
+ *  - REQUIRED and not given: never any ads (EEA, UK)
+ *  - UNKNOWN, or the check failed or timed out (info null):
+ *      test builds (RELEASE_ADS false): non-personalised test ads at once, so testing is never blocked
+ *      release builds: try the check again (attempt < attempts); after the last try, non-personalised ads
+ * @param {{status?: string, canRequestAds?: boolean}|null} info the UMP answer, null when the request failed
+ * @param {{testing: boolean, attempt: number, attempts: number}} o attempt: tries made so far (1 after the first)
+ * @returns {{action: 'allow'|'block'|'retry', npa: boolean, reason: string}}
  */
-export function consentDecision(info) {
-  if (!info) return { canRequest: true, npa: true };
-  if (info.canRequestAds) return { canRequest: true, npa: false };
-  if (info.status === 'REQUIRED') return { canRequest: false, npa: false };
-  return { canRequest: true, npa: true }; // UNKNOWN without an answer: non-personalised ads only
+export function consentOutcome(info, o) {
+  if (info && (info.status === 'OBTAINED' || info.status === 'NOT_REQUIRED' || info.canRequestAds))
+    return { action: 'allow', npa: false, reason: `consent ${info.status}` };
+  if (info && info.status === 'REQUIRED') return { action: 'block', npa: false, reason: 'consent required, not given' };
+  const why = info ? `consent ${info.status || 'UNKNOWN'}` : 'consent check failed';
+  if (o.testing) return { action: 'allow', npa: true, reason: `${why}: test build, non-personalised ads` };
+  if (o.attempt < o.attempts) return { action: 'retry', npa: false, reason: `${why}: trying again` };
+  return { action: 'allow', npa: true, reason: `${why} after ${o.attempts} tries: non-personalised ads` };
 }
+
+/**
+ * Reject a promise that does not settle in time (the UMP request can stay silent forever).
+ * @template T
+ * @param {Promise<T>} p
+ * @param {number} ms
+ * @returns {Promise<T>}
+ */
+export function withTimeout(p, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject({ code: 'TIMEOUT', message: `no answer within ${ms / 1000} s` }), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
+/** UMP debug geography values (AdmobConsentDebugGeography), for the Ad debug panel's EEA switch. */
+export const DEBUG_GEOGRAPHY = Object.freeze({ off: 0, eea: 1, not_eea: 2 });
 
 /** The app started (interstitials never show in the first session). */
 export const noteLaunch = (rec) => ({ ...rec, launches: rec.launches + 1 });

@@ -451,6 +451,9 @@ export const ADS = Object.freeze({
   }),
   // a failed ad load is tried again after 5 s, 10 s, 20 s ... up to 5 minutes between tries
   retry: Object.freeze({ baseMs: 5000, maxMs: 5 * 60 * 1000 }),
+  // Google UMP consent check: a request that does not answer within timeoutMs counts as failed. Release builds try
+  // `attempts` times (backoff from retryBaseMs) before falling back to non-personalised ads; test builds go on at once.
+  consent: Object.freeze({ timeoutMs: 8000, attempts: 3, retryBaseMs: 3000 }),
   interstitial: Object.freeze({
     fromLevel: 10, // never before this level
     everyLevels: 3, // at most once every 3 level wins
