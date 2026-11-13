@@ -365,23 +365,33 @@
 
     <!-- Victory -->
     <div class="modal victory" id="modal-victory">
-      <div class="sunburst"></div>
       <canvas id="confetti"></canvas>
       <div class="victory-bar" data-currency-bar></div>
-      <h2 id="victory-title">Level Completed!</h2>
-      <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
-      <div class="reward-box" id="reward-box">
-        <ul class="reward-lines" id="reward-lines"></ul>
-        <div class="reward-total" id="reward-total"></div>
+      <div class="win-card" role="dialog" aria-labelledby="victory-title">
+        <div class="win-badge">
+          <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>
+        </div>
+        <h2 id="victory-title">Level 1 Complete!</h2>
+        <p class="win-sub" id="victory-sub"></p>
+        <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="win-rewards" id="win-rewards">
+          <span class="win-amt" data-kind="coins"
+            ><svg class="cur-icon" aria-hidden="true"><use href="#i-coin" /></svg><b id="win-coins">+0</b></span
+          >
+          <span class="win-amt" data-kind="diamonds" id="win-gems-wrap" hidden
+            ><svg class="cur-icon" aria-hidden="true"><use href="#i-gem" /></svg><b id="win-gems">+0</b></span
+          >
+          <span class="win-amt xp" data-kind="xp"><i>XP</i><b id="win-xp">+0</b></span>
+        </div>
+        <button class="win-double" id="btn-double" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-play" /></svg
+          ><span id="double-label">Watch ad: 2x coins</span><span class="win-badge-amt" id="double-amt">+0</span>
+        </button>
+        <button class="win-next" id="btn-next">
+          <span id="next-label">Next Level</span><small id="next-sub">Level 2</small>
+        </button>
+        <button class="win-home" id="btn-main">Home</button>
       </div>
-      <button class="ad-double" id="btn-double" hidden>
-        <svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg><span id="double-label">2x coins</span>
-      </button>
-      <div class="victory-spacer"></div>
-      <button class="pill-btn" id="btn-next">
-        <span id="next-label">Next Game</span><small id="next-sub">Level 2</small>
-      </button>
-      <button class="text-btn" id="btn-main">Main</button>
     </div>
 
     <script type="module" src="./src/main.js"></script>

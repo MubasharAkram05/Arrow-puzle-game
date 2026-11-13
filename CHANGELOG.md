@@ -40,6 +40,14 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
   Each heart continues the level. "Refill heart" for coins and "Continue (full hearts)" are gone from this popup; buying a heart with coins by tapping the hearts during a level is unchanged.
 
+- Level complete popup, redesigned (same rewards, logic and ad rules):
+  - A calm brand gradient (cyan-blue to royal blue; deep navy in dark mode) instead of the rotating rays.
+  - Confetti is one light 1.5 s burst behind the card, then it stops. Reduced motion: no confetti, a simple fade.
+  - One centered card: check badge, "Level N Complete!", "Perfect!" for a perfect level, a smaller board preview in a light frame.
+  - One rewards row (coins, diamonds when earned, XP) that counts up; the per-line breakdown is gone. Coins fly to the top counter once.
+  - "Watch ad: 2x coins" is a gold button with a "+N" badge, hidden when no ad is available or the daily cap is reached. After the ad the coins count up to the doubled value and the button reads "Collected!".
+  - "Next Level" (was "Next Game") is the main blue button with the level number under it; "Home" (was "Main") is a text button.
+  - Fits at 360 x 640 without scrolling, in light and dark mode.
 - The 3-diamond Game Over option now gives +1 heart instead of full hearts (`PRICES.gameOverHeart`, was `continueGame`).
 - Levels and difficulty are unchanged.
 

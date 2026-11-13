@@ -621,7 +621,7 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Back button
 
-- Modal open: close it (victory acts like "Main", game over leaves the level)
+- Modal open: close it (victory acts like "Home", game over leaves the level)
 - Otherwise: go back one screen
 - On Home: ask "Exit game?"
 

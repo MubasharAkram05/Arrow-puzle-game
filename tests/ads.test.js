@@ -225,3 +225,32 @@ describe('Out of Hearts popup (3.26.0)', () => {
     expect(body).toContain('renderHearts(-1)');
   });
 });
+
+describe('Level complete popup (3.26.0)', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const popup = html.slice(html.indexOf('id="modal-victory"'), html.indexOf('<script type="module"'));
+  const css = readFileSync(new URL('../src/styles/victory.css', import.meta.url), 'utf8');
+
+  it('one card: title, preview, rewards, 2x coins, Next Level, Home (in that order)', () => {
+    const order = ['victory-title', 'mini-card', 'win-rewards', 'btn-double', 'btn-next', 'btn-main'];
+    const at = order.map((id) => popup.indexOf(`id="${id}"`));
+    expect(at.every((i) => i > 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+    expect(popup).toContain('Next Level');
+    expect(popup).toContain('>Home<');
+    expect(popup).not.toContain('Next Game');
+    expect(popup).not.toContain('reward-lines');
+  });
+
+  it('no rotating rays; the confetti canvas sits behind the card', () => {
+    expect(popup).not.toContain('sunburst');
+    expect(css).not.toContain('sunburst');
+    expect(css).toMatch(/#confetti \{[^}]*z-index: 0/);
+  });
+
+  it('confetti is one short burst', () => {
+    const src = readFileSync(new URL('../src/render/confetti.js', import.meta.url), 'utf8');
+    expect(src).toContain('const BURST_MS = 1500');
+    expect(src).not.toContain('RAIN_MS');
+  });
+});

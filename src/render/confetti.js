@@ -3,21 +3,23 @@ import { $ } from '../ui/dom.js';
 
 /** Pastel confetti like the reference victory screen. */
 const COLORS = ['#F7A6DA', '#F3E244', '#7FE7A6', '#6FE2F2', '#C69BF7', '#FFFFFF', '#FF9EB1'];
-const COUNT = 110;
-const RAIN_MS = 5000; // new pieces keep falling for this long
+const COUNT = 42;
+const BURST_MS = 1500; // one short burst, then the canvas is cleared
+const GRAVITY = 0.16;
 let frameId = 0;
 
-/** One confetti piece starting above the screen (or anywhere when scattered). */
-function piece(w, h, scattered) {
+/** One piece thrown up and out from the burst point. */
+function piece(x, y) {
+  const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9;
+  const speed = 5 + Math.random() * 6;
   return {
-    x: Math.random() * w,
-    y: scattered ? Math.random() * h : -20 - Math.random() * h * 0.5,
-    vy: 1.2 + Math.random() * 1.8,
-    sway: Math.random() * Math.PI * 2,
-    swaySpeed: 0.02 + Math.random() * 0.03,
-    size: 7 + Math.random() * 7,
+    x,
+    y,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    size: 6 + Math.random() * 6,
     rot: Math.random() * Math.PI * 2,
-    vr: (Math.random() - 0.5) * 0.12,
+    vr: (Math.random() - 0.5) * 0.2,
     flip: Math.random() * Math.PI * 2,
     curl: Math.random() < 0.35, // some classic pieces are curly ribbons
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
@@ -81,8 +83,9 @@ function draw(ctx, p, style) {
 }
 
 /**
- * Confetti rain on the victory screen in the equipped style. Stops when the screen closes
- * or every piece has fallen. Reduced motion shows no confetti.
+ * A short confetti burst (1.5 s) in the equipped style, from just above the victory card. The canvas sits behind
+ * the card, so no piece ever covers its text or buttons, and it is cleared when the burst ends or the screen
+ * closes. Reduced motion shows no confetti.
  */
 export function startConfetti() {
   const canvas = $('confetti');
@@ -100,23 +103,25 @@ export function startConfetti() {
   canvas.width = w * dpr;
   canvas.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const parts = Array.from({ length: COUNT }, (_, i) => piece(w, h, i < COUNT / 2));
+  const card = modal.querySelector('.win-card');
+  const top = card ? card.getBoundingClientRect().top : h * 0.2;
+  const parts = Array.from({ length: COUNT }, () => piece(w / 2 + (Math.random() - 0.5) * w * 0.3, top + 24));
   const t0 = performance.now();
   (function frame(now) {
+    const t = now - t0;
     ctx.clearRect(0, 0, w, h);
-    const raining = now - t0 < RAIN_MS;
-    let alive = false;
+    if (t >= BURST_MS || !modal.classList.contains('open')) return;
+    ctx.globalAlpha = Math.min(1, (BURST_MS - t) / 450); // fade out over the last part
     for (const p of parts) {
+      p.vx *= 0.985;
+      p.vy += GRAVITY;
+      p.x += p.vx;
       p.y += p.vy;
-      p.sway += p.swaySpeed;
-      p.x += Math.sin(p.sway) * 0.8;
       p.rot += p.vr;
-      p.flip += 0.08;
-      if (p.y > h + 20 && raining) Object.assign(p, piece(w, h, false));
-      if (p.y < h + 20) alive = true;
+      p.flip += 0.1;
       draw(ctx, p, style);
     }
-    if (alive && modal.classList.contains('open')) frameId = requestAnimationFrame(frame);
-    else ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+    frameId = requestAnimationFrame(frame);
   })(t0);
 }
