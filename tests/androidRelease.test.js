@@ -1,7 +1,7 @@
 /**
  * Android release setup (3.25.0): the native project, signing from secrets, the workflow, the privacy policy.
  */
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const text = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -42,6 +42,36 @@ describe('Android project', () => {
     expect(styles).toContain('<item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>');
     expect(text(`${res}/values-night/splash_colors.xml`)).toContain('#0B1020');
     expect(text(`${res}/values/strings.xml`)).toContain('<string name="app_name">Arrow Expert</string>');
+  });
+});
+
+describe('Android resource folders', () => {
+  // the qualifiers we use, in the order Android requires (orientation, night mode, density, API version);
+  // a wrong order (e.g. drawable-night-land-xxxhdpi) fails the Gradle build
+  const ORDER = [
+    /^(port|land)$/,
+    /^(night|notnight)$/,
+    /^(ldpi|mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi|nodpi|anydpi)$/,
+    /^v\d+$/,
+  ];
+  const valid = (dir) => {
+    const [, ...qualifiers] = dir.split('-');
+    let last = -1;
+    for (const q of qualifiers) {
+      const i = ORDER.findIndex((re) => re.test(q));
+      if (i <= last) return false;
+      last = i;
+    }
+    return true;
+  };
+
+  it('every res/ folder name has its qualifiers in Android order', () => {
+    expect(valid('drawable-land-night-xxxhdpi')).toBe(true);
+    expect(valid('drawable-night-land-xxxhdpi')).toBe(false);
+    expect(valid('mipmap-anydpi-v26')).toBe(true);
+    for (const root of ['store-assets/android/res', 'android/app/src/main/res'])
+      for (const dir of readdirSync(new URL(`../${root}`, import.meta.url)))
+        expect(valid(dir), `${root}/${dir}`).toBe(true);
   });
 });
 

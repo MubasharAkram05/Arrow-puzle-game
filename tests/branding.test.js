@@ -90,7 +90,7 @@ describe('splash screens', () => {
     for (const night of ['', '-night'])
       for (const o of ['port', 'land'])
         expect(
-          existsSync(new URL(`../store-assets/android/res/drawable${night}-${o}-xxxhdpi/splash.png`, import.meta.url)),
+          existsSync(new URL(`../store-assets/android/res/drawable-${o}${night}-xxxhdpi/splash.png`, import.meta.url)),
         ).toBe(true);
   });
 
