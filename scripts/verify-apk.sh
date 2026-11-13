@@ -28,7 +28,11 @@ grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' "$TMP/apksign
 
 echo "== aapt2 dump badging"
 "$BT/aapt2" dump badging "$APK" > "$TMP/badging.txt"
-grep -E "^(package|sdkVersion|targetSdkVersion|application-debuggable|testOnly|native-code)" "$TMP/badging.txt" || true
+grep -E "^(package|sdkVersion|minSdkVersion|targetSdkVersion|application-debuggable|testOnly|native-code)" "$TMP/badging.txt" || true
+grep -qE "^(sdkVersion|minSdkVersion):" "$TMP/badging.txt" || {
+  echo "::error::aapt2 shows no minSdkVersion for $APK"
+  exit 1
+}
 if grep -q "^testOnly" "$TMP/badging.txt"; then
   echo "::error::$APK is a test-only build (android:testOnly), phones refuse to install it"
   exit 1
