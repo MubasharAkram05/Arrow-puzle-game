@@ -1,0 +1,140 @@
+name: android-release
+
+# Builds the Android app (see docs/RELEASE.md):
+#  - release-aab: web app in release mode (TEST_UNLOCK_ALL always off), signed with the upload key from
+#    GitHub Secrets -> app-release.aab for Google Play
+#  - debug-apk: an APK to install on a phone for testing (signed with Gradle's debug key)
+# Manual run (Actions tab), or a version tag (v*) for a release. Pull requests that touch the Android project
+# build the debug APK only, to check the build still works (no secrets needed).
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: What to build
+        type: choice
+        options: [both, release-aab, debug-apk]
+        default: both
+      debug_test_mode:
+        description: Debug APK with every level unlocked (TEST MODE badge on Home)
+        type: boolean
+        default: false
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'capacitor.config.json'
+      - '.github/workflows/android-release.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - run: npm ci
+
+      - name: What to build
+        id: what
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request) BUILD=debug-apk ;;
+            push) BUILD=both ;;
+            *) BUILD="${{ inputs.build }}" ;;
+          esac
+          echo "release=$([ "$BUILD" != debug-apk ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "debug=$([ "$BUILD" != release-aab ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "code=$(node -p "require('./package.json').androidVersionCode")" >> "$GITHUB_OUTPUT"
+
+      # ---------- signed release AAB ----------
+      - name: Check the signing secrets
+        if: steps.what.outputs.release == 'true'
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$KEYSTORE" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -n "$STORE_PASS" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$ALIAS" ] || missing="$missing ANDROID_KEY_ALIAS"
+          [ -n "$KEY_PASS" ] || missing="$missing ANDROID_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing GitHub Secrets:$missing (see docs/RELEASE.md, step 2)"
+            exit 1
+          fi
+      - name: Web app (release mode)
+        if: steps.what.outputs.release == 'true'
+        run: |
+          npm run build:release
+          grep -q 'content="test-unlock=false"' dist/index.html
+      - name: Sync Capacitor
+        if: steps.what.outputs.release == 'true'
+        run: npx cap sync android
+      - name: Signed release AAB
+        if: steps.what.outputs.release == 'true'
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
+          echo "$KEYSTORE_B64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease
+          rm -f "$ANDROID_KEYSTORE_PATH"
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab > /dev/null
+          cp app/build/outputs/bundle/release/app-release.aab \
+            "$RUNNER_TEMP/arrow-expert-${{ steps.what.outputs.version }}-${{ steps.what.outputs.code }}.aab"
+      - uses: actions/upload-artifact@v4
+        if: steps.what.outputs.release == 'true'
+        with:
+          name: arrow-expert-${{ steps.what.outputs.version }}-${{ steps.what.outputs.code }}-release-aab
+          path: ${{ runner.temp }}/arrow-expert-*.aab
+          if-no-files-found: error
+
+      # ---------- debug APK for a test phone ----------
+      - name: Web app (debug APK)
+        if: steps.what.outputs.debug == 'true'
+        run: |
+          if [ "${{ inputs.debug_test_mode }}" = "true" ]; then ARROW_TEST_UNLOCK=1 npm run build; else npm run build:release; fi
+      - name: Sync Capacitor (debug)
+        if: steps.what.outputs.debug == 'true'
+        run: npx cap sync android
+      - name: Debug APK
+        if: steps.what.outputs.debug == 'true'
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "$RUNNER_TEMP/arrow-expert-${{ steps.what.outputs.version }}-debug.apk"
+      - uses: actions/upload-artifact@v4
+        if: steps.what.outputs.debug == 'true'
+        with:
+          name: arrow-expert-${{ steps.what.outputs.version }}-debug-apk
+          path: ${{ runner.temp }}/arrow-expert-*-debug.apk
+          if-no-files-found: error

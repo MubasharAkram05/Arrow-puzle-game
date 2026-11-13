@@ -46,9 +46,19 @@ export function openCredits() {
     .catch(() => ($('credits-list').innerHTML = '<li class="muted">Credits could not load. See CREDITS.md.</li>'));
 }
 
-/** Wire the credits link (Profile tab) and the way back. */
+/** Privacy policy (3.25.0): the same page as /privacy.html on the web, shown inside the app. */
+function openPrivacy() {
+  const frame = $('privacy-frame');
+  if (!frame.getAttribute('src')) frame.setAttribute('src', './privacy.html');
+  openModal('modal-privacy');
+}
+
+/** Wire the credits link (Profile tab), the privacy policy and the ways back. */
 export function bindCredits() {
   $('btn-credits').addEventListener('click', openCredits);
   $('btn-credits-back').addEventListener('click', closeModals);
   onModalBack('modal-credits', closeModals);
+  $('btn-privacy').addEventListener('click', openPrivacy);
+  $('btn-privacy-back').addEventListener('click', openCredits);
+  onModalBack('modal-privacy', openCredits);
 }

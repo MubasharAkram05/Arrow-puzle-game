@@ -1,7 +1,6 @@
 node_modules/
 dist/
 coverage/
-/android/
 /ios/
 .DS_Store
 *.log
@@ -11,3 +10,8 @@ shape-sheet.html
 shapes-preview.html
 shapes-preview-*.png
 shapes-review.md
+
+# Android signing keys: never commit a keystore (see docs/RELEASE.md)
+*.jks
+*.keystore
+android/keystore.properties

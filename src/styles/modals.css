@@ -127,3 +127,21 @@
   height: 40px;
   border-radius: 10px;
 }
+
+/* Privacy policy inside the app (3.25.0) */
+.privacy-link {
+  margin-top: 4px;
+}
+.privacy-card {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+}
+.privacy-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 60dvh;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--pill);
+}

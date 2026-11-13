@@ -4,8 +4,8 @@
  *   phone      8 x 1080x1920  store-assets/screenshots/phone/
  *   tablet-7   4 x 1200x1920  store-assets/screenshots/tablet-7/
  *   tablet-10  4 x 1600x2560  store-assets/screenshots/tablet-10/
- * TEST_UNLOCK_ALL is switched off in src/config.js only while capturing (no "TEST MODE" badge), then put
- * back exactly as it was, even when something fails. Needs Playwright with Chromium, and Python 3 with Pillow
+ * The dev server runs with ARROW_TEST_UNLOCK=0, so TEST_UNLOCK_ALL is off while capturing (no "TEST MODE"
+ * badge); nothing in the code changes. Needs Playwright with Chromium, and Python 3 with Pillow
  * to save the files without an alpha channel (Google Play wants opaque images).
  */
 const { chromium } = require('playwright');
@@ -14,7 +14,6 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const CONFIG = path.join(ROOT, 'src', 'config.js');
 const OUT = path.join(ROOT, 'store-assets', 'screenshots');
 const PORT = 5299;
 const URL = `http://localhost:${PORT}/`;
@@ -234,7 +233,11 @@ async function compose(browser, dev, caption, img, img2, file) {
 
 function startServer() {
   return new Promise((resolve, reject) => {
-    const proc = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { cwd: ROOT, detached: true });
+    const proc = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
+      cwd: ROOT,
+      detached: true,
+      env: { ...process.env, ARROW_TEST_UNLOCK: '0' },
+    });
     let out = '';
     const timer = setTimeout(() => reject(new Error('dev server did not start')), 30000);
     proc.stdout.on('data', (d) => {
@@ -249,16 +252,10 @@ function startServer() {
 }
 
 async function main() {
-  const original = fs.readFileSync(CONFIG, 'utf8');
-  if (!/export const TEST_UNLOCK_ALL = (true|false);/.test(original)) throw new Error('TEST_UNLOCK_ALL not found');
   let server;
   let browser;
   const files = [];
   try {
-    fs.writeFileSync(
-      CONFIG,
-      original.replace(/export const TEST_UNLOCK_ALL = (true|false);/, 'export const TEST_UNLOCK_ALL = false;'),
-    );
     server = await startServer();
     browser = await chromium.launch();
     for (const [name, dev] of Object.entries(DEVICES)) {
@@ -275,7 +272,6 @@ async function main() {
   } finally {
     if (browser) await browser.close();
     if (server) process.kill(-server.pid);
-    fs.writeFileSync(CONFIG, original); // the test flag goes back exactly as it was
   }
   // Google Play wants opaque images: drop the alpha channel
   execFileSync('python3', [
@@ -283,7 +279,7 @@ async function main() {
     'import sys\nfrom PIL import Image\nfor f in sys.argv[1:]:\n    Image.open(f).convert("RGB").save(f, optimize=True)',
     ...files,
   ]);
-  console.log(`done: ${files.length} screenshots; TEST_UNLOCK_ALL restored`);
+  console.log(`done: ${files.length} screenshots`);
 }
 
 main().catch((e) => {
