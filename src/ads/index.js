@@ -81,7 +81,9 @@ export async function initAds() {
   try {
     await provider.init();
   } catch (e) {
-    adLog(`init failed, no ads this session: ${e && e.message ? e.message : e}`);
+    const msg = e && e.message ? e.message : String(e);
+    adLog(`init failed, no ads this session: ${msg}`);
+    setAdStatus('provider', `none (init failed: ${msg})`);
     provider = { ...noneProvider(), bannerSlot: provider.bannerSlot }; // the slot stays, so nothing moves
   }
   syncBanner();

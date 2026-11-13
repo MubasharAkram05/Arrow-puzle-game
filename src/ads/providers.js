@@ -44,6 +44,7 @@ export function admobProvider(ids, changed, retry) {
   let M; // the plugin module (enums)
   let canRequest = false;
   let npa = false;
+  let gate = 'pending'; // the ad gate: 'pending' (consent not settled) | 'allowed' | 'blocked'
   let privacyRequired = false;
   const ready = { rewarded: false, interstitial: false };
   const loading = { rewarded: false, interstitial: false };
@@ -133,7 +134,9 @@ export function admobProvider(ids, changed, retry) {
     }
     let info = await withTimeout(AdMob.requestConsentInfo(opts), ADS.consent.timeoutMs);
     setAdStatus('consent', consentFields(info));
-    if (info.status === M.AdmobConsentStatus.REQUIRED && info.isConsentFormAvailable) {
+    // plain strings: the plugin's JS does not export every consent enum (PrivacyOptionsRequirementStatus is
+    // missing at runtime), so comparing against M.<Enum> can throw
+    if (info.status === 'REQUIRED' && info.isConsentFormAvailable) {
       adLog('consent form: showing');
       info = await AdMob.showConsentForm();
       setAdStatus('consent', consentFields(info));
@@ -148,12 +151,23 @@ export function admobProvider(ids, changed, retry) {
     error: '',
   });
 
-  /** Check consent (retrying in release builds), then allow or block ads and load everything that is allowed. */
-  async function resolveConsent() {
+  /**
+   * The ad gate: check consent (retrying in release builds), decide, then load every format that is allowed.
+   * One run at a time; whatever happens, the gate ends 'allowed' or 'blocked' with a reason (never stuck).
+   */
+  let gateRun = null;
+  function resolveConsent() {
+    if (!gateRun) gateRun = runGate().finally(() => (gateRun = null));
+    return gateRun;
+  }
+  async function runGate() {
     const geography = __AD_DEBUG__ && isTesting ? adDebugSettings().geography : 'off';
+    gate = 'pending';
+    let out;
+    let info;
     for (let attempt = 1; ; attempt++) {
       setAdStatus('consent', { status: 'checking', attempt, geography, decision: '', error: '' });
-      let info = null;
+      info = null;
       try {
         info = await askConsent();
       } catch (e) {
@@ -165,28 +179,39 @@ export function admobProvider(ids, changed, retry) {
           error: `${err.code !== null ? `code ${err.code}: ` : e && e.code === 'TIMEOUT' ? 'timeout: ' : ''}${err.message}`,
         });
       }
-      const out = consentOutcome(info, { testing: isTesting, attempt, attempts: ADS.consent.attempts });
-      if (out.action === 'retry') {
-        await new Promise((r) => setTimeout(r, retryDelay(attempt, { baseMs: ADS.consent.retryBaseMs, maxMs: 60000 })));
-        continue;
-      }
-      privacyRequired = !!info && info.privacyOptionsRequirementStatus === M.PrivacyOptionsRequirementStatus.REQUIRED;
-      canRequest = out.action === 'allow';
-      npa = out.npa;
-      setAdStatus('consent', { canRequest, npa, decision: out.reason });
+      out = consentOutcome(info, { testing: isTesting, attempt, attempts: ADS.consent.attempts });
+      if (out.action !== 'retry') break;
+      await new Promise((r) => setTimeout(r, retryDelay(attempt, { baseMs: ADS.consent.retryBaseMs, maxMs: 60000 })));
+    }
+    // decide first, so the gate and the panel always agree
+    gate = out.action === 'allow' ? 'allowed' : 'blocked';
+    canRequest = gate === 'allowed';
+    npa = out.npa;
+    privacyRequired = !!info && info.privacyOptionsRequirementStatus === 'REQUIRED';
+    setAdStatus('consent', { canRequest, npa, decision: out.reason });
+    try {
       if (!canRequest) {
         banner.made = false;
-        await AdMob.removeBanner().catch(() => {});
         ready.rewarded = ready.interstitial = false;
         for (const f of ['banner', 'interstitial', 'rewarded'])
           setAdStatus(f, { state: 'blocked', message: out.reason, retryAt: 0 });
+        await AdMob.removeBanner().catch(() => {});
       }
       changed();
-      // consent settled: load every format now
-      loadRewarded();
-      loadInterstitial();
+    } finally {
+      // consent settled: load every allowed format now
+      loadAll();
+    }
+  }
+
+  /** Load whatever is not loaded or loading yet (each load returns at once when ads are not allowed). */
+  function loadAll() {
+    for (const fmt of ['rewarded', 'interstitial']) clearTimeout(timers[fmt]);
+    loadRewarded();
+    loadInterstitial();
+    if (banner.want && !banner.made) {
+      clearTimeout(timers.banner);
       placeBanner();
-      return;
     }
   }
 
@@ -231,22 +256,11 @@ export function admobProvider(ids, changed, retry) {
     },
     rewardedReady: () => ready.rewarded,
     interstitialReady: () => ready.interstitial,
-    /** Try the loads that failed now (a player tapped a "Watch ad" button while no ad was ready). */
+    /** "Retry failed loads now" / a "Watch ad" tap with no ad ready: settle the gate if needed, then load. */
     retryNow() {
-      if (!canRequest) return;
-      for (const [fmt, load] of [
-        ['rewarded', loadRewarded],
-        ['interstitial', loadInterstitial],
-      ]) {
-        if (!ready[fmt] && !loading[fmt]) {
-          clearTimeout(timers[fmt]);
-          load();
-        }
-      }
-      if (banner.want && !banner.made) {
-        clearTimeout(timers.banner);
-        retryBanner();
-      }
+      if (!AdMob) return;
+      if (gate === 'pending') resolveConsent();
+      else loadAll();
     },
     showRewarded(emit) {
       ready.rewarded = false;

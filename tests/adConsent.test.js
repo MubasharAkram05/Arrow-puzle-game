@@ -56,18 +56,16 @@ describe('withTimeout', () => {
 // ---------- the provider with a fake AdMob plugin ----------
 
 const plugin = vi.hoisted(() => ({ AdMob: null }));
-vi.mock('@capacitor-community/admob', () => ({
-  get AdMob() {
-    return plugin.AdMob;
-  },
-  AdmobConsentStatus: { REQUIRED: 'REQUIRED', NOT_REQUIRED: 'NOT_REQUIRED', OBTAINED: 'OBTAINED', UNKNOWN: 'UNKNOWN' },
-  PrivacyOptionsRequirementStatus: { REQUIRED: 'REQUIRED', NOT_REQUIRED: 'NOT_REQUIRED' },
-  RewardAdPluginEvents: { FailedToLoad: 'rfail', Rewarded: 'r', Dismissed: 'rd', FailedToShow: 'rfs' },
-  InterstitialAdPluginEvents: { FailedToLoad: 'ifail', Dismissed: 'id', FailedToShow: 'ifs' },
-  BannerAdPluginEvents: { Loaded: 'bl', FailedToLoad: 'bfail' },
-  BannerAdSize: { BANNER: 'BANNER' },
-  BannerAdPosition: { BOTTOM_CENTER: 'BOTTOM_CENTER' },
-}));
+// the real plugin module (its real enums, including the ones it does NOT export), with a fake AdMob object
+vi.mock('@capacitor-community/admob', async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    get AdMob() {
+      return plugin.AdMob;
+    },
+  };
+});
 
 /** A fake AdMob plugin; consent answers come from `answers` (a value, an Error, or 'hang'). */
 function fakeAdMob(answers) {
@@ -99,14 +97,17 @@ function fakeAdMob(answers) {
 const TEST_IDS = { mode: 'test', banner: 'b', interstitial: 'i', rewarded: 'r' };
 const REAL_IDS = { ...TEST_IDS, mode: 'real' };
 
-async function start(ids, answers) {
+async function start(ids, answers, setup = () => {}) {
   vi.resetModules();
   const api = fakeAdMob(answers);
+  setup(api);
   const { admobProvider } = await import('../src/ads/providers.js');
   const { adStatus } = await import('../src/ads/status.js');
   const p = admobProvider(ids, () => {}, ADS.retry);
   await p.showBanner(66); // the screen wants a banner (before consent: nothing is placed yet)
   const done = p.init();
+  // the plugin module loads asynchronously: wait until the consent request really started
+  await vi.waitFor(() => expect(api.requestConsentInfo).toHaveBeenCalled());
   return { api, p, adStatus, done };
 }
 const loads = (api) => api.calls.filter((c) => c[0] !== 'consent').map((c) => `${c[0]}${c[1].npa ? ':npa' : ''}`);
@@ -140,11 +141,65 @@ describe('AdMob provider consent flow', () => {
     expect(loads(api).sort()).toEqual(['banner', 'interstitial', 'rewarded']);
   });
 
-  it('REQUIRED: the form shows; if consent is still not given, nothing loads', async () => {
-    const { api, adStatus, done } = await start(TEST_IDS, [
-      { status: 'REQUIRED', isConsentFormAvailable: true, canRequestAds: false },
+  it('the phone in Pakistan: UMP answers NOT_REQUIRED + canRequestAds after init -> Ads allowed, all three load', async () => {
+    const answer = {
+      status: 'NOT_REQUIRED',
+      isConsentFormAvailable: false,
+      canRequestAds: true,
+      privacyOptionsRequirementStatus: 'NOT_REQUIRED',
+    };
+    const { api, adStatus, done } = await start(TEST_IDS, [answer]);
+    await done;
+    expect(adStatus.provider).toBe('admob (test ids)');
+    expect(adStatus.consent).toMatchObject({
+      status: 'NOT_REQUIRED',
+      formAvailable: false,
+      canRequestAds: true,
+      privacy: 'NOT_REQUIRED',
+      canRequest: true,
+      npa: false,
+    });
+    expect(adStatus.consent.decision).toBe('consent NOT_REQUIRED'); // the panel's Ads line: allowed, with the reason
+    expect(loads(api).sort()).toEqual(['banner', 'interstitial', 'rewarded']);
+    expect(['loading', 'loaded']).toContain(adStatus.rewarded.state);
+    expect(['loading', 'loaded']).toContain(adStatus.interstitial.state);
+    expect(['loading', 'loaded']).toContain(adStatus.banner.state);
+  });
+
+  it('OBTAINED with privacy options REQUIRED (EEA after consent): allowed, privacy options shown', async () => {
+    const { api, p, done } = await start(TEST_IDS, [
+      { status: 'OBTAINED', canRequestAds: true, privacyOptionsRequirementStatus: 'REQUIRED' },
     ]);
-    api.showConsentForm.mockResolvedValueOnce({ status: 'REQUIRED', canRequestAds: false });
+    await done;
+    expect(p.privacyOptionsRequired()).toBe(true);
+    expect(loads(api)).toHaveLength(3);
+  });
+
+  it('"Retry failed loads now" loads a failed format again; "Re-check consent" re-runs the gate', async () => {
+    const ok = { status: 'NOT_REQUIRED', canRequestAds: true };
+    const { api, p, adStatus, done } = await start(TEST_IDS, [ok], (a) =>
+      a.prepareRewardVideoAd.mockRejectedValueOnce({ code: 3, message: 'No fill.' }),
+    );
+    await done;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(adStatus.rewarded).toMatchObject({ state: 'failed', code: 3, message: 'No fill.' });
+    api.calls.length = 0;
+    p.retryNow(); // at once, not after the 5 s backoff
+    await vi.advanceTimersByTimeAsync(0);
+    expect(loads(api)).toEqual(['rewarded']);
+    expect(adStatus.rewarded.state).toBe('loaded');
+    await p.recheckConsent(true);
+    expect(api.resetConsentInfo).toHaveBeenCalled();
+    expect(api.requestConsentInfo).toHaveBeenCalledTimes(2);
+    expect(adStatus.consent).toMatchObject({ canRequest: true, decision: 'consent NOT_REQUIRED' });
+  });
+
+  it('REQUIRED: the form shows; if consent is still not given, nothing loads', async () => {
+    const { api, adStatus, done } = await start(
+      TEST_IDS,
+      [{ status: 'REQUIRED', isConsentFormAvailable: true, canRequestAds: false }],
+      (a) => a.showConsentForm.mockResolvedValueOnce({ status: 'REQUIRED', canRequestAds: false }),
+    );
     await done;
     expect(api.showConsentForm).toHaveBeenCalled();
     expect(adStatus.consent.canRequest).toBe(false);
