@@ -5,7 +5,7 @@
  *    (+1 diamond, +1 hint, +40 coins, each with its own daily limit in ADS.earn); a reward only on the reward
  *    event, at most ADS.rewardedPerDay a day in all
  *  - interstitial: only when the player leaves a victory screen (policy.js interstitialDue)
- *  - banner: only on Home, Levels, Shop and Tasks, never with a popup open, in a slot reserved at startup
+ *  - banner: off (BANNER_ENABLED false): never loaded or shown, and no space is reserved for it
  * The per-device ad record (daily count, last interstitial, launches) is kept in localStorage.
  */
 import { Capacitor } from '@capacitor/core';
@@ -69,10 +69,11 @@ function bannerMargin() {
 export async function initAds() {
   rec = noteLaunch(load());
   save();
-  const ids = adUnitIds(ADS.ids, __ADS_REAL_ALLOWED__);
+  const ids = adUnitIds(ADS.ids, __ADS_REAL_ALLOWED__, ADS.bannerEnabled);
   adLog(`init: native=${Capacitor.isNativePlatform()} ids=${ids.mode} app=${ids.appId || '-'}`);
-  if (Capacitor.isNativePlatform() && ids.mode !== 'off') provider = admobProvider(ids, changed, ADS.retry);
-  else if (__ADS_SIMULATED__) provider = simProvider(changed);
+  if (Capacitor.isNativePlatform() && ids.mode !== 'off')
+    provider = admobProvider(ids, changed, ADS.retry, ADS.bannerEnabled);
+  else if (__ADS_SIMULATED__) provider = simProvider(changed, ADS.bannerEnabled);
   else setAdStatus('provider', ids.mode === 'off' ? 'none (real IDs not filled in)' : 'none (web build)');
   if (provider.bannerSlot) {
     document.body.classList.add('ad-slot');
@@ -182,7 +183,7 @@ export async function maybeInterstitial(level) {
 
 /** Show or hide the banner for the visible screen and popups (called on every screen change and popup). */
 export function syncBanner() {
-  if (!provider.bannerSlot) return;
+  if (!ADS.bannerEnabled || !provider.bannerSlot) return;
   const screen = document.querySelector('.screen.active');
   const modal = !!document.querySelector('.modal.open') || !!document.querySelector('.sim-ad');
   if (screen && bannerAllowed(screen.id, modal, ADS.bannerScreens)) provider.showBanner(bannerMargin());

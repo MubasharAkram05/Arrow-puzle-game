@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ADS, RELEASE_ADS } from '../src/config.js';
+import { ADS, BANNER_ENABLED, RELEASE_ADS } from '../src/config.js';
 import {
   adUnitIds,
   bannerAllowed,
@@ -22,13 +22,11 @@ import { adsRealAllowed, adsSimulated } from '../scripts/build-flags.mjs';
 
 const TEST = {
   appId: 'ca-app-pub-3940256099942544~3347511713',
-  banner: 'ca-app-pub-3940256099942544/6300978111',
   interstitial: 'ca-app-pub-3940256099942544/1033173712',
   rewarded: 'ca-app-pub-3940256099942544/5224354917',
 };
 const REAL = {
   appId: 'ca-app-pub-1234567890123456~1111111111',
-  banner: 'ca-app-pub-1234567890123456/2222222222',
   interstitial: 'ca-app-pub-1234567890123456/3333333333',
   rewarded: 'ca-app-pub-1234567890123456/4444444444',
 };
@@ -40,7 +38,8 @@ describe('ad IDs', () => {
   it("ships with RELEASE_ADS false and Google's official test IDs", () => {
     expect(RELEASE_ADS).toBe(false);
     expect(ADS.ids.test).toEqual(TEST);
-    for (const k of ['appId', 'banner', 'interstitial', 'rewarded']) expect(ADS.ids.real[k]).toMatch(/^REAL_/);
+    for (const k of ['appId', 'interstitial', 'rewarded']) expect(ADS.ids.real[k]).toMatch(/^REAL_/);
+    expect(ADS.ids.real.banner).toBeUndefined(); // no banner ad unit is needed
   });
 
   it('test IDs whenever RELEASE_ADS is false, in every build', () => {
@@ -179,26 +178,38 @@ describe('interstitial rules', () => {
   });
 });
 
-describe('banner', () => {
-  const screens = ADS.bannerScreens;
+describe('banner ads: off', () => {
+  const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
-  it('only on Home, Levels, Shop and Tasks', () => {
-    expect([...screens]).toEqual(['screen-home', 'screen-levels', 'screen-shop', 'screen-tasks']);
+  it('BANNER_ENABLED is false', () => {
+    expect(BANNER_ENABLED).toBe(false);
+    expect(ADS.bannerEnabled).toBe(false);
+  });
+
+  it('no banner unit is needed for real IDs (only App ID, interstitial and rewarded)', () => {
+    const ids = { releaseAds: true, test: TEST, real: REAL };
+    expect(adUnitIds(ids, true)).toEqual({ mode: 'real', ...REAL });
+    expect(adUnitIds(ids, true)).not.toHaveProperty('banner');
+    // turning banners on would need a banner unit too
+    expect(adUnitIds(ids, true, true)).toEqual({ mode: 'off' });
+  });
+
+  it('the providers never place a banner and reserve no slot while it is off', () => {
+    const p = src('ads/providers.js');
+    expect(p).toContain('if (!bannerOn) return;');
+    expect(p).toMatch(/bannerSlot: bannerOn/);
+    expect(src('ads/index.js')).toMatch(/if \(!ADS\.bannerEnabled \|\| !provider\.bannerSlot\) return;/);
+  });
+
+  it('the Ad debug panel shows no banner line while it is off', () => {
+    expect(src('ui/modals/adDebug.js')).toContain("...(ADS.bannerEnabled ? [fmtRow('Banner', adStatus.banner)] : [])");
+  });
+
+  it('the rules for when it is turned on still hold (Home, Levels, Shop, Tasks; never with a popup)', () => {
+    const screens = ADS.bannerScreens;
     for (const s of screens) expect(bannerAllowed(s, false, screens), s).toBe(true);
-  });
-
-  it('never on the game screen, Profile, a popup or the victory screen', () => {
     expect(bannerAllowed('screen-game', false, screens)).toBe(false);
-    expect(bannerAllowed('screen-profile', false, screens)).toBe(false);
     for (const s of screens) expect(bannerAllowed(s, true, screens), `${s} with a popup`).toBe(false);
-  });
-
-  it('a fixed slot (BANNER 320 x 50) with a gap above the bottom nav', () => {
-    expect(ADS.bannerHeight).toBe(50);
-    expect(ADS.bannerGap).toBeGreaterThanOrEqual(8);
-    expect(readFileSync(new URL('../src/ads/providers.js', import.meta.url), 'utf8')).toContain(
-      'M.BannerAdSize.BANNER',
-    );
   });
 });
 

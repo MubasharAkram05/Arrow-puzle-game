@@ -174,14 +174,15 @@ nothing; you can click them safely.
 1. **AdMob account** at https://admob.google.com (use the same Google account as the Play Console if you can).
 2. **Add the app:** Apps > Add app > Android. If the app is not on Google Play yet, choose "No" for now and
    link it to the store listing later. You get an **App ID** like `ca-app-pub-1234567890123456~1234567890`.
-3. **Create 3 ad units** in that app: **Banner**, **Interstitial** and **Rewarded**. Each has an ID like
+3. **Create 2 ad units** in that app: **Interstitial** and **Rewarded** (the game shows no banners,
+   `BANNER_ENABLED = false` in `src/config.js`). Each has an ID like
    `ca-app-pub-1234567890123456/1234567890`.
 4. **Consent message (EEA/UK):** Privacy & messaging > European regulations (GDPR) > create a message for the app
    and **publish** it. Without a published message, Google's consent form cannot show, and EEA/UK players get
    no personalised ads. Also check "US state regulations" if you want that message.
 5. **Content rating:** Blocking controls > Content rating: set the maximum ad content rating (G or PG fits this
    game).
-6. **Put your IDs in `src/ads.config.json`**: replace `REAL_APP_ID`, `REAL_BANNER_ID`,
+6. **Put your IDs in `src/ads.config.json`**: replace `REAL_APP_ID`,
    `REAL_INTERSTITIAL_ID` and `REAL_REWARDED_ID`, and set `"releaseAds": true`. Commit, merge, then build the
    release AAB (section 3). The debug APK keeps the test IDs.
 7. **Never click your own real ads.** To see real ads on your phone without risk, add the phone as a test device
@@ -217,10 +218,10 @@ earn less.
 ### Checking test ads on a phone (debug APK)
 
 - **Ad debug panel:** Settings, tap the version line ("Version 3.26.0") 7 times. It shows the SDK start, the
-  consent status, and for banner / interstitial / rewarded: loading, loaded or failed with Google's error code and
+  consent status, and for interstitial / rewarded: loading, loaded or failed with Google's error code and
   message, plus the next retry. "Retry failed loads now" tries again at once. Only in debug builds.
 - **Logcat:** with USB debugging on, `adb logcat -s ArrowAds` shows the same lines (for example
-  `consent NOT_REQUIRED canRequest=true npa=false`, `rewarded loaded`, `banner failed code=3 "No fill."`).
+  `consent NOT_REQUIRED canRequest=true npa=false`, `rewarded loaded`, `interstitial failed code=3 "No fill."`).
   Google's own SDK messages: `adb logcat -s Ads`.
 - **Consent:** the panel shows Google UMP's answer (status, form available, canRequestAds, the error if the
   request failed or did not answer within 8 s) and what the game decided. Test builds never let a failed or
@@ -233,7 +234,7 @@ earn less.
   **Not EEA** (or Off) and reset again to go back.
 - Common error codes: 0 internal error, 1 invalid request (wrong ad unit ID), 2 network error, 3 no fill (no ad
   to show right now, normal now and then).
-- Test ads say "Test Ad". The banner shows only on Home, Levels, Shop and Tasks.
+- Test ads say "Test Ad". There are no banner ads (`BANNER_ENABLED = false`).
 
 ## Notes
 

@@ -94,7 +94,7 @@ function fakeAdMob(answers) {
   return api;
 }
 
-const TEST_IDS = { mode: 'test', banner: 'b', interstitial: 'i', rewarded: 'r' };
+const TEST_IDS = { mode: 'test', interstitial: 'i', rewarded: 'r' };
 const REAL_IDS = { ...TEST_IDS, mode: 'real' };
 
 async function start(ids, answers, setup = () => {}) {
@@ -104,7 +104,7 @@ async function start(ids, answers, setup = () => {}) {
   const { admobProvider } = await import('../src/ads/providers.js');
   const { adStatus } = await import('../src/ads/status.js');
   const p = admobProvider(ids, () => {}, ADS.retry);
-  await p.showBanner(66); // the screen wants a banner (before consent: nothing is placed yet)
+  await p.showBanner(66); // a screen asks for a banner: banners are off, so nothing is ever placed
   const done = p.init();
   // the plugin module loads asynchronously: wait until the consent request really started
   await vi.waitFor(() => expect(api.requestConsentInfo).toHaveBeenCalled());
@@ -122,7 +122,7 @@ describe('AdMob provider consent flow', () => {
     await done;
     expect(adStatus.consent).toMatchObject({ status: 'check failed', canRequest: true, npa: true });
     expect(adStatus.consent.error).toContain('timeout');
-    expect(loads(api).sort()).toEqual(['banner:npa', 'interstitial:npa', 'rewarded:npa']);
+    expect(loads(api).sort()).toEqual(['interstitial:npa', 'rewarded:npa']);
   });
 
   it('test build, request fails: the error is kept and test ads load at once', async () => {
@@ -130,7 +130,7 @@ describe('AdMob provider consent flow', () => {
     await done;
     expect(adStatus.consent.error).toContain('Publisher misconfiguration');
     expect(adStatus.consent.canRequest).toBe(true);
-    expect(loads(api)).toHaveLength(3);
+    expect(loads(api)).toHaveLength(2);
   });
 
   it('NOT_REQUIRED (Pakistan): personalised ads load right after consent', async () => {
@@ -138,10 +138,10 @@ describe('AdMob provider consent flow', () => {
     const { api, adStatus, done } = await start(TEST_IDS, [answer]);
     await done;
     expect(adStatus.consent).toMatchObject({ status: 'NOT_REQUIRED', formAvailable: false, canRequestAds: true });
-    expect(loads(api).sort()).toEqual(['banner', 'interstitial', 'rewarded']);
+    expect(loads(api).sort()).toEqual(['interstitial', 'rewarded']);
   });
 
-  it('the phone in Pakistan: UMP answers NOT_REQUIRED + canRequestAds after init -> Ads allowed, all three load', async () => {
+  it('the phone in Pakistan: UMP answers NOT_REQUIRED + canRequestAds after init -> Ads allowed, interstitial and rewarded load', async () => {
     const answer = {
       status: 'NOT_REQUIRED',
       isConsentFormAvailable: false,
@@ -160,10 +160,11 @@ describe('AdMob provider consent flow', () => {
       npa: false,
     });
     expect(adStatus.consent.decision).toBe('consent NOT_REQUIRED'); // the panel's Ads line: allowed, with the reason
-    expect(loads(api).sort()).toEqual(['banner', 'interstitial', 'rewarded']);
+    expect(loads(api).sort()).toEqual(['interstitial', 'rewarded']);
     expect(['loading', 'loaded']).toContain(adStatus.rewarded.state);
     expect(['loading', 'loaded']).toContain(adStatus.interstitial.state);
-    expect(['loading', 'loaded']).toContain(adStatus.banner.state);
+    expect(adStatus.banner.state).toBe('off'); // BANNER_ENABLED false: never requested
+    expect(api.showBanner).not.toHaveBeenCalled();
   });
 
   it('OBTAINED with privacy options REQUIRED (EEA after consent): allowed, privacy options shown', async () => {
@@ -172,7 +173,7 @@ describe('AdMob provider consent flow', () => {
     ]);
     await done;
     expect(p.privacyOptionsRequired()).toBe(true);
-    expect(loads(api)).toHaveLength(3);
+    expect(loads(api)).toHaveLength(2);
   });
 
   it('"Retry failed loads now" loads a failed format again; "Re-check consent" re-runs the gate', async () => {
@@ -213,7 +214,7 @@ describe('AdMob provider consent flow', () => {
     await done;
     expect(api.requestConsentInfo).toHaveBeenCalledTimes(ADS.consent.attempts);
     expect(adStatus.consent).toMatchObject({ canRequest: true, npa: true, attempt: ADS.consent.attempts });
-    expect(loads(api)).toHaveLength(3);
+    expect(loads(api)).toHaveLength(2);
   });
 
   it('release build: a retry that succeeds gives normal ads', async () => {

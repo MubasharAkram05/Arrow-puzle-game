@@ -37,8 +37,9 @@ export function noneProvider() {
  * @param {{mode: 'test'|'real', banner: string, interstitial: string, rewarded: string}} ids
  * @param {() => void} changed called when an ad becomes ready or is used
  * @param {{baseMs: number, maxMs: number}} retry ADS.retry
+ * @param {boolean} [bannerOn] BANNER_ENABLED: off by default, so no banner is ever requested
  */
-export function admobProvider(ids, changed, retry) {
+export function admobProvider(ids, changed, retry, bannerOn = false) {
   const isTesting = ids.mode === 'test';
   let AdMob;
   let M; // the plugin module (enums)
@@ -98,7 +99,7 @@ export function admobProvider(ids, changed, retry) {
     loading.interstitial = false;
   }
   async function placeBanner() {
-    if (!canRequest || !banner.want) return;
+    if (!bannerOn || !canRequest || !banner.want) return;
     try {
       if (banner.made) await AdMob.resumeBanner();
       else {
@@ -193,9 +194,9 @@ export function admobProvider(ids, changed, retry) {
       if (!canRequest) {
         banner.made = false;
         ready.rewarded = ready.interstitial = false;
-        for (const f of ['banner', 'interstitial', 'rewarded'])
+        for (const f of bannerOn ? ['banner', 'interstitial', 'rewarded'] : ['interstitial', 'rewarded'])
           setAdStatus(f, { state: 'blocked', message: out.reason, retryAt: 0 });
-        await AdMob.removeBanner().catch(() => {});
+        if (bannerOn) await AdMob.removeBanner().catch(() => {});
       }
       changed();
     } finally {
@@ -223,7 +224,7 @@ export function admobProvider(ids, changed, retry) {
 
   return {
     name: 'admob',
-    bannerSlot: true,
+    bannerSlot: bannerOn,
     async init() {
       setAdStatus('provider', `admob (${ids.mode} ids)`);
       setAdStatus('sdk', 'starting');
@@ -244,8 +245,10 @@ export function admobProvider(ids, changed, retry) {
       AdMob.addListener(M.InterstitialAdPluginEvents.FailedToLoad, (e) =>
         setAdStatus('interstitial', { state: 'failed', ...adError(e) }),
       );
-      AdMob.addListener(M.BannerAdPluginEvents.Loaded, () => loaded('banner'));
-      AdMob.addListener(M.BannerAdPluginEvents.FailedToLoad, (e) => failed('banner', e, retryBanner));
+      if (bannerOn) {
+        AdMob.addListener(M.BannerAdPluginEvents.Loaded, () => loaded('banner'));
+        AdMob.addListener(M.BannerAdPluginEvents.FailedToLoad, (e) => failed('banner', e, retryBanner));
+      } else setAdStatus('banner', { state: 'off', message: 'BANNER_ENABLED is false' });
       await resolveConsent();
     },
     /** Ad debug panel: check consent again (after changing the EEA switch); reset first to see the form again. */
@@ -302,10 +305,12 @@ export function admobProvider(ids, changed, retry) {
       loadInterstitial();
     },
     async showBanner(margin) {
+      if (!bannerOn) return;
       banner = { ...banner, want: true, margin };
       await placeBanner();
     },
     async hideBanner() {
+      if (!bannerOn) return;
       banner.want = false;
       if (banner.made) await AdMob.hideBanner().catch(() => {});
     },
@@ -321,7 +326,7 @@ export function admobProvider(ids, changed, retry) {
  * failed ad, interstitial, banner) can be tried in a browser. Never used in a Vercel or Android build.
  * @param {() => void} changed
  */
-export function simProvider(changed) {
+export function simProvider(changed, bannerOn = false) {
   let ready = false;
   let interReady = false;
   let banner = null;
@@ -347,7 +352,7 @@ export function simProvider(changed) {
 
   return {
     name: 'simulated',
-    bannerSlot: true,
+    bannerSlot: bannerOn,
     async init() {
       setAdStatus('provider', 'simulated (dev server)');
       setAdStatus('sdk', 'ready');
@@ -361,6 +366,7 @@ export function simProvider(changed) {
         attempt: 1,
         decision: 'simulated ads',
       });
+      if (!bannerOn) setAdStatus('banner', { state: 'off', message: 'BANNER_ENABLED is false' });
       reload();
     },
     rewardedReady: () => ready,
@@ -405,6 +411,7 @@ export function simProvider(changed) {
       reload();
     },
     async showBanner(margin) {
+      if (!bannerOn) return;
       if (!banner) {
         banner = document.createElement('div');
         banner.className = 'sim-banner';

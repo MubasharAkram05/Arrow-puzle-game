@@ -4,7 +4,7 @@
 import { dayNumber } from '../game/daily.js';
 
 const PLACEHOLDER = /^REAL_/;
-const UNITS = ['appId', 'banner', 'interstitial', 'rewarded'];
+const UNITS = ['appId', 'interstitial', 'rewarded']; // + 'banner' only when BANNER_ENABLED
 
 /**
  * Which ad IDs to use.
@@ -14,17 +14,18 @@ const UNITS = ['appId', 'banner', 'interstitial', 'rewarded'];
  *   and never test ads in the store build
  * @param {{releaseAds: boolean, test: object, real: object}} ids src/ads.config.json
  * @param {boolean} realAllowed this is an Android release build (see scripts/build-flags.mjs)
+ * @param {boolean} [banner] banner ads on (BANNER_ENABLED): a banner unit is then needed too
  * @returns {{mode: 'test'|'real'|'off', appId?: string, banner?: string, interstitial?: string, rewarded?: string}}
  */
-export function adUnitIds(ids, realAllowed) {
+export function adUnitIds(ids, realAllowed, banner = false) {
+  const units = banner ? [...UNITS, 'banner'] : UNITS;
+  const pick = (o) => Object.fromEntries(units.map((k) => [k, o[k]]));
   if (!ids.releaseAds || !realAllowed) return { mode: 'test', ...pick(ids.test) };
-  const filled = UNITS.every(
+  const filled = units.every(
     (k) => typeof ids.real[k] === 'string' && /^ca-app-pub-/.test(ids.real[k]) && !PLACEHOLDER.test(ids.real[k]),
   );
   return filled ? { mode: 'real', ...pick(ids.real) } : { mode: 'off' };
 }
-
-const pick = (o) => Object.fromEntries(UNITS.map((k) => [k, o[k]]));
 
 /** Per-device ad record (localStorage, see src/ads/index.js). */
 export const newAdRecord = () => ({

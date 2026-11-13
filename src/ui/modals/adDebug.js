@@ -1,8 +1,10 @@
 /**
  * Hidden "Ad debug" panel (3.26.0), debug builds only (__AD_DEBUG__: the debug APK, the dev server).
  * Settings > tap the version 7 times. Shows the live AdMob status from src/ads/status.js: SDK start, consent, and
- * for banner / interstitial / rewarded: loading / loaded / failed with Google's error code and message.
+ * for interstitial / rewarded (and the banner, only when BANNER_ENABLED): loading / loaded / failed with Google's
+ * error code and message.
  */
+import { ADS } from '../../config.js';
 import { recheckConsent, retryAdsNow } from '../../ads/index.js';
 import { adDebugSettings, adStatus, onAdStatus, saveAdDebugSettings } from '../../ads/status.js';
 import { toast } from '../components/toast.js';
@@ -29,7 +31,7 @@ function render() {
     `<dt>Consent (UMP)</dt><dd data-state="${c.status === 'check failed' ? 'failed' : c.status === 'checking' ? 'loading' : ''}">${esc(c.status)}${c.attempt > 1 ? ` (try ${c.attempt})` : ''}<br><small>form available: ${esc(c.formAvailable)}, canRequestAds: ${esc(c.canRequestAds)}${c.privacy ? `, privacy options: ${esc(c.privacy)}` : ''}</small>${c.error ? `<br><small class="ad-debug-err">${esc(c.error)}</small>` : ''}</dd>`,
     `<dt>Ads</dt><dd data-state="${c.decision ? (c.canRequest ? 'loaded' : 'blocked') : 'loading'}">${c.decision ? `${c.canRequest ? 'allowed' : 'blocked'}${c.npa ? ', non-personalised' : ''}<br><small>${esc(c.decision)}</small>` : 'waiting for consent'}</dd>`,
     `<dt>Geography</dt><dd>${esc(c.geography)}</dd>`,
-    fmtRow('Banner', adStatus.banner),
+    ...(ADS.bannerEnabled ? [fmtRow('Banner', adStatus.banner)] : []),
     fmtRow('Interstitial', adStatus.interstitial),
     fmtRow('Rewarded', adStatus.rewarded),
   ].join('');
