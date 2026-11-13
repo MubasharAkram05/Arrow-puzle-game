@@ -49,6 +49,8 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
   - "Next Level" (was "Next Game") is the main blue button with the level number under it; "Home" (was "Main") is a text button.
   - Fits at 360 x 640 without scrolling, in light and dark mode.
 - The 3-diamond Game Over option now gives +1 heart instead of full hearts (`PRICES.gameOverHeart`, was `continueGame`).
+- Android debug APK: one fixed debug key (`android/app/debug.keystore`), so a new debug APK installs over the old one and keeps the progress. The release AAB still uses the upload key.
+- CI checks every debug APK (`scripts/verify-apk.sh`): zip, `apksigner` v2 signature and the expected debug certificate, `aapt2` badging, no testOnly, `android:exported` on every component with an intent-filter. It prints the APK's size and SHA-256, and a second job downloads the artifact again and compares it.
 - Levels and difficulty are unchanged.
 
 ## [3.25.0] - 2026-11-13

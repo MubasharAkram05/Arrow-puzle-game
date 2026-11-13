@@ -21,6 +21,14 @@ if ! "$BT/apksigner" verify --verbose --print-certs "$APK" > "$TMP/apksigner.txt
   exit 1
 fi
 grep -Ev '^WARNING: META-INF/' "$TMP/apksigner.txt" || true
+# EXPECT_CERT_SHA256: the signer the APK must have (the fixed debug key for debug APKs)
+if [ -n "${EXPECT_CERT_SHA256:-}" ]; then
+  grep -q "certificate SHA-256 digest: $EXPECT_CERT_SHA256" "$TMP/apksigner.txt" || {
+    echo "::error::$APK is not signed with the expected key (certificate SHA-256 $EXPECT_CERT_SHA256)"
+    exit 1
+  }
+  echo "signer: the expected key ($EXPECT_CERT_SHA256)"
+fi
 grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' "$TMP/apksigner.txt" || {
   echo "::error::$APK is not signed with APK Signature Scheme v2"
   exit 1

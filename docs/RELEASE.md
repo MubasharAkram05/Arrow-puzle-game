@@ -31,7 +31,8 @@ keytool -genkeypair -v \
 - Write both passwords and the alias (`upload`) in a password manager.
 - **Back up `arrow-expert-upload.jks`** (password manager, encrypted USB drive). If you lose it, Google can
   reset the upload key, but only after a support request and a waiting period.
-- Never put the `.jks` file in the repo. `.gitignore` blocks `*.jks` and `*.keystore` to help.
+- Never put the `.jks` file in the repo. `.gitignore` blocks `*.jks` and `*.keystore` to help. The only
+  exception is `android/app/debug.keystore`, the public debug key (see section 4).
 
 Check it:
 
@@ -98,7 +99,18 @@ sudo apt install -y adb
 adb install -r arrow-expert-3.25.0-debug.apk
 ```
 
-The debug APK has a different signature than the Play version: uninstall one before installing the other.
+**Debug key.** Every debug APK (from the workflow or from Android Studio) is signed with the same fixed debug
+key, `android/app/debug.keystore`, so a new debug APK installs **over** the old one and keeps your progress
+(levels, coins, settings). The workflow checks it: the "Verify the APK" step fails if a debug APK is signed with
+any other certificate than SHA-256 `872feba347c32ef53557e464b65829cddbf46d37eb60e43c7715d535e049dd84`.
+
+- That key is only for test phones. Its passwords are Android's public defaults (`android` / `androiddebugkey`),
+  so it is fine in the repo. Never use it for Google Play.
+- The release AAB is still signed with your upload key from GitHub Secrets (section 2), never with the debug key.
+- Debug APKs built before the fixed key was added (13 Nov 2026, PR #24) were signed with a random key per
+  build: uninstall that one once, then every later debug APK updates in place.
+- The debug APK and the Play version have different signatures: uninstall one before installing the other
+  (uninstalling clears the progress saved on the phone).
 
 **Check the APK before installing.** The run's summary (and the "Verify the APK" step log) shows the APK's
 size and SHA-256, and the zip also has an `arrow-expert-<version>-debug.apk.sha256` file. A file of a different
