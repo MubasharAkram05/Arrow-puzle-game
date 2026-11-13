@@ -48,7 +48,8 @@ describe('Android project', () => {
     expect(exceptions).toEqual(['!android/app/debug.keystore']);
   });
 
-  it('the workflow expects the certificate that is in android/app/debug.keystore', () => {
+  // keytool starts a JVM: give it more than the 5 s default on a busy CI runner
+  it('the workflow expects the certificate that is in android/app/debug.keystore', { timeout: 30_000 }, () => {
     const wf = text('.github/workflows/android-release.yml');
     const expected = wf.match(/EXPECT_CERT_SHA256: ([0-9a-f]{64})/)[1];
     const r = spawnSync(
