@@ -31,10 +31,12 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
   - Play Console "Contains ads", Advertising ID and Data safety
   - `app-ads.txt`
 - The privacy page shows the contact email as the link text (it showed `CONTACT_EMAIL`).
-- Out of Hearts popup, now three rows of the same height, each on one line at 375px:
-  1. "+1 heart" for 3 diamonds, with "Need X more diamonds" under it when short
-  2. "Watch ad: +1 heart": only while an ad is loaded and the daily cap allows it, and it counts toward the 2 refills per level
-  3. "Try Again"
+- Out of Hearts popup, redesigned: one "Get +1 heart" card with two buttons side by side, then "Try Again" full width.
+  - "Watch Ad" (green, primary): +1 heart after the full ad. It counts toward the 2 refills per level and the daily cap. With no ad loaded or the cap reached it reads "Ad not available" (or "No refills left") and is disabled, and the diamond button becomes the main one.
+  - Diamond "3" (outlined): +1 heart for 3 diamonds. When short it looks disabled, shakes on tap, and "Need X more diamonds" shows under both buttons.
+  - Both unavailable: both disabled, with a short hint to tap Try Again.
+  - Buttons are 52px tall and stay on one line at 360px, in light and dark mode.
+  - The top-bar hearts are always shown as lost while the popup is open.
 
   Each heart continues the level. "Refill heart" for coins and "Continue (full hearts)" are gone from this popup; buying a heart with coins by tapping the hearts during a level is unchanged.
 

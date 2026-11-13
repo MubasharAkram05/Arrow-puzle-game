@@ -206,12 +206,22 @@ describe('Out of Hearts popup (3.26.0)', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const popup = html.slice(html.indexOf('id="modal-gameover"'), html.indexOf('<!-- Victory -->'));
 
-  it('three options in order: +1 heart for diamonds, watch ad for +1 heart, try again', () => {
+  it('one "Get +1 heart" card: Watch Ad then diamonds side by side, then Try Again', () => {
     const ids = [...popup.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]);
-    expect(ids).toEqual(['btn-heart-gems', 'btn-heart-ad', 'btn-tryagain']);
-    expect(popup).toContain('+1 heart');
-    expect(popup).toContain('Watch ad: +1 heart');
+    expect(ids).toEqual(['btn-heart-ad', 'btn-heart-gems', 'btn-tryagain']);
+    const card = popup.slice(popup.indexOf('id="go-offer"'), popup.indexOf('</section>'));
+    expect(card).toContain('Get +1 heart');
+    expect(card).toContain('id="btn-heart-ad"');
+    expect(card).toContain('id="btn-heart-gems"');
+    expect(card).not.toContain('btn-tryagain');
+    expect(popup).toContain('Watch Ad');
     expect(popup).not.toContain('Refill heart');
     expect(popup).not.toContain('Continue');
+  });
+
+  it('opening it repaints the top-bar hearts as lost', () => {
+    const src = readFileSync(new URL('../src/ui/modals/gameover.js', import.meta.url), 'utf8');
+    const body = src.slice(src.indexOf('export function showGameOver'), src.indexOf("openModal('modal-gameover')"));
+    expect(body).toContain('renderHearts(-1)');
   });
 });

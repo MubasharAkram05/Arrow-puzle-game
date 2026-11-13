@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../src/config.js';
 import { adRefillHeart, buyGameOverHeart, refillHeart } from '../src/game/rewards.js';
 import { state } from '../src/game/state.js';
+import { heartOffer } from '../src/ui/modals/gameoverOffer.js';
 
 beforeEach(() => Object.assign(state, { coins: 1000, diamonds: 10, hearts: 0, maxHearts: 3, refillsUsed: 0 }));
 
@@ -37,5 +38,44 @@ describe('+1 heart for a rewarded ad', () => {
     state.hearts = 0;
     expect(adRefillHeart()).toMatchObject({ ok: false, reason: 'limit' });
     expect(state.hearts).toBe(0);
+  });
+});
+
+describe('heartOffer: how the Get +1 heart card looks', () => {
+  it('ad ready and enough diamonds: Watch Ad primary, diamonds outlined, no note', () => {
+    expect(heartOffer({ adReady: true, refillsLeft: 2, missingDiamonds: 0 })).toEqual({
+      ad: 'ready',
+      gems: 'secondary',
+      note: '',
+    });
+  });
+
+  it('short of diamonds: diamonds disabled and the note says how many are missing', () => {
+    const o = heartOffer({ adReady: true, refillsLeft: 1, missingDiamonds: 2 });
+    expect(o).toMatchObject({ ad: 'ready', gems: 'short' });
+    expect(o.note).toBe('Need 2 more diamonds');
+    expect(heartOffer({ adReady: true, refillsLeft: 1, missingDiamonds: 1 }).note).toBe('Need 1 more diamond');
+  });
+
+  it('no ad loaded or daily cap reached: Watch Ad disabled, diamonds become the main button', () => {
+    expect(heartOffer({ adReady: false, refillsLeft: 2, missingDiamonds: 0 })).toEqual({
+      ad: 'unavailable',
+      gems: 'main',
+      note: '',
+    });
+  });
+
+  it('no refills left this level: the ad is off even when one is loaded', () => {
+    expect(heartOffer({ adReady: true, refillsLeft: 0, missingDiamonds: 0 })).toMatchObject({
+      ad: 'limit',
+      gems: 'main',
+    });
+  });
+
+  it('both unavailable: both disabled and a short hint points to Try Again', () => {
+    const o = heartOffer({ adReady: false, refillsLeft: 2, missingDiamonds: 3 });
+    expect(o).toMatchObject({ ad: 'unavailable', gems: 'short' });
+    expect(o.note).toContain('Need 3 more diamonds');
+    expect(o.note).toContain('Try Again');
   });
 });
