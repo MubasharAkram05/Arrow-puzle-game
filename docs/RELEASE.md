@@ -100,6 +100,21 @@ adb install -r arrow-expert-3.25.0-debug.apk
 
 The debug APK has a different signature than the Play version: uninstall one before installing the other.
 
+**Check the APK before installing.** The run's summary (and the "Verify the APK" step log) shows the APK's
+size and SHA-256, and the zip also has an `arrow-expert-<version>-debug.apk.sha256` file. A file of a different
+size is an incomplete download and gives "There was a problem parsing the package" on the phone. Compare:
+
+```bash
+sha256sum -c arrow-expert-3.26.0-debug.apk.sha256      # Linux / macOS (shasum -a 256 -c on macOS)
+certutil -hashfile arrow-expert-3.26.0-debug.apk SHA256  # Windows
+```
+
+On a phone, download the zip with the browser while signed in to GitHub, wait until the download is complete,
+unzip it with the Files app, then open the `.apk` (not the `.zip`, not the `.sha256`). Every APK the workflow
+builds is checked with `apksigner verify` (v2 signature), `aapt2 dump badging` (not testOnly) and the
+Android 12 `android:exported` rule (`scripts/verify-apk.sh`), and the `artifact-check` job downloads the
+artifact again and compares the SHA-256, so a failed check stops the run instead of producing a broken APK.
+
 ## 5. Upload to Google Play (first time)
 
 1. Play Console > **Create app**: name "Arrow Expert", game, free.
