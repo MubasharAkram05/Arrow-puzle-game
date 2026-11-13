@@ -25,6 +25,8 @@ on:
       - 'android/**'
       - 'capacitor.config.json'
       - '.github/workflows/android-release.yml'
+      - 'scripts/verify-apk.sh'
+      - 'scripts/check-apk-manifest.py'
 
 permissions:
   contents: read
@@ -37,6 +39,10 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      debug: ${{ steps.what.outputs.debug }}
+      apk_name: ${{ steps.apk.outputs.name }}
+      apk_sha256: ${{ steps.apk.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -133,11 +139,62 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
+          ls -l app/build/outputs/apk/debug/
           cp app/build/outputs/apk/debug/app-debug.apk \
             "$RUNNER_TEMP/arrow-expert-${{ steps.what.outputs.version }}-debug.apk"
+      # Fails the job unless the APK is a valid zip, signed with v2, readable by aapt2, not testOnly, and every
+      # component with an intent-filter sets android:exported (Android 12+).
+      - name: Verify the APK (apksigner, aapt2, manifest)
+        id: apk
+        if: steps.what.outputs.debug == 'true'
+        run: |
+          APK="$RUNNER_TEMP/arrow-expert-${{ steps.what.outputs.version }}-debug.apk"
+          scripts/verify-apk.sh "$APK"
+          SHA=$(sha256sum "$APK" | cut -d' ' -f1)
+          SIZE=$(stat -c %s "$APK")
+          NAME=$(basename "$APK")
+          (cd "$RUNNER_TEMP" && sha256sum "$NAME" > "$NAME.sha256")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Debug APK"
+            echo "| File | Size | SHA-256 |"
+            echo "| --- | --- | --- |"
+            echo "| \`$NAME\` | $SIZE bytes ($(awk "BEGIN{printf \"%.2f\", $SIZE/1048576}") MiB) | \`$SHA\` |"
+            echo
+            echo "The download is a .zip: unzip it, then compare the APK's size and SHA-256 with the line above."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "APK $NAME size=$SIZE sha256=$SHA"
       - uses: actions/upload-artifact@v4
         if: steps.what.outputs.debug == 'true'
         with:
           name: arrow-expert-${{ steps.what.outputs.version }}-debug-apk
-          path: ${{ runner.temp }}/arrow-expert-*-debug.apk
+          path: |
+            ${{ runner.temp }}/arrow-expert-*-debug.apk
+            ${{ runner.temp }}/arrow-expert-*-debug.apk.sha256
           if-no-files-found: error
+          compression-level: 0 # an APK is already compressed
+
+  # Download the uploaded artifact again and check the APK inside is byte-for-byte the one that was verified.
+  artifact-check:
+    needs: android
+    if: needs.android.outputs.debug == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arrow-expert-*-debug-apk
+          path: dl
+      - name: Compare the downloaded APK with the built one
+        run: |
+          find dl -type f -exec ls -l {} \;
+          APK=$(find dl -name '${{ needs.android.outputs.apk_name }}' | head -1)
+          [ -n "$APK" ] || { echo "::error::APK not found in the artifact"; exit 1; }
+          GOT=$(sha256sum "$APK" | cut -d' ' -f1)
+          echo "built:      ${{ needs.android.outputs.apk_sha256 }}"
+          echo "downloaded: $GOT"
+          [ "$GOT" = "${{ needs.android.outputs.apk_sha256 }}" ] || { echo "::error::the artifact APK differs from the built APK"; exit 1; }
+          (cd "$(dirname "$APK")" && sha256sum -c ./*.sha256)
+          unzip -tq "$APK"
+          echo "artifact APK: OK (same bytes as the verified build)"
