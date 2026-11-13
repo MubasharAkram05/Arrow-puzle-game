@@ -7,9 +7,57 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#FFFFFF" />
-    <title>Arrow Escape</title>
+    <title>Arrow Expert</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="./icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <style>
+      /* quick loading screen, shown before the app's CSS and JS load (src/ui/bootSplash.js fades it out) */
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: linear-gradient(160deg, #05e6fc 0%, #0250f7 45%, #021470 100%);
+        color: #ffffff;
+        font:
+          800 28px/1.2 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        transition: opacity 0.22s ease;
+      }
+      #boot-splash img {
+        width: 128px;
+        height: 128px;
+      }
+      #boot-splash.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        #boot-splash {
+          background: linear-gradient(180deg, #0b1020 0%, #142a7a 100%);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash {
+          transition: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" aria-hidden="true">
+      <img src="./icons/logo-256.png" alt="" />
+      <span>Arrow Expert</span>
+    </div>
     <!-- Icon sprite is mounted by src/ui/components/icons.js -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
       <!-- cartoon glove, fingertip at (6, 6) of a 64px box (pointer and zoom guide) -->
@@ -36,19 +84,8 @@
         </button>
       </header>
       <div class="home-main">
-        <svg class="logo" viewBox="0 0 96 96" aria-hidden="true">
-          <rect x="4" y="4" width="88" height="88" rx="26" fill="var(--primary)" />
-          <path
-            d="M28 72V52h36V36"
-            fill="none"
-            stroke="#FFFFFF"
-            stroke-width="9"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path d="M51 38 64 21l13 17z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" />
-        </svg>
-        <h1>Arrow Escape</h1>
+        <img class="logo" src="./icons/icon-192.png" width="96" height="96" alt="Arrow Expert icon" />
+        <h1>Arrow Expert</h1>
         <p class="muted">Tap the arrows to clear the board.</p>
         <div class="home-actions">
           <button class="btn primary big" id="btn-play">
@@ -202,7 +239,7 @@
     <div class="modal" id="modal-credits">
       <div class="card">
         <div class="card-head">
-          <h3>Credits</h3>
+          <h3 class="credits-title"><img src="./icons/icon-192.png" width="40" height="40" alt="" />Credits</h3>
           <button class="icon-btn" data-close aria-label="Close">
             <svg class="icon"><use href="#i-close" /></svg>
           </button>

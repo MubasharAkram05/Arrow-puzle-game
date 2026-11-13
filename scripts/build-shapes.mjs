@@ -106,8 +106,8 @@ export const SOURCES = {
     author: 'Christian Robertson',
     file: '@fontsource/roboto-slab/files/roboto-slab-latin-900-normal.woff',
   },
-  orig: { name: 'Arrow Escape original shapes', license: 'project', url: '', author: 'Arrow Escape' },
-  draw: { name: 'Arrow Escape hand-drawn shapes', license: 'project', url: '', author: 'Arrow Escape' },
+  orig: { name: 'Arrow Expert original shapes', license: 'project', url: '', author: 'Arrow Expert' },
+  draw: { name: 'Arrow Expert hand-drawn shapes', license: 'project', url: '', author: 'Arrow Expert' },
 };
 
 const RENDER_PX = 512;
@@ -327,7 +327,7 @@ function writeCredits(shapes) {
     .join('\n');
   const md = `# Credits
 
-Arrow Escape's board shapes (\`src/engine/shapes/library.json\`) are silhouettes made from the open sources below
+Arrow Expert's board shapes (\`src/engine/shapes/library.json\`) are silhouettes made from the open sources below
 by \`scripts/build-shapes.mjs\`. Each shape records its source and license in the library, and the game lists these
 credits in Settings > Credits.
 

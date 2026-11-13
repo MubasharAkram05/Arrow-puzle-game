@@ -26,6 +26,11 @@ export default [
     },
   },
   {
+    // store screenshots (Playwright, CommonJS): Node code, plus callbacks that run in the page
+    files: ['scripts/**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser } },
+  },
+  {
     files: ['tests/**/*.js', '*.config.js', 'scripts/**/*.mjs'],
     languageOptions: { globals: { ...globals.node } },
   },

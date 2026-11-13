@@ -22,7 +22,9 @@
   width: 96px;
   height: 96px;
   margin-bottom: 8px;
-  filter: drop-shadow(0 10px 20px rgba(24, 119, 242, 0.3));
+  /* the app icon (3.24.0), with rounded corners like on a phone's home screen */
+  border-radius: 24px;
+  filter: drop-shadow(0 10px 20px rgba(2, 80, 247, 0.3));
   animation: float 3s ease-in-out infinite;
 }
 @keyframes float {

@@ -1,6 +1,6 @@
 # Credits
 
-Arrow Escape's board shapes (`src/engine/shapes/library.json`) are silhouettes made from the open sources below
+Arrow Expert's board shapes (`src/engine/shapes/library.json`) are silhouettes made from the open sources below
 by `scripts/build-shapes.mjs`. Each shape records its source and license in the library, and the game lists these
 credits in Settings > Credits.
 
@@ -13,8 +13,8 @@ credits in Settings > Credits.
 | [Fluent Emoji (flat)](https://github.com/microsoft/fluentui-emoji)       | Microsoft Corporation             | MIT        |     58 |
 | [Inter (Black 900)](https://rsms.me/inter/)                              | Rasmus Andersson                  | OFL-1.1    |     34 |
 | [Roboto Slab (Black 900)](https://fonts.google.com/specimen/Roboto+Slab) | Christian Robertson               | Apache-2.0 |      1 |
-| Arrow Escape original shapes                                             | Arrow Escape                      | project    |     18 |
-| Arrow Escape hand-drawn shapes                                           | Arrow Escape                      | project    |      6 |
+| Arrow Expert original shapes                                             | Arrow Expert                      | project    |     18 |
+| Arrow Expert hand-drawn shapes                                           | Arrow Expert                      | project    |      6 |
 
 ## Attribution
 

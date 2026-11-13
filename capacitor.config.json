@@ -1,5 +1,18 @@
 {
-  "appId": "com.arrowescape.game",
-  "appName": "Arrow Escape",
-  "webDir": "dist"
+  "appId": "com.sussal.arrowexpert",
+  "appName": "Arrow Expert",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": false,
+      "launchFadeOutDuration": 250,
+      "backgroundColor": "#0250F7",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": false,
+      "splashImmersive": false
+    }
+  }
 }

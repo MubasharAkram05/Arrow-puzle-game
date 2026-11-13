@@ -1,8 +1,8 @@
 node_modules/
 dist/
 coverage/
-android/
-ios/
+/android/
+/ios/
 .DS_Store
 *.log
 .vite/
