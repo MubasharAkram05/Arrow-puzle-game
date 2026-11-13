@@ -2,6 +2,38 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.26.0] - 2026-11-13
+
+### Added
+
+- **Google AdMob** (`@capacitor-community/admob` 8.3, `src/ads/`), with Google's **test IDs only**:
+  - `RELEASE_ADS` is false by default (`src/ads.config.json`), with `REAL_...` placeholders for your IDs.
+  - Real IDs are used only with `RELEASE_ADS` in an Android release build. Dev, previews and the debug APK use test IDs.
+  - No ads on the web. The dev server shows simulated ads to try the flows.
+- **Consent:** the Google UMP consent form shows where required (EEA, UK). Settings gets "Privacy options" when UMP requires it.
+- **Rewarded ads:** watch an ad for:
+  - 1 free hint
+  - refill 1 heart
+  - Continue after Game Over (instead of 3 diamonds)
+  - 2x coins on the victory screen
+
+  The reward comes only on the ad's reward event; closing early or a failed ad gives nothing, with a friendly message. There are at most 10 a day. Ad buttons carry an ad icon and show only while an ad is loaded.
+
+- **Interstitial:** only when leaving a victory screen, from level 10, at most every 3 wins and 6 minutes apart. Never during play, after a rewarded ad, or in the first session.
+- **Banner:** on Home, Levels, Shop and Tasks only, in a slot reserved at startup with a gap above the bottom nav.
+- **Android:** the AdMob App ID comes from `src/ads.config.json` (the test App ID for debug builds), plus the `AD_ID` permission.
+- Tests for the ad IDs, rewards, daily cap, interstitial rules and banner screens.
+
+### Changed
+
+- Privacy policy and store listing describe the ads (Google AdMob, advertising ID, link to Google's partner-sites policy).
+- `docs/RELEASE.md`:
+  - switching to real ads
+  - Play Console "Contains ads", Advertising ID and Data safety
+  - `app-ads.txt`
+- The privacy page shows the contact email as the link text (it showed `CONTACT_EMAIL`).
+- Coin and diamond prices, levels and difficulty are unchanged.
+
 ## [3.25.0] - 2026-11-13
 
 ### Added

@@ -220,6 +220,9 @@
             <span class="knob"></span>
           </button>
         </div>
+        <button class="setting-row privacy-options" id="btn-privacy-options" hidden>
+          <svg class="icon"><use href="#i-shield" /></svg><span>Privacy options (ads)</span>
+        </button>
         <div class="section-label">Theme</div>
         <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
           <button data-theme-opt="light" role="radio">
@@ -311,6 +314,9 @@
         <p class="ask-error" id="ask-error" role="alert"></p>
         <div class="stack">
           <button class="btn primary" id="btn-ask-ok">Confirm</button>
+          <button class="btn ad-btn" id="btn-ask-ad" hidden>
+            <svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg><span id="ask-ad-label">Watch ad</span>
+          </button>
           <button class="btn" id="btn-ask-cancel">Cancel</button>
         </div>
       </div>
@@ -340,10 +346,22 @@
             <span class="buy-label">Refill heart</span><span class="buy-price" id="refill-price"></span>
           </button>
           <p class="buy-note" id="refill-note"></p>
+          <button class="btn buy ad-btn" id="btn-refill-ad" hidden>
+            <span class="buy-label">Refill heart</span
+            ><span class="buy-price"
+              ><svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg>Watch ad</span
+            >
+          </button>
           <button class="btn buy" id="btn-continue">
             <span class="buy-label">Continue (full hearts)</span><span class="buy-price" id="continue-price"></span>
           </button>
           <p class="buy-note" id="continue-note"></p>
+          <button class="btn buy ad-btn" id="btn-continue-ad" hidden>
+            <span class="buy-label">Continue (full hearts)</span
+            ><span class="buy-price"
+              ><svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg>Watch ad</span
+            >
+          </button>
           <button class="btn" id="btn-tryagain">
             <svg class="icon"><use href="#i-restart" /></svg>Try Again
           </button>
@@ -362,6 +380,9 @@
         <ul class="reward-lines" id="reward-lines"></ul>
         <div class="reward-total" id="reward-total"></div>
       </div>
+      <button class="ad-double" id="btn-double" hidden>
+        <svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg><span id="double-label">2x coins</span>
+      </button>
       <div class="victory-spacer"></div>
       <button class="pill-btn" id="btn-next">
         <span id="next-label">Next Game</span><small id="next-sub">Level 2</small>

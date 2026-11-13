@@ -1,0 +1,124 @@
+/* ---------- Ads (3.26.0, src/ads/) ---------- */
+
+/* small "ad" mark on buttons that play a rewarded ad */
+.ad-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.ad-btn .ad-icon {
+  margin-right: 4px;
+}
+.buy-price .ad-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 3px;
+}
+
+/* victory: "Watch ad: +N coins (2x)" */
+.ad-double {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 10px auto 0;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15px;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+.ad-double:active {
+  transform: scale(0.97);
+}
+.ad-double[hidden] {
+  display: none;
+}
+
+/* Settings: Google UMP privacy options (EEA, UK) */
+.privacy-options {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+/* Banner slot: decided once at startup (body.ad-slot), on the banner screens only, so nothing moves when the
+   banner loads late, fails or the phone is offline. The banner sits above the bottom nav, with a gap. */
+body.ad-slot :is(#screen-home, #screen-levels, #screen-shop, #screen-tasks) {
+  padding-bottom: calc(68px + var(--ad-slot, 58px) + env(safe-area-inset-bottom));
+}
+body.ad-slot .jump-current {
+  bottom: calc(84px + var(--ad-slot, 58px) + env(safe-area-inset-bottom));
+}
+body.ad-slot .toast {
+  bottom: calc(88px + var(--ad-slot, 58px) + env(safe-area-inset-bottom));
+}
+
+/* ---------- simulated ads (dev server only) ---------- */
+.sim-ad {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 12, 24, 0.85);
+}
+.sim-ad-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  padding: 24px 18px;
+  border-radius: 18px;
+  background: #e9edf3;
+  color: #1c2433;
+  text-align: center;
+}
+.sim-ad-card small {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #5a6578;
+}
+.sim-ad-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.sim-ad-actions .btn {
+  width: auto;
+  min-height: 44px;
+}
+.sim-banner {
+  position: fixed;
+  left: 50%;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  height: 50px;
+  transform: translateX(-50%);
+  border: 1px dashed #8a94a6;
+  background: #e9edf3;
+  color: #4a5568;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sim-banner[hidden] {
+  display: none;
+}
+.ad-btn .buy-price {
+  white-space: nowrap;
+}

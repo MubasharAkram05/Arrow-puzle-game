@@ -251,3 +251,35 @@ export function claimDailyReward(now = Date.now()) {
   questEvent({ daily: 1 }, now);
   return { ...res, before };
 }
+
+// ---------- rewarded ads (3.26.0): called only after the ad reported its reward ----------
+
+/** A rewarded ad gave one hint. */
+export function adHint() {
+  state.hints += 1;
+}
+
+/**
+ * A rewarded ad refills one heart (same per-level limit as buying one).
+ * @returns {{ok: boolean, reason?: 'limit'|'full'}}
+ */
+export function adRefillHeart() {
+  if (state.refillsUsed >= MAX_REFILLS_PER_LEVEL) return { ok: false, reason: 'limit' };
+  if (state.hearts >= state.maxHearts) return { ok: false, reason: 'full' };
+  state.refillsUsed++;
+  state.hearts++;
+  return { ok: true };
+}
+
+/** A rewarded ad continues the level with full hearts (instead of paying diamonds). */
+export function adContinue() {
+  state.hearts = state.maxHearts;
+}
+
+/**
+ * A rewarded ad doubles the coins of the level just won (the same amount again).
+ * @param {number} coins coins the win paid
+ */
+export function adDoubleCoins(coins) {
+  credit({ coins }, 'ad');
+}

@@ -109,7 +109,8 @@ The debug APK has a different signature than the Play version: uninstall one bef
    to your testers.
 4. **Store listing**: text from `store-assets/listing.md`, icon `store-assets/play/icon-512.png`,
    screenshots from `store-assets/screenshots/` (feature graphic still to make).
-5. **App content**: privacy policy URL https://arrow-puzle-game.vercel.app/privacy.html, ads: no,
+5. **App content**: privacy policy URL https://arrow-puzle-game.vercel.app/privacy.html, ads: **yes**, Advertising
+   ID: **yes** (section 7),
    content rating questionnaire (notes in `store-assets/listing.md`), target audience, data safety: no data
    collected or shared.
 6. When internal testing looks good, promote the release to Closed or Production.
@@ -126,6 +127,65 @@ Every upload to Google Play needs a **higher versionCode** than the one before.
 2. Commit, open a PR, merge it into `main`.
 3. Tag and push: `git tag v3.26.0 && git push origin v3.26.0` (or run the workflow by hand).
 4. Download the new AAB and upload it as a new release in the Play Console.
+
+## 7. Ads (Google AdMob)
+
+The app has Google AdMob (3.26.0, `src/ads/`). It ships with **test ads only**: `releaseAds` is `false` in
+`src/ads.config.json`, so every build uses Google's official test IDs. Test ads show a "Test Ad" label and earn
+nothing; you can click them safely.
+
+| Build                               | Ad IDs                                                      |
+| ----------------------------------- | ----------------------------------------------------------- |
+| dev server (`npm run dev`)          | simulated ads drawn in the page (to try the flows)          |
+| Vercel preview and production (web) | no ads                                                      |
+| debug APK (workflow)                | Google test IDs, always                                     |
+| release AAB, `releaseAds: false`    | Google test IDs                                             |
+| release AAB, `releaseAds: true`     | your real IDs (no ads at all while one is still `REAL_...`) |
+
+### Switch to real ads (when you are ready)
+
+1. **AdMob account** at https://admob.google.com (use the same Google account as the Play Console if you can).
+2. **Add the app:** Apps > Add app > Android. If the app is not on Google Play yet, choose "No" for now and
+   link it to the store listing later. You get an **App ID** like `ca-app-pub-1234567890123456~1234567890`.
+3. **Create 3 ad units** in that app: **Banner**, **Interstitial** and **Rewarded**. Each has an ID like
+   `ca-app-pub-1234567890123456/1234567890`.
+4. **Consent message (EEA/UK):** Privacy & messaging > European regulations (GDPR) > create a message for the app
+   and **publish** it. Without a published message, Google's consent form cannot show, and EEA/UK players get
+   no personalised ads. Also check "US state regulations" if you want that message.
+5. **Content rating:** Blocking controls > Content rating: set the maximum ad content rating (G or PG fits this
+   game).
+6. **Put your IDs in `src/ads.config.json`**: replace `REAL_APP_ID`, `REAL_BANNER_ID`,
+   `REAL_INTERSTITIAL_ID` and `REAL_REWARDED_ID`, and set `"releaseAds": true`. Commit, merge, then build the
+   release AAB (section 3). The debug APK keeps the test IDs.
+7. **Never click your own real ads.** To see real ads on your phone without risk, add the phone as a test device
+   in AdMob (Settings > Test devices); the advertising ID is in Android Settings > Google > Ads.
+
+### Play Console settings for ads
+
+- **App content > Ads:** "Yes, my app contains ads".
+- **App content > Advertising ID:** "Yes", used for **Advertising or marketing** (and Analytics / Fraud prevention).
+  The app declares the `com.google.android.gms.permission.AD_ID` permission in `AndroidManifest.xml`; Google Play
+  requires it for apps that target Android 13+ and use the advertising ID.
+- **App content > Data safety:** declare that the app collects and shares **Device or other IDs** (advertising ID),
+  plus what Google's AdMob guide lists (approximate location, app interactions, diagnostics), for advertising,
+  analytics and fraud prevention. The notes are in `store-assets/listing.md`.
+- **Privacy policy:** https://arrow-puzle-game.vercel.app/privacy.html already describes AdMob.
+- **Target audience:** if you select ages under 13, Google's Families policy applies (certified ad SDKs,
+  child-directed ad settings). Choosing 13+ keeps the current setup simple.
+
+### app-ads.txt (once real ads are on)
+
+`app-ads.txt` tells ad buyers that your AdMob account may sell ads in your app. Without it, ads still work but can
+earn less.
+
+1. In AdMob: Apps > View all apps > app-ads.txt, copy your line. It looks like:
+   `google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0`
+2. Put that line in a file `public/app-ads.txt` (Vite copies it to the site root), commit and merge, so it is
+   served at https://arrow-puzle-game.vercel.app/app-ads.txt.
+3. In the Play Console store listing, set **Website** (developer contact) to `https://arrow-puzle-game.vercel.app`.
+   AdMob looks for `app-ads.txt` at the root of that website. A custom domain of your own works the same way and is
+   more reliable long term.
+4. AdMob checks it within about 24 hours (Apps > app-ads.txt shows the status).
 
 ## Notes
 

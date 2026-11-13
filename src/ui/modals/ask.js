@@ -4,6 +4,7 @@
  */
 import { canAfford, missingLabel, priceLabel, shortfall } from '../../game/economy.js';
 import { wallet } from '../../game/rewards.js';
+import { rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
 import { $ } from '../dom.js';
 import { closeModals, openModal } from './modal.js';
 
@@ -35,8 +36,10 @@ export function missingText(price) {
 
 /**
  * Open the dialog.
- * @param {{title: string, message: string, icon?: string, price?: object, blocked?: string, okLabel?: string, onOk: () => void, onCancel?: () => void}} opts
+ * @param {{title: string, message: string, icon?: string, price?: object, blocked?: string, okLabel?: string, onOk: () => void, onCancel?: () => void, ad?: {label: string, onReward: () => void}}} opts
  *   blocked: reason the action is not possible right now (shown instead of the price check)
+ *   ad: a "Watch ad" alternative (3.26.0), shown only while a rewarded ad is loaded; onReward runs only once the
+ *   ad has reported its reward
  */
 export function ask(opts) {
   pending = opts;
@@ -48,6 +51,9 @@ export function ask(opts) {
   $('ask-error').textContent = missing;
   $('btn-ask-ok').textContent = opts.okLabel || 'Confirm';
   $('btn-ask-ok').disabled = !!missing;
+  const ad = opts.ad && !opts.blocked && rewardedAvailable();
+  $('btn-ask-ad').hidden = !ad;
+  if (ad) $('ask-ad-label').textContent = opts.ad.label;
   openModal('modal-ask');
 }
 
@@ -58,6 +64,12 @@ export function bindAsk() {
     pending = null;
     closeModals();
     if (p) p.onOk();
+  });
+  $('btn-ask-ad').addEventListener('click', async () => {
+    const p = pending;
+    pending = null;
+    closeModals();
+    if (p && p.ad && (await watchRewardedAd())) p.ad.onReward();
   });
   $('btn-ask-cancel').addEventListener('click', () => {
     const p = pending;

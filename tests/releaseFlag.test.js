@@ -45,7 +45,7 @@ describe('TEST_UNLOCK_ALL per build', () => {
     }
     try {
       const html = readFileSync(path.join(out, 'index.html'), 'utf8');
-      expect(html).toContain('<meta name="arrow-build" content="test-unlock=false">');
+      expect(html).toContain('<meta name="arrow-build" content="test-unlock=false ads-real=true">');
       const js = readdirSync(path.join(out, 'assets'))
         .filter((f) => f.endsWith('.js'))
         .map((f) => readFileSync(path.join(out, 'assets', f), 'utf8'))

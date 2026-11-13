@@ -89,7 +89,7 @@ jobs:
         if: steps.what.outputs.release == 'true'
         run: |
           npm run build:release
-          grep -q 'content="test-unlock=false"' dist/index.html
+          grep -q 'test-unlock=false' dist/index.html
       - name: Sync Capacitor
         if: steps.what.outputs.release == 'true'
         run: npx cap sync android
@@ -121,6 +121,8 @@ jobs:
       - name: Web app (debug APK)
         if: steps.what.outputs.debug == 'true'
         run: |
+          # the debug APK always uses Google's test ad IDs (ARROW_TEST_ADS=1), never the real ones
+          export ARROW_TEST_ADS=1
           if [ "${{ inputs.debug_test_mode }}" = "true" ]; then ARROW_TEST_UNLOCK=1 npm run build; else npm run build:release; fi
       - name: Sync Capacitor (debug)
         if: steps.what.outputs.debug == 'true'

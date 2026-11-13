@@ -1,3 +1,4 @@
+import ADS_IDS from './ads.config.json' with { type: 'json' };
 /** SVG units per grid cell. */
 export const CELL = 100;
 /** Fallback hit radius around lines, in cells (used when no cell is hit exactly). */
@@ -426,6 +427,31 @@ export const DAILY = Object.freeze({
  * Shield and Extra Heart boosters were removed in 3.11.0: what a save still holds is paid back once on load.
  */
 export const BOOSTER_REFUND = Object.freeze({ shield: { coins: 60 }, extraHeart: { diamonds: 1 } });
+
+/**
+ * Google AdMob (3.26.0, src/ads/). The flag and the ad IDs live in src/ads.config.json, which Gradle reads too
+ * (the App ID goes into the Android manifest).
+ *  - RELEASE_ADS false (default): Google's official test IDs, always.
+ *  - RELEASE_ADS true: the real IDs (REAL_APP_ID, REAL_BANNER_ID, ... replaced with yours), but only in an Android
+ *    release build (`npm run build:release`, Gradle release). Dev, Vercel preview and debug APKs keep the test IDs.
+ *    While a real ID is still a placeholder, a release build shows no ads at all.
+ * The web game shows no ads; the dev server shows simulated ads so the flows can be tried.
+ */
+export const RELEASE_ADS = ADS_IDS.releaseAds === true;
+export const ADS = Object.freeze({
+  ids: ADS_IDS,
+  rewardedPerDay: 10, // rewarded ads a player can watch per local day
+  interstitial: Object.freeze({
+    fromLevel: 10, // never before this level
+    everyLevels: 3, // at most once every 3 level wins
+    minGapMs: 6 * 60 * 1000, // and at most once every 6 minutes
+  }),
+  // banner: only on these tab screens, never during a level, a popup or the victory screen
+  bannerScreens: Object.freeze(['screen-home', 'screen-levels', 'screen-shop', 'screen-tasks']),
+  bannerHeight: 50, // dp, BANNER size (320 x 50): the reserved slot never changes
+  bannerGap: 8, // dp between the banner and the bottom navigation
+  rewardedGraceMs: 600, // a reward event can arrive just after the ad closes
+});
 
 /** Heart refills allowed per level attempt. */
 export const MAX_REFILLS_PER_LEVEL = 2;

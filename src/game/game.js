@@ -31,6 +31,7 @@ import { isTestPlay, testPlaySummary } from './unlock.js';
 import { newLevelAssist } from './assist.js';
 import { recordLoss } from './stats.js';
 import { questEvent } from './questState.js';
+import { noteLevelStart } from '../ads/index.js';
 import { state } from './state.js';
 
 /**
@@ -67,6 +68,7 @@ export function loadLevel(level) {
  * @param {number} n
  */
 export function startLevel(n) {
+  noteLevelStart(); // ads: no interstitial after a level where a rewarded ad was watched
   // shape boards need the shape library chunk (usually already loaded at start)
   if (isShapeLevel(n) && !shapeLibraryReady()) {
     loadShapeLibrary()

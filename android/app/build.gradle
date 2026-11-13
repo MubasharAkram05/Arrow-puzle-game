@@ -8,6 +8,12 @@ def pkg = new groovy.json.JsonSlurper().parse(file('../../package.json'))
 // android-release workflow). No keystore is ever committed.
 def keystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
 
+// Google AdMob App ID (3.26.0), from the same file as the JS ad IDs. Debug builds always use Google's test App ID;
+// release builds use the real one only when releaseAds is true and it is filled in (not REAL_APP_ID).
+def ads = new groovy.json.JsonSlurper().parse(file('../../src/ads.config.json'))
+def realAppId = ads.real.appId
+def releaseAppId = (ads.releaseAds && realAppId.startsWith('ca-app-pub-')) ? realAppId : ads.test.appId
+
 android {
     namespace = "com.sussal.arrowexpert"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -35,7 +41,11 @@ android {
         }
     }
     buildTypes {
+        debug {
+            manifestPlaceholders = [admobAppId: ads.test.appId]
+        }
         release {
+            manifestPlaceholders = [admobAppId: releaseAppId]
             if (keystorePath) {
                 signingConfig signingConfigs.release
             }

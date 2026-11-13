@@ -1,4 +1,5 @@
 import { state } from '../../game/state.js';
+import { syncBanner } from '../../ads/index.js';
 import { $ } from '../dom.js';
 
 /** Back-button handlers per modal id; the default closes the modal. */
@@ -12,12 +13,14 @@ export function openModal(id) {
   document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
   $(id).classList.add('open');
   state.locked = true;
+  syncBanner(); // no banner over a popup
 }
 
 /** Close all modals; unlock the board only if the level is still running. */
 export function closeModals() {
   document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
   state.locked = state.hearts <= 0 || state.remaining === 0;
+  syncBanner();
 }
 
 /**

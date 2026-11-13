@@ -39,7 +39,7 @@ Earn coins and diamonds by playing, then unlock arrow styles, board backgrounds,
 Play your way
 Light and dark themes, pinch to zoom on big boards, hints when you are stuck, and full offline play.
 
-No ads and no in-app purchases. Everything is earned by playing.
+No in-app purchases: everything is earned by playing. The game is free and shows ads; you can also choose to watch a short ad for a hint, a heart, a continue or double coins.
 
 ## Category
 
@@ -57,13 +57,19 @@ Game > Puzzle
 
 - Violence, blood, fear, sexual content, crude humour, drugs, alcohol, tobacco: none.
 - Gambling: none. Chests and daily rewards always give the same, stated rewards; nothing is random and nothing
-  can be bought with real money.
+  can be bought with real money. Rewarded ads give a stated reward, not a random one.
 - User interaction: none. No chat, no sharing, no user-generated content visible to others. The player name is
   stored only on the device.
 - Location and personal data: none collected. Progress is saved only on the device (no account, no analytics).
-- In-app purchases and ads: none in this version. Update this listing and the questionnaire if that changes.
+- Ads: yes (Google AdMob: banner, interstitial, optional rewarded). Play Console > App content > Ads: "Yes, my app
+  contains ads". In AdMob, set the maximum ad content rating to match the game's rating (e.g. G or PG).
+- In-app purchases: none.
 - Expected rating: Everyone / PEGI 3.
 
 ## Data safety form
 
-- Data collected: none. Data shared: none. Everything stays in the app's local storage on the device.
+- The app itself collects nothing; game progress stays in the app's local storage on the device.
+- Google AdMob (an SDK in the app) collects, and shares with Google for advertising: **Device or other IDs**
+  (advertising ID), approximate location (from the IP address), app interactions with ads, and diagnostics. Declare
+  these in the Data safety form as "collected" and "shared" for **Advertising or marketing**, **Analytics** and
+  **Fraud prevention, security and compliance**, as Google's AdMob data disclosure guide describes.
