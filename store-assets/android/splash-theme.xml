@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Arrow Expert launch theme (merge into android/app/src/main/res/values/styles.xml after `npx cap add android`).
+  Android 12+ shows the system SplashScreen: the icon foreground (drawable/splash_icon) centred on
+  @color/splash_background, which is royal blue #0250F7 in light mode and deep navy #0B1020 in dark mode
+  (values/ and values-night/ splash_colors.xml). Older Android shows @drawable/splash through
+  @capacitor/splash-screen (drawable[-night]-port|land-<density>/splash.png).
+  Needs implementation "androidx.core:core-splashscreen:1.0.1" (Capacitor's Android template includes it).
+-->
+<resources>
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>
