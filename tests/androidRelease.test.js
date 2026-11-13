@@ -1,6 +1,7 @@
 /**
  * Android release setup (3.25.0): the native project, signing from secrets, the workflow, the privacy policy.
  */
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -28,6 +29,40 @@ describe('Android project', () => {
     expect(ignore).toMatch(/^\*\.jks$/m);
     expect(ignore).toMatch(/^\*\.keystore$/m);
     expect(ignore).not.toMatch(/^\/?android\/$/m); // the native project is committed
+  });
+
+  it('debug builds use the one fixed debug key from the repo; release never does', () => {
+    const gradle = text('android/app/build.gradle');
+    const debugType = gradle.slice(
+      gradle.indexOf('buildTypes {'),
+      gradle.indexOf('release {', gradle.indexOf('buildTypes {')),
+    );
+    expect(debugType).toContain('signingConfig signingConfigs.debug');
+    expect(gradle).toContain("storeFile file('debug.keystore')");
+    const releaseType = gradle.slice(gradle.indexOf('release {', gradle.indexOf('buildTypes {')));
+    expect(releaseType).toContain('signingConfig signingConfigs.release');
+    expect(releaseType).not.toContain('signingConfigs.debug');
+    expect(exists('android/app/debug.keystore')).toBe(true);
+    // only that file is allowed past the *.keystore rule
+    const exceptions = text('.gitignore').match(/^!.*(keystore|jks).*$/gm);
+    expect(exceptions).toEqual(['!android/app/debug.keystore']);
+  });
+
+  // keytool starts a JVM: give it more than the 5 s default on a busy CI runner
+  it('the workflow expects the certificate that is in android/app/debug.keystore', { timeout: 30_000 }, () => {
+    const wf = text('.github/workflows/android-release.yml');
+    const expected = wf.match(/EXPECT_CERT_SHA256: ([0-9a-f]{64})/)[1];
+    const r = spawnSync(
+      'keytool',
+      ['-list', '-v', '-keystore', 'android/app/debug.keystore', '-storepass', 'android', '-alias', 'androiddebugkey'],
+      { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8' },
+    );
+    expect(r.status, r.stderr).toBe(0);
+    const sha = r.stdout
+      .match(/SHA256: ([0-9A-F:]+)/)[1]
+      .replaceAll(':', '')
+      .toLowerCase();
+    expect(sha).toBe(expected);
   });
 
   it('uses the generated icons and splash, with the splash theme merged', () => {

@@ -31,7 +31,8 @@ keytool -genkeypair -v \
 - Write both passwords and the alias (`upload`) in a password manager.
 - **Back up `arrow-expert-upload.jks`** (password manager, encrypted USB drive). If you lose it, Google can
   reset the upload key, but only after a support request and a waiting period.
-- Never put the `.jks` file in the repo. `.gitignore` blocks `*.jks` and `*.keystore` to help.
+- Never put the `.jks` file in the repo. `.gitignore` blocks `*.jks` and `*.keystore` to help. The only
+  exception is `android/app/debug.keystore`, the public debug key (see section 4).
 
 Check it:
 
@@ -98,7 +99,33 @@ sudo apt install -y adb
 adb install -r arrow-expert-3.25.0-debug.apk
 ```
 
-The debug APK has a different signature than the Play version: uninstall one before installing the other.
+**Debug key.** Every debug APK (from the workflow or from Android Studio) is signed with the same fixed debug
+key, `android/app/debug.keystore`, so a new debug APK installs **over** the old one and keeps your progress
+(levels, coins, settings). The workflow checks it: the "Verify the APK" step fails if a debug APK is signed with
+any other certificate than SHA-256 `872feba347c32ef53557e464b65829cddbf46d37eb60e43c7715d535e049dd84`.
+
+- That key is only for test phones. Its passwords are Android's public defaults (`android` / `androiddebugkey`),
+  so it is fine in the repo. Never use it for Google Play.
+- The release AAB is still signed with your upload key from GitHub Secrets (section 2), never with the debug key.
+- Debug APKs built before the fixed key was added (13 Nov 2026, PR #24) were signed with a random key per
+  build: uninstall that one once, then every later debug APK updates in place.
+- The debug APK and the Play version have different signatures: uninstall one before installing the other
+  (uninstalling clears the progress saved on the phone).
+
+**Check the APK before installing.** The run's summary (and the "Verify the APK" step log) shows the APK's
+size and SHA-256, and the zip also has an `arrow-expert-<version>-debug.apk.sha256` file. A file of a different
+size is an incomplete download and gives "There was a problem parsing the package" on the phone. Compare:
+
+```bash
+sha256sum -c arrow-expert-3.26.0-debug.apk.sha256      # Linux / macOS (shasum -a 256 -c on macOS)
+certutil -hashfile arrow-expert-3.26.0-debug.apk SHA256  # Windows
+```
+
+On a phone, download the zip with the browser while signed in to GitHub, wait until the download is complete,
+unzip it with the Files app, then open the `.apk` (not the `.zip`, not the `.sha256`). Every APK the workflow
+builds is checked with `apksigner verify` (v2 signature), `aapt2 dump badging` (not testOnly) and the
+Android 12 `android:exported` rule (`scripts/verify-apk.sh`), and the `artifact-check` job downloads the
+artifact again and compares the SHA-256, so a failed check stops the run instead of producing a broken APK.
 
 ## 5. Upload to Google Play (first time)
 
@@ -147,14 +174,15 @@ nothing; you can click them safely.
 1. **AdMob account** at https://admob.google.com (use the same Google account as the Play Console if you can).
 2. **Add the app:** Apps > Add app > Android. If the app is not on Google Play yet, choose "No" for now and
    link it to the store listing later. You get an **App ID** like `ca-app-pub-1234567890123456~1234567890`.
-3. **Create 3 ad units** in that app: **Banner**, **Interstitial** and **Rewarded**. Each has an ID like
+3. **Create 2 ad units** in that app: **Interstitial** and **Rewarded** (the game shows no banners,
+   `BANNER_ENABLED = false` in `src/config.js`). Each has an ID like
    `ca-app-pub-1234567890123456/1234567890`.
 4. **Consent message (EEA/UK):** Privacy & messaging > European regulations (GDPR) > create a message for the app
    and **publish** it. Without a published message, Google's consent form cannot show, and EEA/UK players get
    no personalised ads. Also check "US state regulations" if you want that message.
 5. **Content rating:** Blocking controls > Content rating: set the maximum ad content rating (G or PG fits this
    game).
-6. **Put your IDs in `src/ads.config.json`**: replace `REAL_APP_ID`, `REAL_BANNER_ID`,
+6. **Put your IDs in `src/ads.config.json`**: replace `REAL_APP_ID`,
    `REAL_INTERSTITIAL_ID` and `REAL_REWARDED_ID`, and set `"releaseAds": true`. Commit, merge, then build the
    release AAB (section 3). The debug APK keeps the test IDs.
 7. **Never click your own real ads.** To see real ads on your phone without risk, add the phone as a test device
@@ -186,6 +214,27 @@ earn less.
    AdMob looks for `app-ads.txt` at the root of that website. A custom domain of your own works the same way and is
    more reliable long term.
 4. AdMob checks it within about 24 hours (Apps > app-ads.txt shows the status).
+
+### Checking test ads on a phone (debug APK)
+
+- **Ad debug panel:** Settings, tap the version line ("Version 3.26.0") 7 times. It shows the SDK start, the
+  consent status, and for interstitial / rewarded: loading, loaded or failed with Google's error code and
+  message, plus the next retry. "Retry failed loads now" tries again at once. Only in debug builds.
+- **Logcat:** with USB debugging on, `adb logcat -s ArrowAds` shows the same lines (for example
+  `consent NOT_REQUIRED canRequest=true npa=false`, `rewarded loaded`, `interstitial failed code=3 "No fill."`).
+  Google's own SDK messages: `adb logcat -s Ads`.
+- **Consent:** the panel shows Google UMP's answer (status, form available, canRequestAds, the error if the
+  request failed or did not answer within 8 s) and what the game decided. Test builds never let a failed or
+  UNKNOWN consent check block ads (non-personalised test ads); release builds try 3 times, then fall back to
+  non-personalised ads. A REQUIRED consent that was not given always blocks ads.
+- **Testing the consent form (EEA):** UMP applies a debug geography only on a test device. Run
+  `adb logcat -s UserMessagingPlatform`, open the app, and copy the ID from the line
+  `Use new ConsentDebugSettings.Builder().addTestDeviceHashedId("…")`. In the panel, paste it into
+  "Test device ID", pick **EEA**, then tap **Reset consent & show form**: the consent form should appear. Pick
+  **Not EEA** (or Off) and reset again to go back.
+- Common error codes: 0 internal error, 1 invalid request (wrong ad unit ID), 2 network error, 3 no fill (no ad
+  to show right now, normal now and then).
+- Test ads say "Test Ad". There are no banner ads (`BANNER_ENABLED = false`).
 
 ## Notes
 

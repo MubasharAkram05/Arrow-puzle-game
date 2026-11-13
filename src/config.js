@@ -433,21 +433,41 @@ export const BOOSTER_REFUND = Object.freeze({ shield: { coins: 60 }, extraHeart:
  * Google AdMob (3.26.0, src/ads/). The flag and the ad IDs live in src/ads.config.json, which Gradle reads too
  * (the App ID goes into the Android manifest).
  *  - RELEASE_ADS false (default): Google's official test IDs, always.
- *  - RELEASE_ADS true: the real IDs (REAL_APP_ID, REAL_BANNER_ID, ... replaced with yours), but only in an Android
+ *  - RELEASE_ADS true: the real IDs (REAL_APP_ID, REAL_INTERSTITIAL_ID, ... replaced with yours), but only in an Android
  *    release build (`npm run build:release`, Gradle release). Dev, Vercel preview and debug APKs keep the test IDs.
  *    While a real ID is still a placeholder, a release build shows no ads at all.
  * The web game shows no ads; the dev server shows simulated ads so the flows can be tried.
  */
 export const RELEASE_ADS = ADS_IDS.releaseAds === true;
+/**
+ * Banner ads (3.26.0): off. No banner is loaded or shown anywhere and no space is reserved for one, so Home,
+ * Levels, Shop and Tasks use the full height. Only interstitial and rewarded ads are used. Turning this on brings
+ * back the banner (Home, Levels, Shop, Tasks, a slot reserved at startup) and needs a "banner" ad unit ID in
+ * src/ads.config.json.
+ */
+export const BANNER_ENABLED = false;
 export const ADS = Object.freeze({
   ids: ADS_IDS,
-  rewardedPerDay: 10, // rewarded ads a player can watch per local day
+  bannerEnabled: BANNER_ENABLED,
+  rewardedPerDay: 30, // rewarded ads a player can watch per local day (all kinds together)
+  // Shop "Watch ad" rewards (3.26.0): what one ad gives, and how many of each kind a day (inside rewardedPerDay).
+  // 'hint' also counts the free-hint ad in a level.
+  earn: Object.freeze({
+    diamond: Object.freeze({ amount: 1, perDay: 5 }),
+    hint: Object.freeze({ amount: 1, perDay: 10 }),
+    coins: Object.freeze({ amount: 40, perDay: 10 }),
+  }),
+  // a failed ad load is tried again after 5 s, 10 s, 20 s ... up to 5 minutes between tries
+  retry: Object.freeze({ baseMs: 5000, maxMs: 5 * 60 * 1000 }),
+  // Google UMP consent check: a request that does not answer within timeoutMs counts as failed. Release builds try
+  // `attempts` times (backoff from retryBaseMs) before falling back to non-personalised ads; test builds go on at once.
+  consent: Object.freeze({ timeoutMs: 8000, attempts: 3, retryBaseMs: 3000 }),
   interstitial: Object.freeze({
     fromLevel: 10, // never before this level
     everyLevels: 3, // at most once every 3 level wins
     minGapMs: 6 * 60 * 1000, // and at most once every 6 minutes
   }),
-  // banner: only on these tab screens, never during a level, a popup or the victory screen
+  // banner (only when BANNER_ENABLED): only on these tab screens, never during a level, a popup or the victory screen
   bannerScreens: Object.freeze(['screen-home', 'screen-levels', 'screen-shop', 'screen-tasks']),
   bannerHeight: 50, // dp, BANNER size (320 x 50): the reserved slot never changes
   bannerGap: 8, // dp between the banner and the bottom navigation

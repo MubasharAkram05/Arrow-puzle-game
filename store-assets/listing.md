@@ -61,7 +61,7 @@ Game > Puzzle
 - User interaction: none. No chat, no sharing, no user-generated content visible to others. The player name is
   stored only on the device.
 - Location and personal data: none collected. Progress is saved only on the device (no account, no analytics).
-- Ads: yes (Google AdMob: banner, interstitial, optional rewarded). Play Console > App content > Ads: "Yes, my app
+- Ads: yes (Google AdMob: interstitial between some levels, optional rewarded; no banners). Play Console > App content > Ads: "Yes, my app
   contains ads". In AdMob, set the maximum ad content rating to match the game's rating (e.g. G or PG).
 - In-app purchases: none.
 - Expected rating: Everyone / PEGI 3.

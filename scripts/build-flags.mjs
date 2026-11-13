@@ -38,3 +38,13 @@ export function adsRealAllowed({ mode, env = process.env }) {
 export function adsSimulated({ mode }) {
   return mode === 'development';
 }
+
+/**
+ * The hidden "Ad debug" panel and the ArrowAds log (3.26.0): the debug APK (ARROW_TEST_ADS=1), the dev server and
+ * tests. Never in the release AAB, Vercel preview or production.
+ * @param {{mode: string, env?: Record<string, string|undefined>}} o
+ * @returns {boolean}
+ */
+export function adDebug({ mode, env = process.env }) {
+  return env.ARROW_TEST_ADS === '1' || mode === 'development' || mode === 'test';
+}

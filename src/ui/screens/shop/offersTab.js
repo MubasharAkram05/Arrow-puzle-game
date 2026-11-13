@@ -1,5 +1,6 @@
 /**
- * Offers tab: starter pack, free gift, weekly sale, coin exchange, "get more coins" placeholder.
+ * Offers tab (3.26.0 redesign): the Free rewards card (ad rewards and the Free Gift), the Starter Pack as a featured
+ * card, the Weekly Sale card and the coin-to-diamond Exchange. Items, prices and purchase logic are unchanged.
  */
 import { OFFERS } from '../../../config.js';
 import {
@@ -9,14 +10,21 @@ import {
   exchangeCoins,
   starterPackAvailable,
 } from '../../../game/offerActions.js';
-import { formatCountdown, giftStatus, weeklySale } from '../../../game/offers.js';
+import { formatCountdown, weeklySale } from '../../../game/offers.js';
 import { state } from '../../../game/state.js';
 import { flyCurrency } from '../../components/currencyBar.js';
 import { icon } from '../../components/icons.js';
 import { toast } from '../../components/toast.js';
 import { renderNavDots } from '../../components/bottomNav.js';
 import { buyFlow, cosmeticTap, done } from './actions.js';
-import { card, section } from './cards.js';
+import { cardMode, sectionHead } from './cards.js';
+import { freeRewardsCard, onEarn } from './adEarn.js';
+import { stylePreview } from './previews.js';
+import { priceHTML } from '../../modals/ask.js';
+import { wallet } from '../../../game/rewards.js';
+
+const GEM = '<svg class="cur-icon" aria-hidden="true"><use href="#i-gem" /></svg>';
+const COIN = '<svg class="cur-icon" aria-hidden="true"><use href="#i-coin" /></svg>';
 
 const SALE_ICON = {
   styles: 'palette',
@@ -38,86 +46,84 @@ function saleEndsIn(now) {
   return next - now;
 }
 
-/** Free gift card: claim button or countdown (updated every second by the shop shell). */
-function giftCard() {
-  const s = giftStatus(Date.now(), state.offers.giftLast);
-  const foot = s.ready
-    ? `<span class="claim-pill">${icon('gift')}Claim ${OFFERS.freeGift.coins}</span>`
-    : `<span class="countdown" data-countdown>${formatCountdown(s.remainingMs)}</span>`;
-  const note = s.clockBack ? 'Clock changed: timer restarted' : `${OFFERS.freeGift.coins} coins every 4 hours`;
-  return card({
-    kind: 'gift',
-    id: 'gift',
-    name: 'Free Gift',
-    note,
-    preview: `${icon('gift')}`,
-    foot,
-    newKey: 'offer:gift',
-  });
-}
-
-/** Starter pack: hidden after purchase, locked before level 5. */
+/** Starter Pack: a big featured card (gradient, what's inside, price button, "One-time offer" ribbon). */
 function starterCard() {
   if (state.offers.starterBought) return '';
   const c = OFFERS.starterPack.contents;
+  const p = OFFERS.starterPack.price;
   const locked = starterPackAvailable() ? '' : `Unlocks at level ${OFFERS.starterPack.minLevel}`;
-  const note = `${c.hints} hints + Dark Slate style`;
-  return card({
-    kind: 'starter',
-    id: 'starter',
-    name: 'Starter Pack',
-    note,
-    preview: `${icon('gift')}<em>x1</em>`,
-    price: OFFERS.starterPack.price,
-    locked,
-    newKey: 'offer:starter',
-  });
+  const mode = cardMode({ price: p, locked }, wallet());
+  const btn =
+    mode === 'locked'
+      ? `<span class="price-btn is-locked">${icon('lock')}${locked}</span>`
+      : `<span class="price-btn is-${mode} big">${priceHTML(p)}</span>`;
+  return `<button class="starter-card" data-kind="starter" data-id="starter" data-mode="${mode}">
+    <span class="ribbon">One-time offer</span>
+    <span class="starter-title"><b>Starter Pack</b><small>Best value to get going</small></span>
+    <span class="starter-items">
+      <span class="starter-item">${icon('bulb')}<b>x${c.hints}</b><small>Hints</small></span>
+      <span class="starter-item">${stylePreview(c.style)}<small>Dark Slate style</small></span>
+    </span>
+    ${btn}
+  </button>`;
+}
+
+/** Weekly Sale: "-30%" badge, old price crossed out, new price, time left. */
+function saleCard(sale) {
+  const owned =
+    sale.cat === 'styles' || sale.cat === 'themes'
+      ? state.owned[sale.cat].includes(sale.id)
+      : state.cosmetics.owned[sale.cat].includes(sale.id);
+  const off = Math.round(OFFERS.weeklySale.discount * 100);
+  const mode = cardMode({ price: sale.price, sale: sale.sale, owned }, wallet());
+  const btn = owned
+    ? '<span class="price-btn is-owned">Owned: Equip</span>'
+    : `<span class="price-btn is-${mode}"><span class="old-price">${priceHTML(sale.price)}</span>${priceHTML(sale.sale)}</span>`;
+  return `<button class="sale-card" data-kind="sale" data-id="${sale.id}" data-mode="${owned ? 'owned' : mode}">
+    <span class="sale-badge">-${off}%</span>
+    <span class="sale-preview">${icon(SALE_ICON[sale.cat] || 'tag')}</span>
+    <span class="sale-text"><b>${sale.name}</b><small>${icon('clock')}Ends in ${formatCountdown(saleEndsIn(Date.now()))}</small></span>
+    ${btn}
+  </button>`;
+}
+
+/** Exchange: coins to diamonds, with an arrow between the amounts. */
+function exchangeCard(n) {
+  const ex = OFFERS.exchange;
+  const price = { coins: n * ex.coins };
+  const mode = cardMode({ price }, wallet());
+  return `<button class="exchange-card" data-kind="exchange" data-id="${n}" data-mode="${mode}">
+    <span class="ex-amounts"><span class="ex-amt">${COIN}${(n * ex.coins).toLocaleString('en-US')}</span><span class="ex-arrow">${icon('arrow-right')}</span><span class="ex-amt">${GEM}${n * ex.diamonds}</span></span>
+    <span class="price-btn is-${mode}">Exchange</span>
+  </button>`;
 }
 
 /** @returns {string[]} keys for the tab's "New" dot */
 export const keys = () => ['offer:starter', 'offer:gift', 'offer:exchange', 'offer:sale'];
 
-/** @returns {string} tab content */
-export function render() {
+/**
+ * @param {{inAll?: boolean}} [o] inAll: the All tab draws the Free rewards card itself, at its very top
+ * @returns {string} tab content
+ */
+export function render(o = {}) {
   const sale = weeklySale(new Date());
-  const ex = OFFERS.exchange;
-  const saleOwned =
-    sale.cat === 'styles' || sale.cat === 'themes'
-      ? state.owned[sale.cat].includes(sale.id)
-      : state.cosmetics.owned[sale.cat].includes(sale.id);
-  const saleCard = card({
-    kind: 'sale',
-    id: sale.id,
-    name: sale.name,
-    note: `Weekly sale, 30% off. Ends in ${formatCountdown(saleEndsIn(Date.now()))}`,
-    preview: icon(SALE_ICON[sale.cat] || 'tag'),
-    price: sale.price,
-    sale: sale.sale,
-    owned: saleOwned,
-    newKey: 'offer:sale',
-  });
-  const exchange = [1, ex.bulk].map((n) =>
-    card({
-      kind: 'exchange',
-      id: String(n),
-      name: `${n * ex.diamonds} Diamond${n > 1 ? 's' : ''}`,
-      note: `${(n * ex.coins).toLocaleString('en-US')} coins`,
-      preview: `<svg class="cur-icon big-cur"><use href="#i-gem" /></svg>`,
-      price: { coins: n * ex.coins },
-      newKey: 'offer:exchange',
-    }),
-  );
+  const starter = starterCard();
   return [
-    section('Daily', [giftCard(), starterCard()].filter(Boolean)),
-    section('Weekly Sale', [saleCard]),
-    section('Exchange', exchange),
-    `<h3 class="section-title">Get more coins</h3><div class="soon-card">${icon('coin')}<div><b>Coin packs and rewarded videos</b><small>Coming soon</small></div><span class="soon-tag">Soon</span></div>`,
+    o.inAll ? '' : freeRewardsCard(),
+    starter ? sectionHead('Starter Pack', { icon: 'gift', sub: 'A one-time bundle for new players' }) + starter : '',
+    sectionHead('Weekly Sale', {
+      icon: 'tag',
+      sub: `${Math.round(OFFERS.weeklySale.discount * 100)}% off one item, new every Monday`,
+    }) + saleCard(sale),
+    sectionHead('Exchange', { icon: 'swap', sub: 'Turn coins into diamonds' }) +
+      `<div class="exchange-list">${[1, OFFERS.exchange.bulk].map(exchangeCard).join('')}</div>`,
   ].join('');
 }
 
 /** Handle a card tap in this tab. */
 export function onCard(el) {
   const { kind, id } = el.dataset;
+  if (kind === 'adearn') return onEarn(el);
   if (kind === 'gift') {
     const before = state.coins;
     const res = claimFreeGift();
@@ -159,7 +165,7 @@ export function onCard(el) {
   }
   if (kind === 'sale') {
     const sale = weeklySale(new Date());
-    if (el.querySelector('.owned-tag')) return cosmeticTap(sale.cat, sale.id);
+    if (el.dataset.mode === 'owned') return cosmeticTap(sale.cat, sale.id);
     return buyFlow({
       kind,
       id,

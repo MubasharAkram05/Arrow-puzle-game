@@ -1,7 +1,7 @@
 /**
  * Applies economy results to the shared game state. No DOM: screens read the returned summaries.
  */
-import { MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
+import { ADS, MAX_REFILLS_PER_LEVEL, PRICES } from '../config.js';
 import { achievementUnlocks, buyCosmetic, equipCosmetic, grantCosmetic } from './cosmetics.js';
 import { claimAchievement } from './achievements.js';
 import { isShapeLevel, shapeOf } from '../engine/index.js';
@@ -269,6 +269,19 @@ export function adRefillHeart() {
   state.refillsUsed++;
   state.hearts++;
   return { ok: true };
+}
+
+/**
+ * A Shop "Watch ad" reward (3.26.0, ADS.earn): +1 diamond, +1 hint or +40 coins. Called only after the ad reported
+ * its reward; the daily limits are checked before the ad plays (src/ads/index.js watchRewardedAd).
+ * @param {'diamond'|'hint'|'coins'} kind
+ * @returns {number} the amount given
+ */
+export function adEarn(kind) {
+  const n = ADS.earn[kind].amount;
+  if (kind === 'hint') state.hints += n;
+  else credit(kind === 'diamond' ? { diamonds: n } : { coins: n }, 'ad');
+  return n;
 }
 
 /**

@@ -14,6 +14,8 @@ export default [
         __TEST_UNLOCK_ALL__: 'readonly',
         __ADS_REAL_ALLOWED__: 'readonly',
         __ADS_SIMULATED__: 'readonly',
+        __AD_DEBUG__: 'readonly',
+        __APP_VERSION__: 'readonly',
       },
     },
     rules: {

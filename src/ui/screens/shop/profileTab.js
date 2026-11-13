@@ -44,7 +44,10 @@ export function render() {
       ...cardState('frame', f),
     });
   });
-  return section('Premium Avatars', avatars) + section('Avatar Frames', frames);
+  return (
+    section('Premium Avatars', avatars, '', { icon: 'user', sub: 'Your picture on the profile' }) +
+    section('Avatar Frames', frames, '', { icon: 'frame', sub: 'A ring around your avatar' })
+  );
 }
 
 /** Handle a card tap in this tab. */

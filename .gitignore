@@ -15,3 +15,5 @@ shapes-review.md
 *.jks
 *.keystore
 android/keystore.properties
+# the one exception: the fixed DEBUG key (public, test phones only) so every debug APK installs over the last one
+!android/app/debug.keystore

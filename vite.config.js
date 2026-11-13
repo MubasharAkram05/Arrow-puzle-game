@@ -1,5 +1,8 @@
 import { defineConfig } from 'vite';
-import { adsRealAllowed, adsSimulated, testUnlockAll } from './scripts/build-flags.mjs';
+import { readFileSync } from 'node:fs';
+import { adDebug, adsRealAllowed, adsSimulated, testUnlockAll } from './scripts/build-flags.mjs';
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 // Relative base so the build works from file:// and inside the Capacitor WebView.
 export default defineConfig(({ mode }) => {
@@ -12,6 +15,9 @@ export default defineConfig(({ mode }) => {
       // AdMob (src/ads/): real IDs only in an Android release build; simulated ads only on the dev server
       __ADS_REAL_ALLOWED__: JSON.stringify(adsRealAllowed({ mode })),
       __ADS_SIMULATED__: JSON.stringify(adsSimulated({ mode })),
+      // the hidden Ad debug panel and the ArrowAds log: debug APK, dev server and tests only
+      __AD_DEBUG__: JSON.stringify(adDebug({ mode })),
+      __APP_VERSION__: JSON.stringify(version),
     },
     plugins: [
       {

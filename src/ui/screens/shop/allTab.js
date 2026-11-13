@@ -1,8 +1,9 @@
 /**
- * Shop "All" tab: every section in order under its own heading (Offers, Hints, Styles, Effects,
- * Profile items). Card taps go to the section the card belongs to.
+ * Shop "All" tab: the Free rewards card on top, then every section in order under its own heading (Offers, Hints,
+ * Styles, Effects, Profile items). Card taps go to the section the card belongs to.
  */
 import { icon } from '../../components/icons.js';
+import { freeRewardsCard } from './adEarn.js';
 import * as hints from './hintsTab.js';
 import * as effects from './effectsTab.js';
 import * as offers from './offersTab.js';
@@ -23,10 +24,14 @@ export const keys = () => PARTS.flatMap((p) => p.mod.keys());
 
 /** @returns {string} tab content */
 export function render() {
-  return PARTS.map(
-    (p) =>
-      `<section class="shop-part" data-part="${p.id}"><h2 class="shop-part-head">${icon(p.icon)}${p.title}</h2>${p.mod.render()}</section>`,
-  ).join('');
+  // the Free rewards card first (it belongs to Offers, so its taps go there), then every section
+  return (
+    `<section class="shop-part" data-part="offers">${freeRewardsCard()}</section>` +
+    PARTS.map(
+      (p) =>
+        `<section class="shop-part" data-part="${p.id}"><h2 class="shop-part-head">${icon(p.icon)}${p.title}</h2>${p.mod.render({ inAll: true })}</section>`,
+    ).join('')
+  );
 }
 
 /**
