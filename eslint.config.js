@@ -6,10 +6,15 @@ export default [
   js.configs.recommended,
   {
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 'latest',
       sourceType: 'module',
       // __TEST_UNLOCK_ALL__ is replaced at build time (vite.config.js define)
-      globals: { ...globals.browser, __TEST_UNLOCK_ALL__: 'readonly' },
+      globals: {
+        ...globals.browser,
+        __TEST_UNLOCK_ALL__: 'readonly',
+        __ADS_REAL_ALLOWED__: 'readonly',
+        __ADS_SIMULATED__: 'readonly',
+      },
     },
     rules: {
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

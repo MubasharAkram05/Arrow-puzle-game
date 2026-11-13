@@ -2,6 +2,55 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.26.0] - 2026-11-13
+
+### Added
+
+- **Google AdMob** (`@capacitor-community/admob` 8.3, `src/ads/`), with Google's **test IDs only**:
+  - `RELEASE_ADS` is false by default (`src/ads.config.json`), with `REAL_...` placeholders for your IDs.
+  - Real IDs are used only with `RELEASE_ADS` in an Android release build. Dev, previews and the debug APK use test IDs.
+  - No ads on the web. The dev server shows simulated ads to try the flows.
+- **Consent:** the Google UMP consent form shows where required (EEA, UK). Settings gets "Privacy options" when UMP requires it.
+- **Rewarded ads:** watch an ad for:
+  - 1 free hint
+  - refill 1 heart (tapping the hearts during play, or +1 heart on Game Over)
+  - 2x coins on the victory screen
+
+  The reward comes only on the ad's reward event; closing early or a failed ad gives nothing, with a friendly message. There are at most 10 a day. Ad buttons carry an ad icon and show only while an ad is loaded.
+
+- **Interstitial:** only when leaving a victory screen, from level 10, at most every 3 wins and 6 minutes apart. Never during play, after a rewarded ad, or in the first session.
+- **Banner:** on Home, Levels, Shop and Tasks only, in a slot reserved at startup with a gap above the bottom nav.
+- **Android:** the AdMob App ID comes from `src/ads.config.json` (the test App ID for debug builds), plus the `AD_ID` permission.
+- Tests for the ad IDs, rewards, daily cap, interstitial rules and banner screens.
+
+### Changed
+
+- Privacy policy and store listing describe the ads (Google AdMob, advertising ID, link to Google's partner-sites policy).
+- `docs/RELEASE.md`:
+  - switching to real ads
+  - Play Console "Contains ads", Advertising ID and Data safety
+  - `app-ads.txt`
+- The privacy page shows the contact email as the link text (it showed `CONTACT_EMAIL`).
+- Out of Hearts popup, redesigned: one "Get +1 heart" card with two buttons side by side, then "Try Again" full width.
+  - "Watch Ad" (green, primary): +1 heart after the full ad. It counts toward the 2 refills per level and the daily cap. With no ad loaded or the cap reached it reads "Ad not available" (or "No refills left") and is disabled, and the diamond button becomes the main one.
+  - Diamond "3" (outlined): +1 heart for 3 diamonds. When short it looks disabled, shakes on tap, and "Need X more diamonds" shows under both buttons.
+  - Both unavailable: both disabled, with a short hint to tap Try Again.
+  - Buttons are 52px tall and stay on one line at 360px, in light and dark mode.
+  - The top-bar hearts are always shown as lost while the popup is open.
+
+  Each heart continues the level. "Refill heart" for coins and "Continue (full hearts)" are gone from this popup; buying a heart with coins by tapping the hearts during a level is unchanged.
+
+- Level complete popup, redesigned (same rewards, logic and ad rules):
+  - A calm brand gradient (cyan-blue to royal blue; deep navy in dark mode) instead of the rotating rays.
+  - Confetti is one light 1.5 s burst behind the card, then it stops. Reduced motion: no confetti, a simple fade.
+  - One centered card: check badge, "Level N Complete!", "Perfect!" for a perfect level, a smaller board preview in a light frame.
+  - One rewards row (coins, diamonds when earned, XP) that counts up; the per-line breakdown is gone. Coins fly to the top counter once.
+  - "Watch ad: 2x coins" is a gold button with a "+N" badge, hidden when no ad is available or the daily cap is reached. After the ad the coins count up to the doubled value and the button reads "Collected!".
+  - "Next Level" (was "Next Game") is the main blue button with the level number under it; "Home" (was "Main") is a text button.
+  - Fits at 360 x 640 without scrolling, in light and dark mode.
+- The 3-diamond Game Over option now gives +1 heart instead of full hearts (`PRICES.gameOverHeart`, was `continueGame`).
+- Levels and difficulty are unchanged.
+
 ## [3.25.0] - 2026-11-13
 
 ### Added

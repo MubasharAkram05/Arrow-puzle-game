@@ -220,6 +220,9 @@
             <span class="knob"></span>
           </button>
         </div>
+        <button class="setting-row privacy-options" id="btn-privacy-options" hidden>
+          <svg class="icon"><use href="#i-shield" /></svg><span>Privacy options (ads)</span>
+        </button>
         <div class="section-label">Theme</div>
         <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
           <button data-theme-opt="light" role="radio">
@@ -311,6 +314,9 @@
         <p class="ask-error" id="ask-error" role="alert"></p>
         <div class="stack">
           <button class="btn primary" id="btn-ask-ok">Confirm</button>
+          <button class="btn ad-btn" id="btn-ask-ad" hidden>
+            <svg class="icon ad-icon" aria-label="Ad"><use href="#i-ad" /></svg><span id="ask-ad-label">Watch ad</span>
+          </button>
           <button class="btn" id="btn-ask-cancel">Cancel</button>
         </div>
       </div>
@@ -336,15 +342,21 @@
         <h3>Out of Hearts!</h3>
         <p class="muted">Look for arrows with a clear path ahead of their tip.</p>
         <div class="stack">
-          <button class="btn primary buy" id="btn-refill">
-            <span class="buy-label">Refill heart</span><span class="buy-price" id="refill-price"></span>
-          </button>
-          <p class="buy-note" id="refill-note"></p>
-          <button class="btn buy" id="btn-continue">
-            <span class="buy-label">Continue (full hearts)</span><span class="buy-price" id="continue-price"></span>
-          </button>
-          <p class="buy-note" id="continue-note"></p>
-          <button class="btn" id="btn-tryagain">
+          <section class="go-offer" id="go-offer" aria-labelledby="go-offer-title">
+            <h4 id="go-offer-title">
+              <svg class="icon"><use href="#i-heart" /></svg>Get +1 heart
+            </h4>
+            <div class="go-actions">
+              <button class="go-ad" id="btn-heart-ad">
+                <svg class="icon"><use href="#i-play" /></svg><span id="heart-ad-label">Watch Ad</span>
+              </button>
+              <button class="go-gems" id="btn-heart-gems" aria-label="+1 heart for 3 diamonds">
+                <svg class="cur-icon" aria-hidden="true"><use href="#i-gem" /></svg><span id="heart-gems-cost">3</span>
+              </button>
+            </div>
+            <p class="go-note" id="heart-note" role="status"></p>
+          </section>
+          <button class="btn go-retry" id="btn-tryagain">
             <svg class="icon"><use href="#i-restart" /></svg>Try Again
           </button>
         </div>
@@ -353,20 +365,33 @@
 
     <!-- Victory -->
     <div class="modal victory" id="modal-victory">
-      <div class="sunburst"></div>
       <canvas id="confetti"></canvas>
       <div class="victory-bar" data-currency-bar></div>
-      <h2 id="victory-title">Level Completed!</h2>
-      <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
-      <div class="reward-box" id="reward-box">
-        <ul class="reward-lines" id="reward-lines"></ul>
-        <div class="reward-total" id="reward-total"></div>
+      <div class="win-card" role="dialog" aria-labelledby="victory-title">
+        <div class="win-badge">
+          <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>
+        </div>
+        <h2 id="victory-title">Level 1 Complete!</h2>
+        <p class="win-sub" id="victory-sub"></p>
+        <div class="mini-card" id="mini-card"><svg id="mini-board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="win-rewards" id="win-rewards">
+          <span class="win-amt" data-kind="coins"
+            ><svg class="cur-icon" aria-hidden="true"><use href="#i-coin" /></svg><b id="win-coins">+0</b></span
+          >
+          <span class="win-amt" data-kind="diamonds" id="win-gems-wrap" hidden
+            ><svg class="cur-icon" aria-hidden="true"><use href="#i-gem" /></svg><b id="win-gems">+0</b></span
+          >
+          <span class="win-amt xp" data-kind="xp"><i>XP</i><b id="win-xp">+0</b></span>
+        </div>
+        <button class="win-double" id="btn-double" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-play" /></svg
+          ><span id="double-label">Watch ad: 2x coins</span><span class="win-badge-amt" id="double-amt">+0</span>
+        </button>
+        <button class="win-next" id="btn-next">
+          <span id="next-label">Next Level</span><small id="next-sub">Level 2</small>
+        </button>
+        <button class="win-home" id="btn-main">Home</button>
       </div>
-      <div class="victory-spacer"></div>
-      <button class="pill-btn" id="btn-next">
-        <span id="next-label">Next Game</span><small id="next-sub">Level 2</small>
-      </button>
-      <button class="text-btn" id="btn-main">Main</button>
     </div>
 
     <script type="module" src="./src/main.js"></script>

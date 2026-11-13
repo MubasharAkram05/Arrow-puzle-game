@@ -82,7 +82,7 @@ describe('android-release workflow', () => {
     expect(wf).toMatch(/workflow_dispatch:/);
     expect(wf).toMatch(/tags: \['v\*'\]/);
     expect(wf).toContain('npm run build:release');
-    expect(wf).toContain('grep -q \'content="test-unlock=false"\' dist/index.html');
+    expect(wf).toContain("grep -q 'test-unlock=false' dist/index.html");
     expect(wf).toContain('npx cap sync android');
     expect(wf).toContain('./gradlew --no-daemon bundleRelease');
     expect(wf).toContain('./gradlew --no-daemon assembleDebug');
@@ -105,15 +105,20 @@ describe('android-release workflow', () => {
 describe('privacy policy', () => {
   const page = text('public/privacy.html');
 
-  it('names the app and the publisher, with a contact placeholder', () => {
+  it('names the app, the publisher and a contact email', () => {
     expect(page).toContain('Arrow Expert');
     expect(page).toContain('Sussal Productions');
-    expect(page).toContain('CONTACT_EMAIL');
+    expect(page).toMatch(/<a href="mailto:([^"]+)">\1<\/a>/); // the address shown is the one linked
+    expect(page).not.toContain('CONTACT_EMAIL');
   });
 
-  it('matches the app: no account, ads, purchases or analytics; data stays on the device', () => {
-    for (const s of ['No account', 'No ads', 'No in-app purchases', 'No analytics', 'only on your device', 'children'])
+  it('matches the app: no account or purchases, progress on the device, ads by Google AdMob (3.26.0)', () => {
+    for (const s of ['No account', 'No in-app purchases', 'only on your device', 'children', 'Google AdMob'])
       expect(page, s).toContain(s);
+    expect(page).toContain('advertising ID');
+    expect(page).toContain('https://policies.google.com/technologies/partner-sites');
+    expect(page).toContain('Privacy options');
+    expect(page).not.toContain('No ads');
   });
 
   it('is linked from the Credits screen', () => {

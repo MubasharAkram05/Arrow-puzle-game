@@ -1,6 +1,6 @@
 import { MAX_REFILLS_PER_LEVEL, PRICES } from '../../config.js';
 import { restart, resumePlay } from '../../game/game.js';
-import { buyHints, refillHeart } from '../../game/rewards.js';
+import { adHint, adRefillHeart, buyHints, refillHeart } from '../../game/rewards.js';
 import { updateTutorial, useHint } from '../../game/hints.js';
 import { state } from '../../game/state.js';
 import { layoutBoard } from '../../render/board.js';
@@ -31,6 +31,14 @@ function onHint() {
       useHint();
       saveProgress();
     },
+    ad: {
+      label: 'Watch ad: free hint',
+      onReward: () => {
+        adHint();
+        useHint();
+        saveProgress();
+      },
+    },
   });
 }
 
@@ -49,6 +57,12 @@ function onHearts() {
       if (!refillHeart().ok) return;
       renderCurrency();
       resumePlay();
+    },
+    ad: {
+      label: 'Watch ad: refill 1 heart',
+      onReward: () => {
+        if (adRefillHeart().ok) resumePlay();
+      },
     },
   });
 }

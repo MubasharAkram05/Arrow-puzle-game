@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { COSMETICS, MAX_REFILLS_PER_LEVEL, OFFERS, PRICES, SHOP_STYLES, SHOP_THEMES } from '../src/config.js';
 import { salePrice } from '../src/game/offers.js';
-import { buyContinue, buyHints, refillHeart } from '../src/game/rewards.js';
+import { buyGameOverHeart, buyHints, refillHeart } from '../src/game/rewards.js';
 import { state } from '../src/game/state.js';
 import { sanitize } from '../src/storage/schema.js';
 
@@ -15,11 +15,11 @@ const items = () => [
 ];
 
 describe('consumable prices', () => {
-  it('hint 90, 5-hint pack 350, heart refill 150 (max 2 per level), continue 3 diamonds', () => {
+  it('hint 90, 5-hint pack 350, heart refill 150 (max 2 per level), Game Over +1 heart 3 diamonds', () => {
     expect(PRICES.hint).toEqual({ coins: 90 });
     expect(PRICES.hintPack).toEqual({ coins: 350, count: 5 });
     expect(PRICES.heartRefill).toEqual({ coins: 150 });
-    expect(PRICES.continueGame).toEqual({ diamonds: 3 });
+    expect(PRICES.gameOverHeart).toEqual({ diamonds: 3 });
   });
 
   it('buying takes the new amounts', () => {
@@ -39,8 +39,10 @@ describe('consumable prices', () => {
     expect(refillHeart().ok).toBe(true);
     expect(refillHeart()).toMatchObject({ ok: false, reason: 'limit' });
     expect(state.coins).toBe(700);
-    expect(buyContinue().ok).toBe(true);
+    state.hearts = 0;
+    expect(buyGameOverHeart().ok).toBe(true);
     expect(state.diamonds).toBe(0);
+    expect(state.hearts).toBe(1); // exactly one heart
   });
 });
 

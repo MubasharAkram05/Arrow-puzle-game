@@ -416,18 +416,18 @@ Prices went up in 3.22.0 (coin items about x2, diamond items about x1.5). Items 
 
 **Combo prices** (3.22.0): an item can cost coins and diamonds together (`{ coins, diamonds }` in `src/config.js`). The card shows both icons ("[coin] 600 + [gem] 3"), buying needs both amounts, and when either is short the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). The Weekly Sale takes 30% off both parts. The premium avatars no longer show a price on the Profile avatar picker, only a lock (the Shop shows the price).
 
-| Item                                  | Price                   |
-| ------------------------------------- | ----------------------- |
-| Hint (once free hints run out)        | 90 coins                |
-| 5-hint pack                           | 350 coins               |
-| Refill 1 heart (max 2 per level)      | 150 coins               |
-| Continue after game over, full hearts | 3 diamonds              |
-| Arrow styles: Dark Slate, Olive       | 600 coins               |
-| Arrow style: Soft Mint                | 8 diamonds              |
-| Themes: Royal Purple, Lagoon Teal     | 800 coins               |
-| Arrow style: Rose Gold (new)          | 800 coins + 4 diamonds  |
-| Arrow style: Neon Night (new)         | 1100 coins + 6 diamonds |
-| Theme: Sunset Coral                   | 12 diamonds             |
+| Item                                 | Price                   |
+| ------------------------------------ | ----------------------- |
+| Hint (once free hints run out)       | 90 coins                |
+| 5-hint pack                          | 350 coins               |
+| Refill 1 heart (max 2 per level)     | 150 coins               |
+| Game Over: +1 heart and keep playing | 3 diamonds              |
+| Arrow styles: Dark Slate, Olive      | 600 coins               |
+| Arrow style: Soft Mint               | 8 diamonds              |
+| Themes: Royal Purple, Lagoon Teal    | 800 coins               |
+| Arrow style: Rose Gold (new)         | 800 coins + 4 diamonds  |
+| Arrow style: Neon Night (new)        | 1100 coins + 6 diamonds |
+| Theme: Sunset Coral                  | 12 diamonds             |
 
 ### Hints
 
@@ -621,7 +621,7 @@ Currency from outside the game (rewarded ads, in-app purchases) should go throug
 
 ## Back button
 
-- Modal open: close it (victory acts like "Main", game over leaves the level)
+- Modal open: close it (victory acts like "Home", game over leaves the level)
 - Otherwise: go back one screen
 - On Home: ask "Exit game?"
 
@@ -658,9 +658,24 @@ npx cap sync android
 cd android && ./gradlew assembleDebug    # -> app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## Ads (Google AdMob)
+
+3.26.0 adds Google AdMob through `@capacitor-community/admob` (`src/ads/`). Numbers live in `ADS` in `src/config.js`, and the IDs in `src/ads.config.json` (Gradle reads the App ID from the same file).
+
+| What         | Rule                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IDs          | Google's test IDs while `releaseAds` is `false` (default). Real IDs only with `releaseAds: true` **and** an Android release build; dev, Vercel preview and the debug APK always use test IDs. A release build with a `REAL_...` placeholder left shows no ads.                                                                                                                                                  |
+| Web          | No ads on Vercel. The dev server shows simulated ads (grey "TEST AD" cards) to try the flows.                                                                                                                                                                                                                                                                                                                   |
+| Consent      | Google UMP form on first launch where required (EEA, UK); the SDK serves non-personalised ads when consent is refused. Settings shows **Privacy options** when UMP requires it.                                                                                                                                                                                                                                 |
+| Rewarded     | "Watch ad" for 1 free hint, refill 1 heart (hearts during play, and "Watch Ad" next to the 3-diamond button in the Game Over "Get +1 heart" card; it counts toward the limit of 2 refills per level), 2x coins on the victory screen. Reward only on the ad's reward event; closed early or failed: no reward and a friendly message. At most 10 a day. Buttons show an ad icon and only while an ad is loaded. |
+| Interstitial | Only when leaving a victory screen, from level 10, at most every 3 wins and 6 minutes apart; never during play, never after a rewarded ad in that level, never in the first app session.                                                                                                                                                                                                                        |
+| Banner       | 320 x 50 on Home, Levels, Shop and Tasks only, 8 dp above the bottom nav. The slot is reserved at startup on those screens, so nothing moves when the ad is late, fails or the phone is offline. Hidden under any popup, the game and the victory screen.                                                                                                                                                       |
+
+Switching to real ads, the Play Console settings (Contains ads, Advertising ID, Data safety) and `app-ads.txt`: [docs/RELEASE.md](docs/RELEASE.md), section 7.
+
 ## Privacy policy
 
-`public/privacy.html` is served at https://arrow-puzle-game.vercel.app/privacy.html (the URL for Google Play), and the app shows the same page from Credits > Privacy policy. It says what the app does today: no account, ads, purchases or analytics, and progress saved only on the device. Replace `CONTACT_EMAIL` with the real address before publishing, and update the page if any of that changes.
+`public/privacy.html` is served at https://arrow-puzle-game.vercel.app/privacy.html (the URL for Google Play), and the app shows the same page from Credits > Privacy policy. It says what the app does today: no account or purchases, progress saved only on the device, and ads from Google AdMob (advertising ID and device data, with a link to Google's partner-sites policy). Update it if any of that changes.
 
 ## CI
 

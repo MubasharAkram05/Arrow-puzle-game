@@ -27,6 +27,7 @@ import { toast } from './ui/components/toast.js';
 import { maybeShowDaily } from './ui/modals/daily.js';
 import { renderHome } from './ui/screens/home.js';
 import { hideBootSplash } from './ui/bootSplash.js';
+import { initAds } from './ads/index.js';
 
 /** Removed boosters were paid back on load: say so once, then forget it. */
 function announceRefund() {
@@ -71,6 +72,7 @@ function boot() {
   initBackButton();
   goHome();
   hideBootSplash();
+  initAds(); // after Home and the bottom nav exist: the banner slot is decided once, here
   announceRefund();
   // back in front on a new day: the daily reward may be waiting
   document.addEventListener('visibilitychange', () => {

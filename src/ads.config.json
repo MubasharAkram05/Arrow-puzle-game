@@ -1,0 +1,15 @@
+{
+  "releaseAds": false,
+  "test": {
+    "appId": "ca-app-pub-3940256099942544~3347511713",
+    "banner": "ca-app-pub-3940256099942544/6300978111",
+    "interstitial": "ca-app-pub-3940256099942544/1033173712",
+    "rewarded": "ca-app-pub-3940256099942544/5224354917"
+  },
+  "real": {
+    "appId": "REAL_APP_ID",
+    "banner": "REAL_BANNER_ID",
+    "interstitial": "REAL_INTERSTITIAL_ID",
+    "rewarded": "REAL_REWARDED_ID"
+  }
+}

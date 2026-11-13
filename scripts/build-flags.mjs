@@ -17,3 +17,24 @@ export function testUnlockAll({ mode, env = process.env }) {
   if (mode === 'development' || mode === 'test') return true;
   return env.VERCEL_ENV === 'preview';
 }
+
+/**
+ * May this build use the real AdMob IDs (3.26.0)? Only an Android release build (`vite build --mode release`),
+ * and not when ARROW_TEST_ADS=1 (the debug APK in the android-release workflow). Even then the real IDs are used
+ * only when RELEASE_ADS is true in src/ads.config.json (see src/ads/policy.js adUnitIds).
+ * @param {{mode: string, env?: Record<string, string|undefined>}} o
+ * @returns {boolean}
+ */
+export function adsRealAllowed({ mode, env = process.env }) {
+  return mode === 'release' && env.ARROW_TEST_ADS !== '1';
+}
+
+/**
+ * Simulated ads on the web (3.26.0): only on the dev server, so the rewarded / interstitial / banner flows can be
+ * tried in a browser. Every other web build (Vercel preview and production) shows no ads.
+ * @param {{mode: string}} o
+ * @returns {boolean}
+ */
+export function adsSimulated({ mode }) {
+  return mode === 'development';
+}

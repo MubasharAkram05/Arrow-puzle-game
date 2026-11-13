@@ -2,6 +2,7 @@ import { layoutBoard } from '../render/board.js';
 import { updateBottomNav } from './components/bottomNav.js';
 import { syncCurrency } from './components/currencyBar.js';
 import { keepAwake } from './wakeLock.js';
+import { syncBanner } from '../ads/index.js';
 
 /** Screen history; the first entry is the root (home). */
 const stack = ['screen-home'];
@@ -15,6 +16,7 @@ function show(id) {
   syncCurrency(); // counters always show the real wallet on a new screen
   if (id === 'screen-game') requestAnimationFrame(layoutBoard);
   keepAwake(id === 'screen-game'); // the screen stays on only during gameplay
+  syncBanner(); // banner only on Home, Levels, Shop and Tasks
 }
 
 /**

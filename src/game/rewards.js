@@ -124,12 +124,12 @@ export function refillHeart() {
 }
 
 /**
- * Continue after game over with full hearts.
+ * Game Over: +1 heart for diamonds, and the level goes on (3.26.0). Not limited per level (like the old Continue).
  * @returns {{ok: boolean, missing?: object}}
  */
-export function buyContinue() {
-  const res = pay(PRICES.continueGame);
-  if (res.ok) state.hearts = state.maxHearts;
+export function buyGameOverHeart() {
+  const res = pay(PRICES.gameOverHeart);
+  if (res.ok) state.hearts = Math.min(state.maxHearts, state.hearts + 1);
   return res;
 }
 
@@ -250,4 +250,31 @@ export function claimDailyReward(now = Date.now()) {
   state.hints += res.reward.hints || 0;
   questEvent({ daily: 1 }, now);
   return { ...res, before };
+}
+
+// ---------- rewarded ads (3.26.0): called only after the ad reported its reward ----------
+
+/** A rewarded ad gave one hint. */
+export function adHint() {
+  state.hints += 1;
+}
+
+/**
+ * A rewarded ad refills one heart (same per-level limit as buying one).
+ * @returns {{ok: boolean, reason?: 'limit'|'full'}}
+ */
+export function adRefillHeart() {
+  if (state.refillsUsed >= MAX_REFILLS_PER_LEVEL) return { ok: false, reason: 'limit' };
+  if (state.hearts >= state.maxHearts) return { ok: false, reason: 'full' };
+  state.refillsUsed++;
+  state.hearts++;
+  return { ok: true };
+}
+
+/**
+ * A rewarded ad doubles the coins of the level just won (the same amount again).
+ * @param {number} coins coins the win paid
+ */
+export function adDoubleCoins(coins) {
+  credit({ coins }, 'ad');
 }

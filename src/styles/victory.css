@@ -1,48 +1,106 @@
-/* ---------- Victory ---------- */
+/* ---------- Victory (3.26.0): one centered card on a calm brand gradient ---------- */
 .victory {
   flex-direction: column;
-  justify-content: flex-start;
-  overflow: hidden;
-  padding: calc(12dvh + env(safe-area-inset-top)) 16px calc(4dvh + env(safe-area-inset-bottom));
-  color: #ffffff;
-  background: radial-gradient(ellipse at 50% 46%, #4fd0ff 0%, #2aa6f7 38%, #1d84ea 72%, #1a6fe0 100%);
+  justify-content: center;
+  overflow: hidden auto;
+  padding: calc(56px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #38c6f4 0%, #1f8ff0 45%, #1a5fd8 100%);
 }
-.sunburst {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 250vmax;
-  height: 250vmax;
-  margin: -125vmax 0 0 -125vmax;
-  background: repeating-conic-gradient(rgba(255, 255, 255, 0.1) 0deg 7deg, rgba(255, 255, 255, 0) 7deg 15deg);
-  animation: spin 80s linear infinite;
-  will-change: transform;
+html[data-theme='dark'] .victory {
+  background: linear-gradient(180deg, #123a6b 0%, #0f2c58 50%, #0b1c3d 100%);
+}
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  z-index: 0; /* behind the card: no piece covers text or buttons */
 }
-@keyframes spin {
+
+.win-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 380px);
+  margin: auto 0;
+  padding: 22px 18px 10px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 48px rgba(6, 30, 80, 0.3);
+  text-align: center;
+}
+.victory.open .win-card {
+  animation: win-pop 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes win-pop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
   to {
-    transform: rotate(360deg);
+    transform: none;
+    opacity: 1;
   }
 }
-.victory h2 {
-  position: relative;
-  margin: 0;
-  font-size: clamp(30px, 9vw, 40px);
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  text-shadow: 0 2px 8px rgba(0, 60, 140, 0.25);
+
+.win-badge {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: -46px; /* half outside the card */
+  border-radius: 50%;
+  background: linear-gradient(180deg, #34d399, #16a34a);
+  color: #ffffff;
+  box-shadow:
+    0 0 0 5px var(--surface),
+    0 8px 18px rgba(22, 163, 74, 0.35);
 }
+.win-badge .icon {
+  width: 26px;
+  height: 26px;
+  stroke-width: 3;
+}
+.victory h2 {
+  margin: 12px 0 0;
+  font-size: clamp(22px, 6.4vw, 26px);
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--title);
+}
+.win-sub {
+  min-height: 0;
+  margin: 2px 0 0;
+  color: #16a34a;
+  font-size: 15px;
+  font-weight: 700;
+}
+html[data-theme='dark'] .win-sub {
+  color: #4ade80;
+}
+.win-sub:empty {
+  display: none;
+}
+
+/* the solved board, small, in a light rounded frame */
 .mini-card {
-  position: relative;
-  width: min(50vw, 260px, 30dvh);
+  width: min(44vw, 168px, 22dvh);
   aspect-ratio: 1;
-  margin-top: 4dvh;
+  margin-top: 14px;
+  border-radius: var(--r-md);
   background: #ffffff;
-  border-radius: 12px;
+  box-shadow: inset 0 0 0 1.5px #e3e8f2;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 18px 36px rgba(0, 50, 130, 0.28);
+}
+html[data-theme='dark'] .mini-card {
+  background: #eef2f9;
+  box-shadow: none;
 }
 .mini-card svg {
   display: block;
@@ -55,69 +113,149 @@
   fill: #0a1440;
   stroke: #0a1440;
 }
-.victory-spacer {
-  flex: 1;
+
+/* rewards: big and clear, no breakdown */
+.win-rewards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 14px;
 }
-.pill-btn {
-  position: relative;
+.win-amt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.win-amt[hidden] {
+  display: none;
+}
+.win-amt .cur-icon {
+  width: 26px;
+  height: 26px;
+}
+.win-amt.xp i {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 7px;
+  background: var(--super);
+  color: #ffffff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+.win-amt.bump b {
+  animation: win-bump 0.3s ease;
+}
+@keyframes win-bump {
+  50% {
+    transform: scale(1.18);
+  }
+}
+.win-amt b {
+  display: inline-block;
+}
+
+/* Watch ad: 2x coins (gold) */
+.win-double {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 16px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #ffd54a, #f5b400);
+  color: #3a2600;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(245, 180, 0, 0.35);
+  transition:
+    transform 0.12s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.win-double[hidden] {
+  display: none;
+}
+.win-double .icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.win-badge-amt {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+.win-double:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.win-double.collected {
+  background: var(--pill);
+  color: #15803d; /* 4.6:1 on the light pill */
+  box-shadow: none;
+}
+html[data-theme='dark'] .win-double.collected {
+  color: #4ade80;
+}
+.win-double.collected .icon {
+  fill: none;
+}
+.win-double.collected .win-badge-amt {
+  display: none;
+}
+
+/* Next Level (main) and Home */
+.win-next {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: min(82vw, 380px);
-  min-height: 60px;
-  background: #ffffff;
-  color: var(--primary-on-white);
-  border-radius: 999px;
-  padding: 8px 24px;
-  font-weight: 800;
-  font-size: 21px;
-  line-height: 1.2;
-  box-shadow: 0 10px 24px rgba(0, 50, 130, 0.2);
-}
-.pill-btn small {
-  font-size: 16px;
-  font-weight: 500;
-  color: #5aa2f2;
-}
-.text-btn {
-  position: relative;
-  margin-top: 18px;
-  padding: 8px 32px;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 21px;
-}
-#confetti {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 2;
+  min-height: 52px;
+  margin-top: 10px;
+  padding: 6px 16px;
+  border-radius: var(--r-md);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 35%, transparent);
+  transition: transform 0.12s ease;
 }
-.victory.open h2 {
-  animation: rise 0.35s ease both;
+.win-next small {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.85;
 }
-.victory.open .mini-card {
-  animation: card-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.05s;
+.win-next:active {
+  transform: scale(0.98);
+  background: var(--primary-press);
 }
-.victory.open .pill-btn,
-.victory.open .text-btn {
-  animation: rise 0.35s ease both 0.15s;
+.win-home {
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0 28px;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
 }
-@keyframes card-pop {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: none;
-    opacity: 1;
-  }
+.win-home:active {
+  color: var(--text);
 }
 
-/* Currency counters and the reward breakdown */
+/* Currency counters (top right, coins fly here) */
 .victory-bar {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
@@ -128,51 +266,12 @@
   background: rgba(255, 255, 255, 0.92);
   color: #0e1a3a;
 }
-.reward-box {
-  position: relative;
-  z-index: 1;
-  width: min(86vw, 340px);
-  margin-top: 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(0, 40, 110, 0.22);
-  font-size: 14px;
-}
-.victory.open .reward-box {
-  animation: rise 0.35s ease both 0.25s;
-}
-.reward-lines {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.reward-lines li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 0;
-  opacity: 0.92;
-}
-.reward-total {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
-  font-size: 18px;
-  font-weight: 800;
-}
-.amt {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-weight: 700;
-}
-.amt .cur-icon {
-  width: 18px;
-  height: 18px;
-}
-.xp {
-  color: #d6f0ff;
+
+@media (prefers-reduced-motion: reduce) {
+  .victory.open .win-card {
+    animation: fade 0.2s ease both;
+  }
+  .win-amt.bump b {
+    animation: none;
+  }
 }

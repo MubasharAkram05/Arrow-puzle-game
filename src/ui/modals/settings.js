@@ -3,6 +3,7 @@ import { vibrate } from '../../audio/haptics.js';
 import { saveProgress } from '../../storage/save.js';
 import { $ } from '../dom.js';
 import { applyTheme } from '../theme.js';
+import { privacyOptionsRequired, showPrivacyOptions } from '../../ads/index.js';
 import { openModal } from './modal.js';
 
 /** Sync every settings control with the state. */
@@ -12,6 +13,8 @@ function renderSettings() {
   document
     .querySelectorAll('[data-theme-opt]')
     .forEach((b) => b.setAttribute('aria-checked', String(b.dataset.themeOpt === state.theme)));
+  // Google UMP: shown only where a privacy options entry is required (EEA, UK)
+  $('btn-privacy-options').hidden = !privacyOptionsRequired();
 }
 
 /** Open the settings sheet. */
@@ -41,6 +44,7 @@ export function bindSettings() {
     changed();
     vibrate(40);
   });
+  $('btn-privacy-options').addEventListener('click', () => showPrivacyOptions());
   $('theme-seg').addEventListener('click', (e) => {
     const b = e.target.closest('[data-theme-opt]');
     if (!b) return;

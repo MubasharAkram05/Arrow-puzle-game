@@ -1,6 +1,6 @@
 {
   "name": "arrow-expert",
-  "version": "3.25.0",
+  "version": "3.26.0",
   "androidVersionCode": 1,
   "private": true,
   "description": "Tap Away Arrows style puzzle game. Vanilla JS + Vite, packaged for Android with Capacitor.",
@@ -26,6 +26,7 @@
     "screenshots": "node scripts/store-screenshots.cjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.3.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/splash-screen": "^8.0.2"
