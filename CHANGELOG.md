@@ -4,6 +4,11 @@ All notable changes to this project. Format based on [Keep a Changelog](https://
 
 ## [Unreleased]
 
+### Changed
+
+- **Privacy policy URL for Google Play:** https://mubasharakram05.github.io/arrow-expert/privacy/ (Sussal Productions website). `docs/RELEASE.md`, `store-assets/listing.md` and the README use it. `public/privacy.html` stays on Vercel and in the app (Credits) as a backup, with the same text.
+- **Privacy policy text** (both copies): names the app, its package `com.sussal.arrowexpert` and the developer; names Google's consent form (User Messaging Platform, UMP); says no data is sold; says the game is not directed at children under 13.
+
 ### Fixed
 
 - Emulator smoke test (CI only, the app is unchanged): it connected to the first WebView page in the app's process. AdMob's ad WebViews live in the same process, so on the Android 16 run of android-release #30 it picked an ad page and waited 60 s for a Play button that page never has.
