@@ -134,7 +134,7 @@ describe('android-release workflow', () => {
     expect(job).toContain('bash scripts/android-smoke.sh');
     const sh = text('scripts/android-smoke.sh');
     expect(sh).toContain('adb install -r');
-    expect(sh).toMatch(/FATAL EXCEPTION\|ANR in/);
+    expect(sh).toContain('ANR in $PKG|Process: $PKG, PID'); // this app's crashes only, not the emulator's system apps
     expect(text('scripts/android-smoke.mjs')).toContain('#modal-victory.open');
   });
 

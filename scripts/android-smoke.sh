@@ -36,8 +36,10 @@ PID=$(adb shell pidof "$PKG" | tr -d '\r')
 adb logcat -d > "$OUT/logcat.txt"
 echo "app pid: ${PID:-not running}"
 
-# crashes and ANRs anywhere, and error lines from the app's own process
-BAD=$(grep -E "FATAL EXCEPTION|ANR in $PKG|Process: $PKG|AndroidRuntime: " "$OUT/logcat.txt")
+# crashes and ANRs of this app only (the emulator's own system apps, e.g. Google Play services, crash at times)
+BAD=$(grep -E "ANR in $PKG|Process: $PKG, PID" "$OUT/logcat.txt")
+[ -n "$PID" ] && BAD="$BAD${BAD:+
+}$(grep -E "^[0-9-]+ [0-9:.]+ +$PID +[0-9]+ E AndroidRuntime" "$OUT/logcat.txt")"
 APPERR=""
 [ -n "$PID" ] && APPERR=$(grep -E "^[0-9-]+ [0-9:.]+ +$PID +[0-9]+ E " "$OUT/logcat.txt" | grep -v -E "eglCodecCommon|EGL_emulation|HostConnection|goldfish|gralloc" || true)
 echo "--- crash / ANR lines ---"; echo "${BAD:-none}"
