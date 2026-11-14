@@ -135,15 +135,12 @@ artifact again and compares the SHA-256, so a failed check stops the run instead
 3. **Testing > Internal testing > Create new release**: upload the `.aab`, add release notes, save, roll out
    to your testers.
 4. **Store listing**: text from `store-assets/listing.md`, icon `store-assets/play/icon-512.png`,
-   screenshots from `store-assets/screenshots/` (feature graphic still to make).
+   screenshots from `store-assets/screenshots/`, feature graphic `store-assets/play/feature-graphic.png`.
 5. **App content**: privacy policy URL https://arrow-puzle-game.vercel.app/privacy.html, ads: **yes**, Advertising
    ID: **yes** (section 7),
    content rating questionnaire (notes in `store-assets/listing.md`), target audience, data safety: no data
    collected or shared.
 6. When internal testing looks good, promote the release to Closed or Production.
-
-Before the first upload, replace `CONTACT_EMAIL` in `public/privacy.html` with your real email and merge it,
-so the live privacy page shows it.
 
 ## 6. The next release
 

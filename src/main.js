@@ -89,6 +89,14 @@ function boot() {
   // the shape library is a separate chunk: fetch it once the home screen is up
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200));
   idle(() => loadShapeLibrary().catch(() => {}));
+  // debug builds only (debug APK, dev server): the Android smoke test checks the level fingerprints in the
+  // device's own WebView (scripts/android-smoke.mjs); release builds drop this block
+  if (__AD_DEBUG__) {
+    window.__arrowLevelHashes = async () => {
+      await loadShapeLibrary();
+      return (await import('./engine/levelHash.js')).goldenHashes();
+    };
+  }
 }
 
 boot();

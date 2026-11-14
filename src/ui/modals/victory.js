@@ -1,4 +1,11 @@
-import { maybeInterstitial, noteLevelWin, onAdsChange, rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
+import {
+  adUiShown,
+  maybeInterstitial,
+  noteLevelWin,
+  onAdsChange,
+  rewardedAvailable,
+  watchRewardedAd,
+} from '../../ads/index.js';
 import { adDoubleCoins } from '../../game/rewards.js';
 import { saveProgress } from '../../storage/save.js';
 import { startLevel } from '../../game/game.js';
@@ -88,7 +95,7 @@ let doubled = false;
  */
 function renderDouble() {
   const btn = $('btn-double');
-  btn.hidden = !doubled && !(wonCoins > 0 && rewardedAvailable());
+  btn.hidden = !adUiShown() || (!doubled && !(wonCoins > 0 && rewardedAvailable()));
   btn.disabled = doubled;
   btn.classList.toggle('collected', doubled);
   $('double-label').textContent = doubled ? 'Collected!' : 'Watch ad: 2x coins';

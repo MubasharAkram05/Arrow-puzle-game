@@ -4,7 +4,7 @@
  */
 import { canAfford, missingLabel, priceLabel, shortfall } from '../../game/economy.js';
 import { wallet } from '../../game/rewards.js';
-import { earnState, rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
+import { adUiShown, earnState, rewardedAvailable, watchRewardedAd } from '../../ads/index.js';
 import { $ } from '../dom.js';
 import { closeModals, openModal } from './modal.js';
 
@@ -55,8 +55,10 @@ export function ask(opts) {
   $('ask-error').textContent = missing;
   $('btn-ask-ok').textContent = opts.okLabel || 'Confirm';
   $('btn-ask-ok').disabled = !!missing;
-  const main = !!(opts.ad && opts.ad.main && !opts.blocked);
-  const ad = main || (opts.ad && !opts.blocked && rewardedAvailable());
+  // the production web has no ads: no "Watch ad" button at all there (adUiShown)
+  const adOk = !!opts.ad && !opts.blocked && adUiShown();
+  const main = adOk && !!opts.ad.main;
+  const ad = main || (adOk && rewardedAvailable());
   $('btn-ask-ad').hidden = !ad;
   $('btn-ask-ad').classList.toggle('primary', main);
   $('btn-ask-ad').classList.toggle('ad-main', main);

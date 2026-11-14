@@ -26,7 +26,8 @@ done
 adb forward tcp:9222 "localabstract:$SOCK"
 for _ in $(seq 1 30); do curl -sf http://127.0.0.1:9222/json/version > /dev/null && break; sleep 1; done
 
-SMOKE_OUT="$OUT" node scripts/android-smoke.mjs
+# a hard limit, so a stuck WebView fails the job quickly instead of running into the job timeout
+SMOKE_OUT="$OUT" timeout 900 node scripts/android-smoke.mjs
 PLAY=$?
 
 sleep 2
@@ -35,8 +36,10 @@ PID=$(adb shell pidof "$PKG" | tr -d '\r')
 adb logcat -d > "$OUT/logcat.txt"
 echo "app pid: ${PID:-not running}"
 
-# crashes and ANRs anywhere, and error lines from the app's own process
-BAD=$(grep -E "FATAL EXCEPTION|ANR in $PKG|Process: $PKG|AndroidRuntime: " "$OUT/logcat.txt")
+# crashes and ANRs of this app only (the emulator's own system apps, e.g. Google Play services, crash at times)
+BAD=$(grep -E "ANR in $PKG|Process: $PKG, PID" "$OUT/logcat.txt")
+[ -n "$PID" ] && BAD="$BAD${BAD:+
+}$(grep -E "^[0-9-]+ [0-9:.]+ +$PID +[0-9]+ E AndroidRuntime" "$OUT/logcat.txt")"
 APPERR=""
 [ -n "$PID" ] && APPERR=$(grep -E "^[0-9-]+ [0-9:.]+ +$PID +[0-9]+ E " "$OUT/logcat.txt" | grep -v -E "eglCodecCommon|EGL_emulation|HostConnection|goldfish|gralloc" || true)
 echo "--- crash / ANR lines ---"; echo "${BAD:-none}"

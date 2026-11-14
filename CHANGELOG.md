@@ -2,10 +2,26 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [3.28.0] - 2026-11-14
+
+### Fixed
+
+- **The same board on every device.** A level number gave different boards in Node, Chrome and different Android WebView versions:
+  - The cause: `joinLongArrows` sorted with a comparator that called the random generator. The number of comparisons depends on the engine, which moved the random sequence.
+  - The fix: the shuffle is now drawn once per arrow before sorting.
+  - Also: `Math.log`, fractional `**` and the star's `Math.sin` / `Math.cos` are replaced by deterministic code (`src/engine/detMath.js`, fixed star points).
+  - Every board changes once with this release. Progress, coins, items, difficulty floors and timing limits are unchanged. Saves never held a board, so a level in progress simply starts fresh.
+- First install: the Daily Reward popup and Home button wait until the tutorial (level 3) is done.
+- Production web: no "Watch ad" buttons or rows (the web has no ads). The Free Gift stays, and Game Over shows only the diamonds button. Android and Vercel previews are unchanged.
+- Desktop web: Escape closes the top popup or sheet, like the Android back button.
+- `docs/RELEASE.md`: removed the outdated `CONTACT_EMAIL` step.
 
 ### Added
 
+- Golden level fingerprints (`tests/fixtures/level-hashes.json`, `npm run levels:hashes`), checked in three places:
+  - the unit tests
+  - Chrome in CI
+  - the Android emulator smoke test, inside the app's own WebView
 - **Play Store feature graphic**: `store-assets/play/feature-graphic.png` and `.jpg` (1024 x 500, no alpha, under 1 MB), made by `npm run assets` from `brand-images/feature-graphic-source.png`. The logo and text are found automatically and centred with at least 8% margin. The art is only cropped and resized (Lanczos), never redrawn. Edges are extended only if a crop would cut the art.
 
 ## [3.27.0] - 2026-11-14

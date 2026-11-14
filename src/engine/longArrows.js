@@ -141,7 +141,11 @@ export function joinLongArrows(level, cfg, rng) {
   for (const [id, set] of deps) for (const b of set) waiters.get(b).add(id);
   // latest to leave first (highest solve round), with a little shuffle; rounds stay exact as arrows join
   const round = solveRounds(deps, arrows);
-  const order = [...arrows].sort((x, y) => round.get(y.id) - round.get(x.id) + (rng() - 0.5) * 2);
+  // the shuffle is drawn once per arrow, in list order, before sorting (3.28.0): a comparator that calls rng()
+  // makes the result depend on how many comparisons the engine's sort does, so boards differed between devices
+  const jitter = new Map(arrows.map((a) => [a.id, (rng() - 0.5) * 2]));
+  const key = (a) => round.get(a.id) + jitter.get(a.id);
+  const order = [...arrows].sort((x, y) => key(y) - key(x) || x.id - y.id);
   const want = Math.round(arrows.length * long.share);
   // only arrows in the later part of the solve become long (past the 35th percentile): walls that come out late
   const rounds = [...round.values()].sort((x, y) => x - y);

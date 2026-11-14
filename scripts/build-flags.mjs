@@ -48,3 +48,16 @@ export function adsSimulated({ mode }) {
 export function adDebug({ mode, env = process.env }) {
   return env.ARROW_TEST_ADS === '1' || mode === 'development' || mode === 'test';
 }
+
+/**
+ * Ad buttons and rows on the web (3.28.0). The web never has ads (only the Android app does), so production web
+ * builds (Vercel production, or any plain web build) hide every "Watch ad" button and row. The dev server
+ * (simulated ads), tests and Vercel previews keep them, so the flows can still be tried. The Android app shows
+ * them whatever this flag says (src/ads/index.js adUiShown).
+ * @param {{mode: string, env?: Record<string, string|undefined>}} o
+ * @returns {boolean}
+ */
+export function webAdUi({ mode, env = process.env }) {
+  if (mode === 'development' || mode === 'test') return true;
+  return env.VERCEL_ENV === 'preview';
+}

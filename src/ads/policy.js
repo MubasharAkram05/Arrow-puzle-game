@@ -226,3 +226,13 @@ export function runRewarded(show, graceMs = 0) {
     }
   });
 }
+
+/**
+ * Are "Watch ad" buttons and rows shown at all (3.28.0)? Always in the Android app; on the web only in builds
+ * that try the ad flows (dev server, tests, Vercel previews: webAdUi in scripts/build-flags.mjs).
+ * @param {{native: boolean, webAdUi: boolean}} o
+ * @returns {boolean}
+ */
+export function adUiVisible({ native, webAdUi }) {
+  return native || webAdUi;
+}

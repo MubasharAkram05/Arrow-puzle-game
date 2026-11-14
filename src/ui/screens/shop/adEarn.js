@@ -6,7 +6,7 @@
  * right now, try again in a moment", at the limit "Daily limit reached, come back tomorrow".
  */
 import { ADS, OFFERS } from '../../../config.js';
-import { earnState, watchRewardedAd } from '../../../ads/index.js';
+import { adUiShown, earnState, watchRewardedAd } from '../../../ads/index.js';
 import { formatCountdown, giftStatus } from '../../../game/offers.js';
 import { adEarn } from '../../../game/rewards.js';
 import { state } from '../../../game/state.js';
@@ -80,9 +80,11 @@ function giftRow() {
 
 /** The highlighted "Free rewards" card. */
 export function freeRewardsCard() {
+  // the production web has no ads: only the Free Gift there (adUiShown)
+  const ads = adUiShown();
   return `<section class="free-card" id="free-rewards" aria-labelledby="free-title">
-    <header class="free-head"><span class="free-play">${icon('play')}</span><div><h3 id="free-title">Free rewards</h3><p>Watch a short ad or claim your gift</p></div></header>
-    <div class="free-rows">${EARN_ORDER.map((k) => earnRow(k)).join('')}${giftRow()}</div>
+    <header class="free-head"><span class="free-play">${icon(ads ? 'play' : 'gift')}</span><div><h3 id="free-title">Free rewards</h3><p>${ads ? 'Watch a short ad or claim your gift' : 'Claim your free gift'}</p></div></header>
+    <div class="free-rows">${ads ? EARN_ORDER.map((k) => earnRow(k)).join('') : ''}${giftRow()}</div>
   </section>`;
 }
 

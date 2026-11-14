@@ -105,3 +105,17 @@ export function claimDaily(rec, now) {
   };
   return { ok: true, rec: next, reward: DAILY.rewards[s.day - 1], day: s.day };
 }
+
+/** The last tutorial level: the daily reward waits until it is done (3.28.0). */
+export const TUTORIAL_LAST = 3;
+
+/**
+ * Has the player finished the tutorial (level 3, or any later level)? Until then the Daily Reward popup and
+ * the Home button stay hidden, so a new player starts with the game, not a reward screen.
+ * @param {{completed: Set<number>|number[]}} progress
+ * @returns {boolean}
+ */
+export function tutorialDone(progress) {
+  for (const n of progress.completed) if (n >= TUTORIAL_LAST) return true;
+  return false;
+}
