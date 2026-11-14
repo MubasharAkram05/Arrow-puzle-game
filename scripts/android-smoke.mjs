@@ -17,9 +17,22 @@ const issues = [];
 const notes = [];
 
 // ---------- a tiny CDP client ----------
-const targets = await (await fetch('http://127.0.0.1:9222/json')).json();
-const target = targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
-if (!target) throw new Error(`no WebView page target: ${JSON.stringify(targets)}`);
+// The app's process can hold more than one WebView: the game, and AdMob's own ad WebViews (they load test ads in
+// the background). Pick the game's page by its address (Capacitor serves it from https://localhost), never just
+// the first page in the list; wait for it, since the ad WebViews can appear first.
+const APP_URL = /^https?:\/\/localhost(:\d+)?\//;
+let targets = [];
+let target = null;
+for (let i = 0; i < 60 && !target; i++) {
+  targets = await fetch('http://127.0.0.1:9222/json')
+    .then((r) => r.json())
+    .catch(() => []);
+  target = targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl && APP_URL.test(t.url));
+  if (!target) await sleep(1000);
+}
+const pages = targets.map((t) => `${t.type} ${t.url}`).join('\n  ');
+console.log(`DevTools pages in the app's process:\n  ${pages || '(none)'}`);
+if (!target) throw new Error(`the game's page (https://localhost/) is not among the app's WebViews:\n  ${pages}`);
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => {
   ws.onopen = resolve;
@@ -101,6 +114,8 @@ const shot = async (name) => {
 
 await send('Runtime.enable');
 await send('Page.enable');
+// the game's page must be the visible one (a background page gets no animation frames, so its splash never ends)
+await send('Page.bringToFront').catch(() => {});
 // how long each touch was held (event timeStamps) and how late its handlers ran: shows a busy main thread
 await evaluate(`(() => {
   let down = 0;

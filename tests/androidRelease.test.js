@@ -137,6 +137,10 @@ describe('android-release workflow', () => {
     expect(job).toContain('if [ -f smoke/started ]; then');
     expect(job).toContain("if: steps.smoke1.outcome == 'failure' && steps.setupfail.outcome == 'success'");
     expect(text('scripts/android-smoke.sh')).toContain('touch "$OUT/started"');
+    // the game's page is picked by its address, not as the first page (AdMob's ad WebViews share the process)
+    const smoke = text('scripts/android-smoke.mjs');
+    expect(smoke).toContain('APP_URL.test(t.url)');
+    expect(smoke).not.toContain("targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);");
     const sh = text('scripts/android-smoke.sh');
     expect(sh).toContain('adb install -r');
     expect(sh).toContain('ANR in $PKG|Process: $PKG, PID'); // this app's crashes only, not the emulator's system apps
