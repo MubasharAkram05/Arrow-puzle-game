@@ -13,6 +13,7 @@ import { solveLevel } from '../src/engine/solver.js';
 const OUT = process.env.SMOKE_OUT || '.';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const issues = [];
+const notes = [];
 
 // ---------- a tiny CDP client ----------
 const targets = await (await fetch('http://127.0.0.1:9222/json')).json();
@@ -35,7 +36,15 @@ ws.onmessage = ({ data }) => {
     return;
   }
   if (msg.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(msg.params.type)) {
-    issues.push(`console.${msg.params.type}: ${msg.params.args.map((a) => a.value ?? a.description).join(' ')}`);
+    const text = msg.params.args.map((a) => a.value ?? a.description).join(' ');
+    // Capacitor's SystemBars plugin injects the safe-area CSS variables from native code as soon as the window
+    // insets arrive, which can be before the page has a document; it injects them again when the page is shown
+    // (checked below), so this one startup message is Capacitor's, not the app's.
+    if (/^Error injecting safe area CSS: TypeError: Cannot read properties of null/.test(text)) {
+      notes.push(`Capacitor startup message (ignored): ${text.split('\n')[0]}`);
+      return;
+    }
+    issues.push(`console.${msg.params.type}: ${text}`);
   }
   if (msg.method === 'Runtime.exceptionThrown') {
     const d = msg.params.exceptionDetails;
@@ -87,6 +96,16 @@ await evaluate(
   `window.addEventListener('unhandledrejection', (e) => console.error('unhandledrejection: ' + (e.reason && e.reason.stack || e.reason))), true`,
 );
 
+/** What the app shows right now (for the log). */
+const STATE = `JSON.stringify({
+  screen: [...document.querySelectorAll('.screen')].filter((x) => x.classList.contains('active') || x.classList.contains('on')).map((x) => x.id),
+  modals: [...document.querySelectorAll('.modal.open')].map((m) => m.id),
+  progress: document.getElementById('progress')?.style.transform,
+  lostHearts: document.querySelectorAll('#hearts .heart.lost').length,
+  board: (() => { const r = document.getElementById('board').getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round); })(),
+  viewport: [innerWidth, innerHeight, devicePixelRatio],
+})`;
+
 const step = async (name, fn) => {
   const t = Date.now();
   await fn();
@@ -119,19 +138,38 @@ try {
       const p = await evaluate(
         `(() => { const b = document.getElementById('board').getBoundingClientRect(); return { x: b.left + ${(c + 0.5) / level.cols} * b.width, y: b.top + ${(r + 0.5) / level.rows} * b.height }; })()`,
       );
+      const under = await evaluate(
+        `(() => { const e = document.elementFromPoint(${p.x}, ${p.y}); return e ? e.id || e.className || e.tagName : 'nothing'; })()`,
+      );
       await tap(p.x, p.y);
-      await sleep(500);
+      await sleep(700);
+      console.log(`    tap arrow ${id} at ${p.x.toFixed(0)},${p.y.toFixed(0)} on ${under}: ${await evaluate(STATE)}`);
     }
     await waitFor(`!!document.querySelector('#modal-victory.open')`);
     await sleep(1200);
   });
+  await step('safe-area insets set (Capacitor variables and env())', async () => {
+    const insets = await evaluate(`(() => {
+      const css = getComputedStyle(document.documentElement);
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)';
+      document.body.appendChild(probe);
+      const p = getComputedStyle(probe);
+      const out = { capTop: css.getPropertyValue('--safe-area-inset-top'), capBottom: css.getPropertyValue('--safe-area-inset-bottom'), envTop: p.paddingTop, envBottom: p.paddingBottom };
+      probe.remove();
+      return JSON.stringify(out);
+    })()`);
+    console.log(`    ${insets}`);
+  });
 } catch (e) {
   failed = e;
+  console.log(`state at failure: ${await evaluate(STATE).catch((x) => x.message)}`);
 } finally {
   await shot('smoke-webview.png').catch(() => {});
   ws.close();
 }
 
+if (notes.length) console.log(`\n${notes.join('\n')}`);
 console.log(
   issues.length ? `\nApp console issues:\n${issues.join('\n')}` : '\nNo console errors, warnings or page errors.',
 );
