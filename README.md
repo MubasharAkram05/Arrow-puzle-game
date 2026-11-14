@@ -695,7 +695,7 @@ Switching to real ads, the Play Console settings (Contains ads, Advertising ID, 
 
 ## Privacy policy
 
-`public/privacy.html` is served at https://arrow-puzle-game.vercel.app/privacy.html (the URL for Google Play), and the app shows the same page from Credits > Privacy policy. It says what the app does today: no account or purchases, progress saved only on the device, and ads from Google AdMob (advertising ID and device data, with a link to Google's partner-sites policy). Update it if any of that changes.
+`public/privacy.html` is served at https://arrow-puzle-game.vercel.app/privacy.html (backup copy). The URL for Google Play is https://mubasharakram05.github.io/arrow-expert/privacy/, on the Sussal Productions website (same text; update both together), and the app shows the same page from Credits > Privacy policy. It says what the app does today: no account or purchases, progress saved only on the device, and ads from Google AdMob (advertising ID and device data, with a link to Google's partner-sites policy). Update it if any of that changes.
 
 ## CI
 

@@ -181,6 +181,23 @@ describe('privacy policy', () => {
     expect(page).not.toContain('No ads');
   });
 
+  it('covers the store needs: package, UMP consent, no data sold, not for children under 13, Google links', () => {
+    expect(page).toContain('com.sussal.arrowexpert');
+    expect(page).toContain('mailto:sussalproductions@gmail.com');
+    expect(page).toContain('User Messaging Platform, UMP');
+    expect(page).toContain('We do not sell, rent or trade any information about you.');
+    expect(page).toContain('not directed at children under 13');
+    expect(page).toContain('https://policies.google.com/privacy');
+  });
+
+  it('the Play docs use the Sussal Productions website URL; Vercel stays as the backup', () => {
+    const url = 'https://mubasharakram05.github.io/arrow-expert/privacy/';
+    expect(text('docs/RELEASE.md')).toContain(`| Privacy policy    | ${url} |`);
+    expect(text('docs/RELEASE.md')).toContain(`privacy policy URL ${url}`);
+    expect(text('store-assets/listing.md')).toContain(`## Privacy policy URL\n\n${url}\n`);
+    expect(exists('public/privacy.html')).toBe(true);
+  });
+
   it('is linked from the Credits screen', () => {
     expect(text('index.html')).toContain('id="btn-privacy"');
     expect(text('src/ui/modals/credits.js')).toContain("'./privacy.html'");

@@ -9,7 +9,7 @@ computer only needs Java's `keytool` (to make the signing key once) and a browse
 | versionName       | `version` in `package.json` (e.g. `3.25.0`)             |
 | versionCode       | `androidVersionCode` in `package.json` (starts at `1`)  |
 | Target SDK        | 36 (`android/variables.gradle`)                         |
-| Privacy policy    | https://arrow-puzle-game.vercel.app/privacy.html        |
+| Privacy policy    | https://mubasharakram05.github.io/arrow-expert/privacy/ |
 | Release web build | `npm run build:release` (TEST_UNLOCK_ALL is always off) |
 
 ## 1. Make the upload keystore (once)
@@ -136,8 +136,8 @@ artifact again and compares the SHA-256, so a failed check stops the run instead
    to your testers.
 4. **Store listing**: text from `store-assets/listing.md`, icon `store-assets/play/icon-512.png`,
    screenshots from `store-assets/screenshots/`, feature graphic `store-assets/play/feature-graphic.png`.
-5. **App content**: privacy policy URL https://arrow-puzle-game.vercel.app/privacy.html, ads: **yes**, Advertising
-   ID: **yes** (section 7),
+5. **App content**: privacy policy URL https://mubasharakram05.github.io/arrow-expert/privacy/, ads: **yes**,
+   Advertising ID: **yes** (section 7),
    content rating questionnaire (notes in `store-assets/listing.md`), target audience, data safety: no data
    collected or shared.
 6. When internal testing looks good, promote the release to Closed or Production.
@@ -194,7 +194,10 @@ nothing; you can click them safely.
 - **App content > Data safety:** declare that the app collects and shares **Device or other IDs** (advertising ID),
   plus what Google's AdMob guide lists (approximate location, app interactions, diagnostics), for advertising,
   analytics and fraud prevention. The notes are in `store-assets/listing.md`.
-- **Privacy policy:** https://arrow-puzle-game.vercel.app/privacy.html already describes AdMob.
+- **Privacy policy:** https://mubasharakram05.github.io/arrow-expert/privacy/ (Sussal Productions website). It
+  describes AdMob, UMP consent, local-only progress, no account, no data sold, and that the game is not directed
+  at children under 13. The same text stays at https://arrow-puzle-game.vercel.app/privacy.html (and inside the
+  app, Credits > Privacy policy) as a backup.
 - **Target audience:** if you select ages under 13, Google's Families policy applies (certified ad SDKs,
   child-directed ad settings). Choosing 13+ keeps the current setup simple.
 

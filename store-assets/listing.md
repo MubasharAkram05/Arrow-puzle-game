@@ -73,3 +73,9 @@ Game > Puzzle
   (advertising ID), approximate location (from the IP address), app interactions with ads, and diagnostics. Declare
   these in the Data safety form as "collected" and "shared" for **Advertising or marketing**, **Analytics** and
   **Fraud prevention, security and compliance**, as Google's AdMob data disclosure guide describes.
+
+## Privacy policy URL
+
+https://mubasharakram05.github.io/arrow-expert/privacy/
+
+(Hosted on the Sussal Productions website. Backup copy, same text: https://arrow-puzle-game.vercel.app/privacy.html)
