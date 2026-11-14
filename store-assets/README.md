@@ -7,7 +7,9 @@ screenshots so the table is up to date.
 
 - ✅ = meets the rule in the "Slot" column (Google Play's rules for store files, as of late 2026; check the
   Play Console when uploading).
-- Feature graphic (1024 x 500): not made yet.
+- Feature graphic (1024 x 500): `play/feature-graphic.png` and `.jpg`, cropped and resized (never redrawn)
+  from `brand-images/feature-graphic-source.png`, with the logo and text found automatically, centred, and at
+  least 8% from every edge.
 - `android/res/` goes into `android/app/src/main/res/` once the Android project exists (`npx cap add android`);
   `npm run assets` copies it there automatically when that folder exists. Merge `android/splash-theme.xml`
   into `values/styles.xml`.
@@ -74,6 +76,8 @@ screenshots so the table is up to date.
 | `store-assets/android/res/mipmap-xxxhdpi/ic_launcher_round.png`      | 192 x 192   | 42 KB     | Android launcher icon, round, before Android 8 (48 dp, xxxhdpi)               | ✅  |
 | `store-assets/checks/adaptive-round-48.png`                          | 48 x 48     | 4 KB      | Review only: the icon at 48 px                                                | ✅  |
 | `store-assets/checks/icon-48.png`                                    | 48 x 48     | 4 KB      | Review only: the icon at 48 px                                                | ✅  |
+| `store-assets/play/feature-graphic.jpg`                              | 1024 x 500  | 95 KB     | Play Store: feature graphic (1024 x 500 PNG/JPEG, no alpha, up to 1 MB)       | ✅  |
+| `store-assets/play/feature-graphic.png`                              | 1024 x 500  | 412 KB    | Play Store: feature graphic (1024 x 500 PNG/JPEG, no alpha, up to 1 MB)       | ✅  |
 | `store-assets/play/icon-512.png`                                     | 512 x 512   | 227 KB    | Play Store: app icon (512 x 512 PNG, up to 1 MB, full square)                 | ✅  |
 | `store-assets/screenshots/phone/01-tap-arrows.png`                   | 1080 x 1920 | 208 KB    | Play Store: phone screenshot (PNG/JPEG, no alpha, sides 320-3840 px, max 2:1) | ✅  |
 | `store-assets/screenshots/phone/02-think.png`                        | 1080 x 1920 | 179 KB    | Play Store: phone screenshot (PNG/JPEG, no alpha, sides 320-3840 px, max 2:1) | ✅  |
