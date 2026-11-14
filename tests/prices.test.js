@@ -76,7 +76,9 @@ describe('shop item prices', () => {
         equipped: { effect: 'rocket' },
       },
     });
-    expect(save.items.owned.styles).toContain('slate');
+    // the old Dark Slate style is kept as Pearl White arrows + the Dark Slate board (v8)
+    expect(save.items.owned.styles).toContain('pearl');
+    expect(save.cosmetics.owned.board).toContain('slate');
     expect(save.items.owned.themes).toContain('coral');
     expect(save.cosmetics.owned.effect).toContain('rocket');
     expect(save.cosmetics.owned.board).toContain('stars');

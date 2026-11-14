@@ -145,12 +145,6 @@ html[data-theme='dark'] #screen-shop {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.style-swatch,
-.style-swatch svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
 .theme-swatch {
   display: flex;
   gap: 6px;
@@ -553,12 +547,6 @@ html[data-theme='dark'] #screen-shop {
 .starter-item small {
   font-size: 12px;
   font-weight: 700;
-}
-.starter-item .style-swatch {
-  width: 100%;
-  height: 52px;
-  border-radius: 10px;
-  background: #ffffff;
 }
 .starter-card .price-btn.is-buy {
   background: #ffffff;

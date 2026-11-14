@@ -36,7 +36,8 @@ describe('winning levels pays coins that are saved (regression: counters stuck a
     reload();
     expect(state.coins).toBe(45);
     expect(state.hints).toBe(4);
-    expect(state.style).toBe('olive');
+    expect(state.style).toBe('forest'); // the old Olive style: Forest Green arrows + the Olive board (v8)
+    expect(state.cosmetics.equipped.board).toBe('olive');
   });
 
   it('pays diamonds for a 10th level and keeps them after a reload', () => {

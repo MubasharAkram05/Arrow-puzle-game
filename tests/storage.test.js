@@ -4,7 +4,7 @@ import {
   convertChapters,
   V1_KEY,
   V3_KEY,
-  V7_KEY,
+  V8_KEY,
   defaultSave,
   migrateV1,
   readSave,
@@ -40,13 +40,16 @@ const V1 = {
 describe('v1 migration', () => {
   it('keeps level progress, hints, settings and the equipped style', () => {
     const d = migrateV1(V1);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.progress).toMatchObject({ current: 14, unlocked: 15 });
     expect(d.progress.completed).toEqual(V1.completed);
     expect(d.wallet.hints).toBe(6);
     expect(d.settings).toEqual({ theme: 'dark', sound: false, vibration: true, grid: true });
-    expect(d.items.style).toBe('olive');
-    expect(d.items.owned.styles).toEqual(['classic', 'olive']);
+    // the old Olive style: Forest Green arrows + the Olive board, both owned and equipped (v8)
+    expect(d.items.style).toBe('forest');
+    expect(d.items.owned.styles).toEqual(['classic', 'forest']);
+    expect(d.cosmetics.owned.board).toContain('olive');
+    expect(d.cosmetics.equipped.board).toBe('olive');
   });
 
   it('drops daily data and starts the new fields at zero', () => {
@@ -64,8 +67,8 @@ describe('v1 migration', () => {
     expect(res.source).toBe('v1');
     expect(res.data.progress.current).toBe(14);
     expect(s.has(V1_KEY)).toBe(false);
-    expect(JSON.parse(s.getItem(V7_KEY)).progress.completed).toHaveLength(14);
-    expect(readSave(s).source).toBe('v7');
+    expect(JSON.parse(s.getItem(V8_KEY)).progress.completed).toHaveLength(14);
+    expect(readSave(s).source).toBe('v8');
   });
 
   it('keeps the v1 key when the v3 write fails, so nothing is lost', () => {
@@ -107,8 +110,9 @@ describe('corrupted data', () => {
   });
 
   it('only equips owned items and ignores unknown ones', () => {
+    // an old save (no version): 'slate' is the old style (Pearl White arrows now), 'gold' was unknown and stays unowned
     const d = sanitize({ items: { owned: { styles: ['slate', 'gold'], themes: [] }, style: 'mint', accent: 'coral' } });
-    expect(d.items.owned.styles).toEqual(['classic', 'slate']);
+    expect(d.items.owned.styles).toEqual(['classic', 'pearl']);
     expect(d.items.style).toBe('classic');
     expect(d.items.accent).toBe('blue');
   });
@@ -127,7 +131,7 @@ describe('corrupted data', () => {
 
   it('uses the backup when the main save is unreadable', () => {
     const good = sanitize({ wallet: { coins: 120 } });
-    const s = memoryStorage({ [V7_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
+    const s = memoryStorage({ [V8_KEY]: '{not json', [BACKUP_KEY]: JSON.stringify(good) });
     const res = readSave(s);
     expect(res.source).toBe('backup');
     expect(res.data.wallet.coins).toBe(120);
@@ -146,7 +150,7 @@ describe('corrupted data', () => {
   it('writes the save and a backup copy', () => {
     const s = memoryStorage();
     expect(writeSave(s, defaultSave())).toBe(true);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V7_KEY));
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V8_KEY));
   });
 });
 

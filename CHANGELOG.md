@@ -2,6 +2,22 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.27.0] - 2026-11-14
+
+### Changed
+
+- **Arrow colors**: Shop arrow styles are now arrow colors only: Classic Navy (free), Charcoal, Forest Green, Ocean Teal, Pearl White, Crimson, Deep Purple, Sunset Orange, Electric Cyan, Rose Pink and Gold.
+- **Boards**: the old style backgrounds are boards with the same names (Dark Slate, Olive, Soft Mint, Rose Gold, Neon Night).
+- **Previews**: board, color and head cards show the real board with its dot grid and sample arrows in the equipped color. Chalkboard and Blueprint no longer show white arrows on a white card.
+- **Arrowhead prices**: Chevron 500, Round 700, Feather 900 + 3 diamonds.
+- Starter Pack gives Pearl White arrows + the Dark Slate board.
+
+### Added
+
+- **Contrast safety** (`src/game/looks.js`): below 3:1 the arrows get an outline on the board and in previews, with the note "Low contrast, outline added".
+- Arrowheads **Diamond Tip** (1200 + 5 diamonds) and **Bolt** (1500 + 8 diamonds).
+- **Save v8**: an owned old style grants its arrow color and board; an equipped one equips both. The v7 save stays as a backup.
+
 ## [3.26.0] - 2026-11-13
 
 ### Added

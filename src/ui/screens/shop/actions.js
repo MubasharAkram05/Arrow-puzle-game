@@ -34,6 +34,12 @@ export function saleFor(cat, id) {
   return s.cat === cat && s.id === id ? s.sale : undefined;
 }
 
+/** ". Low contrast, outline added" when the equipped arrow color and board now need the outline. */
+const outlineNote = () =>
+  typeof document !== 'undefined' && document.documentElement.hasAttribute('data-outline')
+    ? '. Low contrast, outline added'
+    : '';
+
 const cardEl = (kind, id) => document.querySelector(`#shop-body [data-kind="${kind}"][data-id="${id}"]`);
 
 /** Pulse the card after a purchase or equip. */
@@ -89,7 +95,7 @@ export function buyFlow(o) {
       const res = o.buy();
       if (!res.ok) return toast(res.missing ? missingText(o.price) : 'Could not buy this item');
       if (o.after) o.after();
-      done(o.kind, o.id, o.success, o.price);
+      done(o.kind, o.id, typeof o.success === 'function' ? o.success() : o.success, o.price);
     },
   });
 }
@@ -109,7 +115,7 @@ export function cosmeticTap(cat, id) {
   };
   if (ownsShopItem(state, cat, id)) {
     equip();
-    return done(cat, id, `${item.name} equipped`);
+    return done(cat, id, `${item.name} equipped${outlineNote()}`);
   }
   const price = saleFor(cat, id) || item.price;
   buyFlow({
@@ -122,7 +128,7 @@ export function cosmeticTap(cat, id) {
     okLabel: 'Unlock',
     buy: () => (isStyle ? buyItem(cat, { ...item, price }) : buyCosmeticItem(cat, id, price)),
     after: equip,
-    success: `${item.name} unlocked`,
+    success: () => `${item.name} unlocked${outlineNote()}`,
   });
 }
 

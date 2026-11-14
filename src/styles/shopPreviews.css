@@ -1,22 +1,80 @@
 /* ---------- Shop live previews (boards, heads, confetti, frames, escape effects) ---------- */
-/* Previews */
-.board-swatch {
+/* Mini boards (3.27.0): arrow colors, boards and arrowheads are previewed on a real board background with the dot
+   grid and sample arrows. src/game/looks.js gives both themes as --l-* / --d-* variables. */
+.look-prev {
+  --p-fill: var(--l-fill);
+  --p-dot: var(--l-dot);
+  --p-arrow: var(--l-arrow);
+  --p-out: var(--l-out);
   display: block;
   width: 100%;
   height: 100%;
   overflow: hidden;
   border-radius: 12px;
-  background: var(--board-bg);
+  background: var(--p-fill);
 }
-.board-swatch svg,
-.head-prev,
-.confetti-prev {
+html[data-theme='dark'] .look-prev {
+  --p-fill: var(--d-fill);
+  --p-dot: var(--d-dot);
+  --p-arrow: var(--d-arrow);
+  --p-out: var(--d-out);
+}
+.look-prev svg {
   display: block;
   width: 100%;
   height: 100%;
 }
-.head-prev {
-  color: var(--arrow);
+.look-prev .p-dots {
+  fill: var(--p-dot);
+}
+.look-prev .p-arrow,
+.look-prev .p-out {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.look-prev .p-arrow path {
+  fill: none;
+  stroke: var(--p-arrow);
+}
+.look-prev .p-arrow .head {
+  fill: var(--p-arrow);
+  stroke: var(--p-arrow);
+}
+.look-prev .p-out path {
+  fill: none;
+  stroke: var(--p-out);
+}
+.look-prev .p-out .head {
+  fill: var(--p-out);
+  stroke: var(--p-out);
+}
+.starter-item .look-prev {
+  height: 52px;
+  border-radius: 10px;
+}
+.contrast-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 600px;
+  margin: 2px auto 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: var(--text);
+  font-size: 13px;
+}
+.contrast-note .icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: #d97706;
+}
+.confetti-prev {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .play-chip {
   position: absolute;

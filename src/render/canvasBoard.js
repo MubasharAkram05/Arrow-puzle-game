@@ -69,6 +69,7 @@ function readColors() {
   const v = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
   return {
     arrow: v('--arrow', '#07193b'),
+    outline: v('--arrow-outline', ''), // low contrast arrow color + board: draw an outline (src/game/looks.js)
     dot: v('--dot', '#dce1ec'),
     error: v('--error', '#ff473e'),
     primary: v('--primary', '#1877f2'),
@@ -227,7 +228,7 @@ export function mountBoard(level, arrows, m) {
     // dark mode, arrow style or board colours changed: redraw with the new colours
     new MutationObserver(() => refreshBoardLook()).observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme', 'data-style', 'data-board'],
+      attributeFilter: ['data-theme', 'data-style', 'data-board', 'data-outline'],
     });
   }
   R.level = level;

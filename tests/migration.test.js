@@ -9,7 +9,7 @@ import {
   V4_KEY,
   V5_BACKUP_KEY,
   V5_KEY,
-  V7_KEY,
+  V8_KEY,
   defaultSave,
   migrateV2,
   migrateV3,
@@ -54,14 +54,21 @@ const V2 = {
 describe('v2 migration', () => {
   it('keeps all progress, coins, diamonds, items, achievements, profile and settings', () => {
     const d = migrateV2(V2);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.progress).toMatchObject({ current: 23, unlocked: 24, perfect: [2, 5], chaptersRewarded: [1, 2] });
     expect(d.progress.completed).toHaveLength(22);
     expect(d.wallet).toEqual({ coins: 1234, diamonds: 17, hints: 4 });
     expect(d.xp).toBe(880);
     expect(d.stats).toMatchObject({ arrowsCleared: 410, wins: 22, bestStreak: 9, coinsSpent: 300 });
     expect(d.achievements.claimed).toEqual(['first-escape', 'chapter-master']);
-    expect(d.items).toEqual(V2.items);
+    // the old Dark Slate style is now Pearl White arrows + the Dark Slate board, both owned and equipped (v8)
+    expect(d.items).toEqual({
+      owned: { styles: ['classic', 'pearl'], themes: ['blue', 'teal'] },
+      style: 'pearl',
+      accent: 'teal',
+    });
+    expect(d.cosmetics.owned.board).toContain('slate');
+    expect(d.cosmetics.equipped.board).toBe('slate');
     expect(d.profile).toEqual({ avatar: 7, name: 'Mubashar' });
     expect(d.settings).toEqual(V2.settings);
   });
@@ -70,7 +77,12 @@ describe('v2 migration', () => {
     const d = migrateV2(V2);
     expect(d).not.toHaveProperty('boosters');
     expect(d.pendingRefund).toBeNull();
-    expect(d.cosmetics).toEqual(defaultSave().cosmetics);
+    // defaults, plus the board of the old Dark Slate style (v8 upgrade)
+    const def = defaultSave().cosmetics;
+    expect(d.cosmetics).toEqual({
+      owned: { ...def.owned, board: ['plain', 'slate'] },
+      equipped: { ...def.equipped, board: 'slate' },
+    });
     expect(d.offers).toEqual({ starterBought: false, giftLast: 0 });
     expect(d.seenNew).toEqual([]);
     expect(d.stats).toMatchObject({ hintsUsed: 0 });
@@ -91,21 +103,22 @@ describe('v2 migration', () => {
     expect(d.wallet.coins).toBe(1234 + 120);
     expect(d.pendingRefund).toEqual({ coins: 120, diamonds: 0 });
     expect(d.cosmetics.owned.effect).toEqual(['default', 'spark']);
-    expect(d.cosmetics.equipped).toMatchObject({ effect: 'spark', board: 'plain' });
+    // 'stars' was not owned; the equipped Dark Slate style equips its board (v8 upgrade)
+    expect(d.cosmetics.equipped).toMatchObject({ effect: 'spark', board: 'slate' });
     expect(d.offers).toEqual({ starterBought: true, giftLast: 1_700_000_000_000 });
     expect(d.seenNew).toEqual(['effect:spark']);
     expect(d).not.toHaveProperty('bogus');
   });
 
-  it('migrates on load, writes v7 and its backup, then removes the v2 keys', () => {
+  it('migrates on load, writes v8 and its backup, then removes the v2 keys', () => {
     const s = memoryStorage({ [V2_KEY]: JSON.stringify(V2), [V2_BACKUP_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v2');
     expect(res.data.wallet.coins).toBe(1234);
     expect(s.has(V2_KEY)).toBe(false);
     expect(s.has(V2_BACKUP_KEY)).toBe(false);
-    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V7_KEY));
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
+    expect(s.getItem(BACKUP_KEY)).toBe(s.getItem(V8_KEY));
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v8' });
   });
 
   it('falls back to the v2 backup when the v2 main key is corrupted', () => {
@@ -154,7 +167,7 @@ const V3 = {
 describe('v3 migration (shape collection)', () => {
   it('keeps everything and collects the shapes of finished shape levels (old order)', () => {
     const d = migrateV3(V3);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.progress).toMatchObject({ current: 70, unlocked: 70, perfect: [6, 9], masks: [6, 9, 66] });
     expect(d.progress.completed).toHaveLength(69);
     // 2 Shields and 1 Extra Heart are paid back
@@ -204,14 +217,14 @@ describe('v3 migration (shape collection)', () => {
     expect(sanitize({ version: 4, progress: { completed: [6, 9], shapes: [] } }).progress.shapes).toEqual([]);
   });
 
-  it('migrates on load from v3 or its backup, writes v7, then removes the old keys', () => {
+  it('migrates on load from v3 or its backup, writes v8, then removes the old keys', () => {
     const s = memoryStorage({ [V3_KEY]: '{broken', [V3_BACKUP_KEY]: JSON.stringify(V3), [V2_KEY]: JSON.stringify(V2) });
     const res = readSave(s);
     expect(res.source).toBe('v3');
     expect(res.data.wallet.coins).toBe(1020);
     expect(res.data.progress.shapes).toContain('heart');
     for (const k of [V3_KEY, V3_BACKUP_KEY, V2_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v8' });
   });
 
   it('keeps the v3 keys when the v6 write fails', () => {
@@ -251,7 +264,7 @@ const V4 = {
 describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
   it('keeps progress, coins, diamonds, hints, items, shapes and claims; adds a fresh daily record', () => {
     const d = migrateV4(V4);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.progress).toMatchObject({ current: 120, unlocked: 120, perfect: [3, 6, 9], masks: [6, 9, 12] });
     expect(d.progress.completed).toHaveLength(119);
     expect(d.progress.shapes).toEqual(['heart', 'cat', 'letterB']);
@@ -259,7 +272,12 @@ describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
     expect(d.wallet).toEqual({ coins: 4321 + 180, diamonds: 33 + 2, hints: 7 });
     expect(d.pendingRefund).toEqual({ coins: 180, diamonds: 2 });
     expect(d.cosmetics.equipped.effect).toBe('spark');
-    expect(d.items).toEqual(V4.items);
+    expect(d.items).toEqual({
+      ...V4.items,
+      owned: { ...V4.items.owned, styles: ['classic', 'pearl'] },
+      style: 'pearl',
+    });
+    expect(d.cosmetics.owned.board).toContain('slate');
     expect(d.profile).toEqual(V4.profile);
     // claims of removed achievements stay (their diamonds are kept), nothing is taken back
     expect(d.achievements.claimed).toEqual(['first-escape', 'collector', 'alphabet', 'big-spender']);
@@ -285,13 +303,13 @@ describe('v4 to v5 migration (daily reward, tiered achievements)', () => {
     expect(s['big-spender'].claimed).toBe(true);
   });
 
-  it('migrates on load from v4 or its backup, writes v7, then removes the v4 keys', () => {
+  it('migrates on load from v4 or its backup, writes v8, then removes the v4 keys', () => {
     const s = memoryStorage({ [V4_KEY]: '{broken', [V4_BACKUP_KEY]: JSON.stringify(V4) });
     const res = readSave(s);
     expect(res.source).toBe('v4');
     expect(res.data.wallet.diamonds).toBe(35);
     for (const k of [V4_KEY, V4_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v8' });
   });
 
   it('keeps the v4 keys when the v6 write fails', () => {
@@ -329,7 +347,7 @@ const V5 = {
 describe('v5 to v6 migration (boosters removed)', () => {
   it('pays back 60 coins per Shield and 1 diamond per Extra Heart, keeps everything else', () => {
     const d = migrateV5(V5);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.wallet).toEqual({ coins: 500 + 240, diamonds: 10 + 3, hints: 6 });
     expect(d.pendingRefund).toEqual({ coins: 240, diamonds: 3 });
     expect(d).not.toHaveProperty('boosters');
@@ -338,7 +356,8 @@ describe('v5 to v6 migration (boosters removed)', () => {
     expect(d.stats).not.toHaveProperty('boostersUsed');
     expect(d.achievements.claimed).toEqual(['first-escape', 'level-climber-1']);
     expect(d.daily).toMatchObject({ streak: 4, best: 6 });
-    expect(d.items.style).toBe('slate');
+    expect(d.items.style).toBe('pearl'); // the old Dark Slate style: Pearl White arrows + the Dark Slate board
+    expect(d.cosmetics.equipped.board).toBe('slate');
   });
 
   it('pays only once: a v6 save has no boosters left to refund', () => {
@@ -355,13 +374,13 @@ describe('v5 to v6 migration (boosters removed)', () => {
     expect(migrateV5({ ...V5, boosters: { shield: -3, extraHeart: 'x' } }).pendingRefund).toBeNull();
   });
 
-  it('migrates on load from v5 or its backup, writes v7, then removes the v5 keys', () => {
+  it('migrates on load from v5 or its backup, writes v8, then removes the v5 keys', () => {
     const s = memoryStorage({ [V5_KEY]: '{broken', [V5_BACKUP_KEY]: JSON.stringify(V5) });
     const res = readSave(s);
     expect(res.source).toBe('v5');
     expect(res.data.wallet.coins).toBe(740);
     for (const k of [V5_KEY, V5_BACKUP_KEY]) expect(s.has(k), k).toBe(false);
-    expect(readSave(s)).toEqual({ data: res.data, source: 'v7' });
+    expect(readSave(s)).toEqual({ data: res.data, source: 'v8' });
   });
 
   it('keeps the v5 keys when the v6 write fails, so the refund is not lost', () => {

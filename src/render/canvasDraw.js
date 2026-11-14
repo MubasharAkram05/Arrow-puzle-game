@@ -60,21 +60,29 @@ export function drawArrow(ctx, a, look, glow) {
   const g = a.geom;
   const m = look.m;
   const s = a.offset || 0;
+  const tone = glow ? look.colors.primary : toneOf(a, look);
   ctx.save();
   if (a.bumpX || a.bumpY) ctx.translate(a.bumpX || 0, a.bumpY || 0);
   ctx.globalAlpha = glow || (a.alpha ?? 1);
-  const color = glow ? look.colors.primary : toneOf(a, look);
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = glow ? m.sw * 2.8 : m.sw;
-  ctx.beginPath();
-  traceSpan(ctx, g, s, s + g.dashLen);
-  ctx.stroke();
-  ctx.translate(g.hx + g.dx * s, g.hy + g.dy * s);
-  ctx.rotate((g.rot * Math.PI) / 180);
-  traceHead(ctx, m, glow ? 1.4 / 0.25 : 1);
+  /** One pass of shaft + head in a color, `extra` wider than normal (the outline pass). */
+  const pass = (color, extra) => {
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = (glow ? m.sw * 2.8 : m.sw) + extra;
+    ctx.beginPath();
+    traceSpan(ctx, g, s, s + g.dashLen);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(g.hx + g.dx * s, g.hy + g.dy * s);
+    ctx.rotate((g.rot * Math.PI) / 180);
+    traceHead(ctx, m, glow ? 1.4 / 0.25 : 1, extra);
+    ctx.restore();
+  };
+  // low contrast with the board: a thin outline under the arrow (only in the arrow's own color)
+  if (!glow && look.colors.outline && tone === look.colors.arrow) pass(look.colors.outline, Math.max(2, m.sw * 0.45));
+  pass(tone, 0);
   ctx.restore();
 }
 

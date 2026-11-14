@@ -74,7 +74,8 @@ describe('combo items in the shop', () => {
   it('5 new premium combo items: 2 arrow styles, 1 escape effect, 1 board, 1 frame', () => {
     const fresh = [
       ['styles', 'rose'],
-      ['styles', 'neon'],
+      ['styles', 'cyan'],
+      ['board', 'neon'], // the old Neon Night style is a board since 3.27.0
       ['effect', 'aurora'],
       ['board', 'blueprint'],
       ['frame', 'prism'],
@@ -95,10 +96,10 @@ describe('buying a combo item', () => {
     expect(
       buyItem(
         'styles',
-        SHOP_STYLES.find((s) => s.id === 'neon'),
+        SHOP_STYLES.find((s) => s.id === 'gold'),
       ).ok,
     ).toBe(true);
-    expect(state.owned.styles).toContain('neon');
+    expect(state.owned.styles).toContain('gold');
     expect([state.coins, state.diamonds]).toEqual([0, 0]);
   });
 

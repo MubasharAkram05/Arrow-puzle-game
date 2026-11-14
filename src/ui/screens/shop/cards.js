@@ -1,7 +1,7 @@
 /**
  * Shared shop card markup and the "New" badge bookkeeping.
  */
-import { COSMETICS } from '../../../config.js';
+import { COSMETICS, SHOP_STYLES } from '../../../config.js';
 import { state } from '../../../game/state.js';
 import { icon } from '../../components/icons.js';
 import { priceHTML } from '../../modals/ask.js';
@@ -14,6 +14,7 @@ export const NEW_KEYS = Object.freeze([
   'offer:exchange',
   'offer:sale',
   ...Object.keys(COSMETICS).flatMap((cat) => COSMETICS[cat].filter((i) => i.price).map((i) => `${cat}:${i.id}`)),
+  ...SHOP_STYLES.filter((i) => i.price).map((i) => `styles:${i.id}`),
 ]);
 
 /** Keys shown during the current render (marked as seen afterwards). */
