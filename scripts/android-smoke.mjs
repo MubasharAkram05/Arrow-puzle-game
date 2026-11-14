@@ -93,11 +93,17 @@ const waitFor = async (expression, timeout = 15000) => {
   }
   throw new Error(`timed out waiting for: ${expression}`);
 };
-/** A real touch tap at a point in CSS pixels. */
+/**
+ * A real touch tap at a point in CSS pixels, held 40 ms. Both events carry the times a real finger would have:
+ * a DevTools touch call waits until the page has handled it, so on a busy emulator the lift would otherwise be
+ * stamped hundreds of ms late (after the press was handled), which makes a quick tap look like a long press.
+ * A phone's touch screen stamps the lift when the finger leaves, however busy the app is.
+ */
 const tap = async (x, y) => {
-  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  const down = Date.now() / 1000;
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }], timestamp: down });
   await sleep(40);
-  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [], timestamp: down + 0.04 });
 };
 /** Tap the middle of an element. */
 const tapEl = async (sel) => {

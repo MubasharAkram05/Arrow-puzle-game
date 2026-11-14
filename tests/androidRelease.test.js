@@ -140,6 +140,8 @@ describe('android-release workflow', () => {
     // the game's page is picked by its address, not as the first page (AdMob's ad WebViews share the process)
     const smoke = text('scripts/android-smoke.mjs');
     expect(smoke).toContain('APP_URL.test(t.url)');
+    // taps carry a real finger's times (touchEnd 40 ms after touchStart), however late the page handles them
+    expect(smoke).toContain("type: 'touchEnd', touchPoints: [], timestamp: down + 0.04");
     expect(smoke).not.toContain("targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);");
     const sh = text('scripts/android-smoke.sh');
     expect(sh).toContain('adb install -r');
