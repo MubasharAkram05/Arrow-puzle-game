@@ -17,9 +17,22 @@ const issues = [];
 const notes = [];
 
 // ---------- a tiny CDP client ----------
-const targets = await (await fetch('http://127.0.0.1:9222/json')).json();
-const target = targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
-if (!target) throw new Error(`no WebView page target: ${JSON.stringify(targets)}`);
+// The app's process can hold more than one WebView: the game, and AdMob's own ad WebViews (they load test ads in
+// the background). Pick the game's page by its address (Capacitor serves it from https://localhost), never just
+// the first page in the list; wait for it, since the ad WebViews can appear first.
+const APP_URL = /^https?:\/\/localhost(:\d+)?\//;
+let targets = [];
+let target = null;
+for (let i = 0; i < 60 && !target; i++) {
+  targets = await fetch('http://127.0.0.1:9222/json')
+    .then((r) => r.json())
+    .catch(() => []);
+  target = targets.find((t) => t.type === 'page' && t.webSocketDebuggerUrl && APP_URL.test(t.url));
+  if (!target) await sleep(1000);
+}
+const pages = targets.map((t) => `${t.type} ${t.url}`).join('\n  ');
+console.log(`DevTools pages in the app's process:\n  ${pages || '(none)'}`);
+if (!target) throw new Error(`the game's page (https://localhost/) is not among the app's WebViews:\n  ${pages}`);
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => {
   ws.onopen = resolve;
@@ -80,11 +93,17 @@ const waitFor = async (expression, timeout = 15000) => {
   }
   throw new Error(`timed out waiting for: ${expression}`);
 };
-/** A real touch tap at a point in CSS pixels. */
+/**
+ * A real touch tap at a point in CSS pixels, held 40 ms. Both events carry the times a real finger would have:
+ * a DevTools touch call waits until the page has handled it, so on a busy emulator the lift would otherwise be
+ * stamped hundreds of ms late (after the press was handled), which makes a quick tap look like a long press.
+ * A phone's touch screen stamps the lift when the finger leaves, however busy the app is.
+ */
 const tap = async (x, y) => {
-  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  const down = Date.now() / 1000;
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }], timestamp: down });
   await sleep(40);
-  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [], timestamp: down + 0.04 });
 };
 /** Tap the middle of an element. */
 const tapEl = async (sel) => {
@@ -101,6 +120,8 @@ const shot = async (name) => {
 
 await send('Runtime.enable');
 await send('Page.enable');
+// the game's page must be the visible one (a background page gets no animation frames, so its splash never ends)
+await send('Page.bringToFront').catch(() => {});
 // how long each touch was held (event timeStamps) and how late its handlers ran: shows a busy main thread
 await evaluate(`(() => {
   let down = 0;

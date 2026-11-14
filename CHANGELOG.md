@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- Emulator smoke test (CI only, the app is unchanged): it connected to the first WebView page in the app's process. AdMob's ad WebViews live in the same process, so on the Android 16 run of android-release #30 it picked an ad page and waited 60 s for a Play button that page never has.
+  - It now picks the game's page by its address (`https://localhost/`).
+  - It waits for that page and brings it to the front.
+  - It logs every page it found.
+- Emulator smoke test taps: a DevTools touch call waits until the page has handled it. On a busy emulator, the lift was stamped after the press had been handled (hundreds of ms late), so a 40 ms tap looked like a 513 ms press. Both touch events now carry a real finger's times (`timestamp`, lift 40 ms after the press). On a phone, the screen stamps the lift when the finger leaves, so the app was not affected.
+
 ## [3.28.1] - 2026-11-14
 
 ### Fixed
