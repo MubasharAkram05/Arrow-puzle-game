@@ -133,3 +133,26 @@ export function migrateV5(raw) {
 export function migrateV6(raw) {
   return sanitize({ ...obj(raw), version: 7 });
 }
+
+/**
+ * The old arrow styles (before v8) as an arrow color + a board (3.27.0). Owning one gives both; the equipped one
+ * equips both. Used by sanitize for every save older than v8.
+ */
+export const STYLE_UPGRADE = Object.freeze({
+  classic: { arrow: 'classic', board: 'plain' },
+  slate: { arrow: 'pearl', board: 'slate' },
+  olive: { arrow: 'forest', board: 'olive' },
+  mint: { arrow: 'teal', board: 'mint' },
+  rose: { arrow: 'rose', board: 'rose' },
+  neon: { arrow: 'cyan', board: 'neon' },
+});
+
+/**
+ * Convert a v7 save to v8: everything is kept; each old arrow style becomes an arrow color and a board, both owned,
+ * and the equipped style equips both (see STYLE_UPGRADE and sanitize).
+ * @param {unknown} raw
+ * @returns {object} sanitized v8 save
+ */
+export function migrateV7(raw) {
+  return sanitize({ ...obj(raw), version: 7 });
+}

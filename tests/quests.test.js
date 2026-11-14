@@ -29,7 +29,7 @@ import {
   BACKUP_KEY,
   V6_BACKUP_KEY,
   V6_KEY,
-  V7_KEY,
+  V8_KEY,
   defaultSave,
   migrateV6,
   readSave,
@@ -284,7 +284,7 @@ describe('save', () => {
     applySave(defaultSave());
     state.quests = { week: MON, counts: { wins: 4 }, claimed: [weekQuests(isoWeekOf(MON))[0].id], chests: [30] };
     const snap = snapshot();
-    expect(snap.version).toBe(7);
+    expect(snap.version).toBe(8);
     expect(sanitize(snap).quests).toEqual(state.quests);
     const bad = sanitize({
       quests: { week: -5, counts: { wins: -3, hax: 9, arrows: 12 }, claimed: ['x', 7], chests: [30, 45, 30] },
@@ -292,7 +292,7 @@ describe('save', () => {
     expect(bad.quests).toEqual({ week: 0, counts: { wins: 0, arrows: 12 }, claimed: [], chests: [30] });
   });
 
-  it('a v6 save migrates to v7 with nothing lost and an empty quest record', () => {
+  it('a v6 save migrates to v8 with nothing lost and an empty quest record', () => {
     const v6 = {
       ...defaultSave(),
       version: 6,
@@ -303,11 +303,12 @@ describe('save', () => {
     };
     delete v6.quests;
     const d = migrateV6(v6);
-    expect(d.version).toBe(7);
+    expect(d.version).toBe(8);
     expect(d.wallet).toEqual({ coins: 1234, diamonds: 7, hints: 4 });
     expect(d.progress).toMatchObject({ current: 12, unlocked: 12 });
     expect(d.achievements.claimed).toEqual(['first-escape']);
-    expect(d.items.style).toBe('slate');
+    expect(d.items.style).toBe('pearl'); // old Dark Slate style: Pearl White arrows + Dark Slate board (v8)
+    expect(d.cosmetics.equipped.board).toBe('slate');
     expect(d.quests).toEqual({ week: 0, counts: {}, claimed: [], chests: [] });
 
     const store = new Map([
@@ -323,7 +324,7 @@ describe('save', () => {
     expect(res.source).toBe('v6');
     expect(res.data.wallet.coins).toBe(1234);
     expect(store.has(V6_KEY) || store.has(V6_BACKUP_KEY)).toBe(false);
-    expect(store.get(BACKUP_KEY)).toBe(store.get(V7_KEY));
-    expect(readSave(s).source).toBe('v7');
+    expect(store.get(BACKUP_KEY)).toBe(store.get(V8_KEY));
+    expect(readSave(s).source).toBe('v8');
   });
 });

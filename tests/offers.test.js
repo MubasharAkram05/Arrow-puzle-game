@@ -101,9 +101,10 @@ describe('offers in the game state', () => {
     expect(buyStarterPack().ok).toBe(true);
     expect(state.diamonds).toBe(7);
     expect(state.hints).toBe(3 + 5);
-    // 5 hints + Dark Slate style only (Shields were removed in 3.11.0)
+    // 5 hints + Pearl White arrows + Dark Slate board (the old Dark Slate style, 3.27.0)
     expect(state).not.toHaveProperty('boosters');
-    expect(state.owned.styles).toContain('slate');
+    expect(state.owned.styles).toContain('pearl');
+    expect(state.cosmetics.owned.board).toContain('slate');
     expect(starterPackAvailable()).toBe(false);
     expect(buyStarterPack()).toMatchObject({ ok: false, reason: 'unavailable' });
     expect(state.diamonds).toBe(7);

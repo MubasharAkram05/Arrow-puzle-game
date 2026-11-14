@@ -481,20 +481,113 @@ export const MAX_REFILLS_PER_LEVEL = 2;
 export const XP = Object.freeze({ perLevel: 10, perHeart: 5 });
 
 /**
- * Shop items: arrow styles and accent themes. The first of each kind is free and owned from the start.
- * 3.22.0 prices: coin items about x2 (400-900 coins), diamond items about x1.5 (4-15 diamonds). Items already
- * owned stay owned (ownership is stored by id, never by price).
- * Combo prices { coins, diamonds } need both amounts (600 coins + 3 diamonds up to 1500 coins + 8 diamonds):
- * the top premium items and the 3.22.0 additions (Rose Gold, Neon Night, Aurora Ribbon, Blueprint, Prism).
+ * Shop items: arrow colors ("styles") and accent themes. The first of each kind is free and owned from the start.
+ * Items already owned stay owned (ownership is stored by id, never by price). Combo prices { coins, diamonds } need
+ * both amounts.
+ *
+ * Arrow colors (3.27.0): an arrow style only sets the arrow color (line + head); the board background comes from
+ * the equipped board (COSMETICS.board, looks in BOARD_LOOKS). `color` is the arrow color on every board, except
+ * Classic Navy, which turns light (`light`) on dark boards so the free default is always easy to see. When an arrow
+ * color and a board have a contrast below 3:1, the game draws the arrows with an outline (src/game/looks.js).
+ * The old 3.22.0 styles became a color + a board (save v8 migration, src/storage/migrate.js).
  */
 export const SHOP_STYLES = Object.freeze([
-  { id: 'classic', name: 'Classic', price: null },
-  { id: 'slate', name: 'Dark Slate', price: { coins: 600 } },
-  { id: 'olive', name: 'Olive', price: { coins: 600 } },
-  { id: 'mint', name: 'Soft Mint', price: { diamonds: 8 } },
-  { id: 'rose', name: 'Rose Gold', price: { coins: 800, diamonds: 4 } },
-  { id: 'neon', name: 'Neon Night', price: { coins: 1100, diamonds: 6 } },
+  { id: 'classic', name: 'Classic Navy', price: null, color: '#0b1442', light: '#e3eaf8' },
+  { id: 'charcoal', name: 'Charcoal', price: { coins: 400 }, color: '#2f3640' },
+  { id: 'forest', name: 'Forest Green', price: { coins: 500 }, color: '#2f6b31' },
+  { id: 'teal', name: 'Ocean Teal', price: { coins: 600 }, color: '#127a73' },
+  { id: 'pearl', name: 'Pearl White', price: { coins: 600 }, color: '#e8edf5' },
+  { id: 'crimson', name: 'Crimson', price: { coins: 600 }, color: '#c62835' },
+  { id: 'purple', name: 'Deep Purple', price: { diamonds: 6 }, color: '#6b3fd4' },
+  { id: 'orange', name: 'Sunset Orange', price: { diamonds: 6 }, color: '#f2711c' },
+  { id: 'cyan', name: 'Electric Cyan', price: { coins: 800, diamonds: 4 }, color: '#22d8f0' },
+  { id: 'rose', name: 'Rose Pink', price: { coins: 800, diamonds: 4 }, color: '#e8558f' },
+  { id: 'gold', name: 'Gold', price: { coins: 1100, diamonds: 6 }, color: '#e3a810' },
 ]);
+
+/**
+ * How each board looks in light and dark mode: `fill` (CSS background: color, gradient or texture), `dot` (the dot
+ * grid) and `base` (its main color, used for the arrow contrast check). Ids match COSMETICS.board.
+ */
+export const BOARD_LOOKS = Object.freeze({
+  plain: {
+    light: { fill: '#ffffff', dot: '#dce1ec', base: '#ffffff' },
+    dark: { fill: '#0d1321', dot: '#2a3550', base: '#0d1321' },
+  },
+  paper: {
+    light: {
+      fill: 'repeating-linear-gradient(0deg, rgba(120,90,40,0.05) 0 1px, transparent 1px 22px), #f7f0e1',
+      dot: '#d8cbb0',
+      base: '#f7f0e1',
+    },
+    dark: {
+      fill: 'repeating-linear-gradient(0deg, rgba(255,240,210,0.05) 0 1px, transparent 1px 22px), #2a251d',
+      dot: '#5a5040',
+      base: '#2a251d',
+    },
+  },
+  sky: {
+    light: { fill: 'linear-gradient(160deg, #dcefff 0%, #eae6ff 55%, #ffe4ef 100%)', dot: '#b8cde4', base: '#e6e9ff' },
+    dark: { fill: 'linear-gradient(160deg, #142848 0%, #241f4a 55%, #3a2140 100%)', dot: '#3f5579', base: '#221f46' },
+  },
+  chalk: {
+    light: {
+      fill: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06), transparent 60%), #23332b',
+      dot: '#42574b',
+      base: '#23332b',
+    },
+    dark: {
+      fill: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06), transparent 60%), #1c2a23',
+      dot: '#3a4e42',
+      base: '#1c2a23',
+    },
+  },
+  stars: {
+    light: {
+      fill: 'radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 62%, #fff, transparent), radial-gradient(1px 1px at 88% 70%, #fff, transparent), radial-gradient(1px 1px at 22% 84%, #fff, transparent), radial-gradient(1.5px 1.5px at 58% 34%, #fdf6c4, transparent), linear-gradient(180deg, #0b1430, #18234d)',
+      dot: '#2d3b68',
+      base: '#121c3e',
+    },
+    dark: {
+      fill: 'radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 62%, #fff, transparent), radial-gradient(1px 1px at 88% 70%, #fff, transparent), radial-gradient(1px 1px at 22% 84%, #fff, transparent), radial-gradient(1.5px 1.5px at 58% 34%, #fdf6c4, transparent), linear-gradient(180deg, #0b1430, #18234d)',
+      dot: '#2d3b68',
+      base: '#121c3e',
+    },
+  },
+  blueprint: {
+    light: {
+      fill: 'linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px) 0 0 / 22px 22px, linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px) 0 0 / 22px 22px, #1b4a85',
+      dot: '#5d8cc4',
+      base: '#1b4a85',
+    },
+    dark: {
+      fill: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px) 0 0 / 22px 22px, linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px) 0 0 / 22px 22px, #0f2c52',
+      dot: '#3f6aa0',
+      base: '#0f2c52',
+    },
+  },
+  // 3.27.0: the backgrounds of the old arrow styles
+  slate: {
+    light: { fill: '#2b3445', dot: '#3d485c', base: '#2b3445' },
+    dark: { fill: '#1f2736', dot: '#364257', base: '#1f2736' },
+  },
+  olive: {
+    light: { fill: '#f2f0e1', dot: '#dad5bc', base: '#f2f0e1' },
+    dark: { fill: '#1e2114', dot: '#3b4127', base: '#1e2114' },
+  },
+  mint: {
+    light: { fill: '#e3f5ee', dot: '#c2e5d7', base: '#e3f5ee' },
+    dark: { fill: '#10211c', dot: '#24453b', base: '#10211c' },
+  },
+  rose: {
+    light: { fill: '#fbf1ec', dot: '#ecd3c8', base: '#fbf1ec' },
+    dark: { fill: '#231918', dot: '#46302c', base: '#231918' },
+  },
+  neon: {
+    light: { fill: 'radial-gradient(ellipse at 50% 0%, #16245a, #0a1027 70%)', dot: '#1e2b57', base: '#0a1027' },
+    dark: { fill: 'radial-gradient(ellipse at 50% 0%, #16245a, #0a1027 70%)', dot: '#1e2b57', base: '#0a1027' },
+  },
+});
 export const SHOP_THEMES = Object.freeze([
   { id: 'blue', name: 'Ocean Blue', price: null, color: '#1877F2' },
   { id: 'purple', name: 'Royal Purple', price: { coins: 800 }, color: '#7C4DFF' },
@@ -522,12 +615,21 @@ export const COSMETICS = Object.freeze({
     { id: 'chalk', name: 'Chalkboard', price: { diamonds: 6 } },
     { id: 'stars', name: 'Night Stars', price: { coins: 900, diamonds: 5 } },
     { id: 'blueprint', name: 'Blueprint', price: { coins: 1000, diamonds: 5 } },
+    // 3.27.0: the backgrounds of the old arrow styles, same names and prices
+    { id: 'slate', name: 'Dark Slate', price: { coins: 600 } },
+    { id: 'olive', name: 'Olive', price: { coins: 600 } },
+    { id: 'mint', name: 'Soft Mint', price: { diamonds: 8 } },
+    { id: 'rose', name: 'Rose Gold', price: { coins: 800, diamonds: 4 } },
+    { id: 'neon', name: 'Neon Night', price: { coins: 1100, diamonds: 6 } },
   ],
   head: [
     { id: 'triangle', name: 'Triangle', price: null },
-    { id: 'chevron', name: 'Chevron', price: { coins: 400 } },
-    { id: 'round', name: 'Round', price: { coins: 500 } },
-    { id: 'feather', name: 'Feather', price: { diamonds: 5 } },
+    // 3.27.0 prices, plus two premium heads
+    { id: 'chevron', name: 'Chevron', price: { coins: 500 } },
+    { id: 'round', name: 'Round', price: { coins: 700 } },
+    { id: 'feather', name: 'Feather', price: { coins: 900, diamonds: 3 } },
+    { id: 'diamond', name: 'Diamond Tip', price: { coins: 1200, diamonds: 5 } },
+    { id: 'bolt', name: 'Bolt', price: { coins: 1500, diamonds: 8 } },
   ],
   confetti: [
     { id: 'classic', name: 'Classic', price: null },
@@ -563,7 +665,8 @@ export const OFFERS = Object.freeze({
     name: 'Starter Pack',
     minLevel: 5, // shown once this level is unlocked
     price: Object.freeze({ diamonds: 3 }),
-    contents: Object.freeze({ hints: 5, style: 'slate' }),
+    // 3.27.0: the old Dark Slate style is now an arrow color + a board (the same pair the save migration gives)
+    contents: Object.freeze({ hints: 5, style: 'pearl', board: 'slate' }),
   }),
   freeGift: Object.freeze({ coins: 30, intervalMs: 4 * 60 * 60 * 1000 }),
   exchange: Object.freeze({ coins: 500, diamonds: 1, bulk: 5 }),

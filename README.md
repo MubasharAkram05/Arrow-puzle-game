@@ -19,7 +19,7 @@ Built with vanilla JavaScript ES modules and Vite. Runs fully offline and is pac
 - Daily reward with a 7-day cycle and a daily streak (shown on Home and in Profile)
 - Levels page as a winding path: sticky chapter banners, round 3D level nodes in an S-curve and a treasure chest per chapter
 - Profile in two tabs: Profile (12 built-in avatars, an editable name, player level/XP, highlight stats and a "View achievements" link) and Awards (clay award badges for 12 achievement groups and 12 monthly trophies, show-off only)
-- Light, dark and auto theme, 6 arrow styles, 4 accent themes
+- Light, dark and auto theme, 11 arrow colors, 4 accent themes
 - Saves locally (versioned, validated, with a backup copy), works with storage blocked
 
 ## Brand images and store assets
@@ -416,18 +416,16 @@ Prices went up in 3.22.0 (coin items about x2, diamond items about x1.5). Items 
 
 **Combo prices** (3.22.0): an item can cost coins and diamonds together (`{ coins, diamonds }` in `src/config.js`). The card shows both icons ("[coin] 600 + [gem] 3"), buying needs both amounts, and when either is short the dialog says exactly what is missing ("Need 120 more coins and 1 more diamond"). The Weekly Sale takes 30% off both parts. The premium avatars no longer show a price on the Profile avatar picker, only a lock (the Shop shows the price).
 
-| Item                                 | Price                   |
-| ------------------------------------ | ----------------------- |
-| Hint (once free hints run out)       | 90 coins                |
-| 5-hint pack                          | 350 coins               |
-| Refill 1 heart (max 2 per level)     | 150 coins               |
-| Game Over: +1 heart and keep playing | 3 diamonds              |
-| Arrow styles: Dark Slate, Olive      | 600 coins               |
-| Arrow style: Soft Mint               | 8 diamonds              |
-| Themes: Royal Purple, Lagoon Teal    | 800 coins               |
-| Arrow style: Rose Gold (new)         | 800 coins + 4 diamonds  |
-| Arrow style: Neon Night (new)        | 1100 coins + 6 diamonds |
-| Theme: Sunset Coral                  | 12 diamonds             |
+| Item                                 | Price       |
+| ------------------------------------ | ----------- |
+| Hint (once free hints run out)       | 90 coins    |
+| 5-hint pack                          | 350 coins   |
+| Refill 1 heart (max 2 per level)     | 150 coins   |
+| Game Over: +1 heart and keep playing | 3 diamonds  |
+| Themes: Royal Purple, Lagoon Teal    | 800 coins   |
+| Theme: Sunset Coral                  | 12 diamonds |
+
+**Arrow colors and boards** (3.27.0): an arrow style is now only the arrow color, and the old style backgrounds are boards. Every Shop preview draws the real board (fill, dot grid) with sample arrows in the equipped color and head. Classic Navy turns light on dark boards. When an arrow color and board are below 3:1 contrast (`src/game/looks.js`), arrows get a white or dark outline and the Shop says "Low contrast, outline added", so arrows are never invisible. Save v8: an owned old style gives both its arrow color and its board (Dark Slate gives Pearl White + Dark Slate, Olive gives Forest Green + Olive, Soft Mint gives Ocean Teal + Soft Mint, Rose Gold gives Rose Pink + Rose Gold, Neon Night gives Electric Cyan + Neon Night). An equipped old style equips both, unless a bought board is already equipped.
 
 ### Hints
 
@@ -453,10 +451,24 @@ Each category has a free default. Owned items are equipped only in the Shop: eve
 | Board background | Chalkboard                       | 6 diamonds                  |
 | Board background | Blueprint (new)                  | 1000 coins + 5 diamonds     |
 | Board background | Night Stars                      | 900 coins + 5 diamonds      |
+| Board background | Dark Slate (3.27.0)              | 600 coins                   |
+| Board background | Olive (3.27.0)                   | 600 coins                   |
+| Board background | Soft Mint (3.27.0)               | 8 diamonds                  |
+| Board background | Rose Gold (3.27.0)               | 800 coins + 4 diamonds      |
+| Board background | Neon Night (3.27.0)              | 1100 coins + 6 diamonds     |
+| Arrow color      | Classic Navy (default)           | Free                        |
+| Arrow color      | Charcoal                         | 400 coins                   |
+| Arrow color      | Forest Green                     | 500 coins                   |
+| Arrow color      | Ocean Teal, Pearl White, Crimson | 600 coins                   |
+| Arrow color      | Deep Purple, Sunset Orange       | 6 diamonds                  |
+| Arrow color      | Electric Cyan, Rose Pink         | 800 coins + 4 diamonds      |
+| Arrow color      | Gold                             | 1100 coins + 6 diamonds     |
 | Arrowhead        | Triangle (default)               | Free                        |
-| Arrowhead        | Chevron                          | 400 coins                   |
-| Arrowhead        | Round                            | 500 coins                   |
-| Arrowhead        | Feather                          | 5 diamonds                  |
+| Arrowhead        | Chevron                          | 500 coins                   |
+| Arrowhead        | Round                            | 700 coins                   |
+| Arrowhead        | Feather                          | 900 coins + 3 diamonds      |
+| Arrowhead        | Diamond Tip (3.27.0)             | 1200 coins + 5 diamonds     |
+| Arrowhead        | Bolt (3.27.0)                    | 1500 coins + 8 diamonds     |
 | Victory confetti | Classic (default)                | Free                        |
 | Victory confetti | Hearts                           | 400 coins                   |
 | Victory confetti | Coins                            | 450 coins                   |

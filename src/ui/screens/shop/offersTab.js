@@ -19,7 +19,7 @@ import { renderNavDots } from '../../components/bottomNav.js';
 import { buyFlow, cosmeticTap, done } from './actions.js';
 import { cardMode, sectionHead } from './cards.js';
 import { freeRewardsCard, onEarn } from './adEarn.js';
-import { stylePreview } from './previews.js';
+import { lookPreviewOf } from './previews.js';
 import { priceHTML } from '../../modals/ask.js';
 import { wallet } from '../../../game/rewards.js';
 
@@ -62,7 +62,7 @@ function starterCard() {
     <span class="starter-title"><b>Starter Pack</b><small>Best value to get going</small></span>
     <span class="starter-items">
       <span class="starter-item">${icon('bulb')}<b>x${c.hints}</b><small>Hints</small></span>
-      <span class="starter-item">${stylePreview(c.style)}<small>Dark Slate style</small></span>
+      <span class="starter-item">${lookPreviewOf(c.style, c.board)}<small>Pearl arrows + Dark Slate board</small></span>
     </span>
     ${btn}
   </button>`;
@@ -142,7 +142,7 @@ export function onCard(el) {
       kind,
       id,
       title: 'Buy the Starter Pack?',
-      message: 'One-time offer: hints and the Dark Slate style.',
+      message: 'One-time offer: 5 hints, Pearl White arrows and the Dark Slate board.',
       icon: 'gift',
       price: OFFERS.starterPack.price,
       buy: buyStarterPack,

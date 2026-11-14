@@ -16,7 +16,7 @@ describe('Shield and Extra Heart boosters are gone', () => {
   it('no booster prices, pack or starter-pack Shields in the config', () => {
     expect(config).not.toHaveProperty('BOOSTERS');
     expect(config).not.toHaveProperty('BOOSTER_PACK');
-    expect(config.OFFERS.starterPack.contents).toEqual({ hints: 5, style: 'slate' });
+    expect(config.OFFERS.starterPack.contents).toEqual({ hints: 5, style: 'pearl', board: 'slate' });
     expect(config.OFFERS.starterPack.price).toEqual({ diamonds: 3 });
   });
 
