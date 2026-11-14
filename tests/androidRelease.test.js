@@ -132,6 +132,11 @@ describe('android-release workflow', () => {
     expect(job).toContain("github.event_name != 'push'");
     expect(job).toContain('reactivecircus/android-emulator-runner@v2');
     expect(job).toContain('bash scripts/android-smoke.sh');
+    // a setup failure (no smoke/started marker) is retried once; a failed test is never retried
+    expect(job).toContain('continue-on-error: true');
+    expect(job).toContain('if [ -f smoke/started ]; then');
+    expect(job).toContain("if: steps.smoke1.outcome == 'failure' && steps.setupfail.outcome == 'success'");
+    expect(text('scripts/android-smoke.sh')).toContain('touch "$OUT/started"');
     const sh = text('scripts/android-smoke.sh');
     expect(sh).toContain('adb install -r');
     expect(sh).toContain('ANR in $PKG|Process: $PKG, PID'); // this app's crashes only, not the emulator's system apps

@@ -101,6 +101,14 @@ const shot = async (name) => {
 
 await send('Runtime.enable');
 await send('Page.enable');
+// how long each touch was held (event timeStamps) and how late its handlers ran: shows a busy main thread
+await evaluate(`(() => {
+  let down = 0;
+  window.__taps = [];
+  addEventListener('pointerdown', (e) => { down = e.timeStamp; window.__taps.push({ type: 'down', late: Math.round(performance.now() - e.timeStamp) }); }, true);
+  addEventListener('pointerup', (e) => { window.__taps.push({ type: 'up', held: Math.round(e.timeStamp - down), late: Math.round(performance.now() - e.timeStamp) }); }, true);
+  return true;
+})()`);
 await evaluate(
   `window.addEventListener('unhandledrejection', (e) => console.error('unhandledrejection: ' + (e.reason && e.reason.stack || e.reason))), true`,
 );
@@ -153,9 +161,19 @@ try {
       const under = await evaluate(
         `(() => { const e = document.elementFromPoint(${p.x}, ${p.y}); return e ? e.id || e.className || e.tagName : 'nothing'; })()`,
       );
+      const before = await evaluate(`document.getElementById('progress').style.transform`);
+      await evaluate('window.__taps = []');
       await tap(p.x, p.y);
-      await sleep(700);
+      // a slow emulator can take a while to slide the arrow out: wait for the progress bar to move
+      let moved = false;
+      for (let i = 0; i < 20 && !moved; i++) {
+        await sleep(250);
+        moved = (await evaluate(`document.getElementById('progress').style.transform`)) !== before;
+      }
+      const timing = await evaluate('JSON.stringify(window.__taps)');
       console.log(`    tap arrow ${id} at ${p.x.toFixed(0)},${p.y.toFixed(0)} on ${under}: ${await evaluate(STATE)}`);
+      console.log(`      pointer events (held ms, handler late by ms): ${timing}`);
+      if (!moved) throw new Error(`the tap on arrow ${id} did nothing (no arrow left, no heart lost): ${timing}`);
     }
     await waitFor(`!!document.querySelector('#modal-victory.open')`);
     await sleep(1200);

@@ -2,6 +2,20 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.28.1] - 2026-11-14
+
+### Fixed
+
+- **Quick taps were ignored on a busy phone.** A tap's length was measured from when the pointer handlers ran, not from the touch itself. While an arrow slid out or an ad loaded, the handlers could run hundreds of ms late, so a quick tap counted as a long press and nothing happened (no arrow left, no heart lost). The Android 16 emulator test caught it on level 1. The length now comes from the events' own timeStamps (`src/input/tapRule.js`). Reproduced in Chromium with a busy main thread: before, 3 of 3 taps were ignored; after, 3 of 3 count.
+
+### Changed
+
+- Emulator smoke test:
+  - Logs, for every tap, how long it was held and how late its handlers ran.
+  - Fails with a clear message when a tap does nothing.
+  - Waits for the arrow to leave instead of a fixed pause.
+- An emulator setup failure (SDK download, boot) is retried once. A failed test never is.
+
 ## [3.28.0] - 2026-11-14
 
 ### Fixed

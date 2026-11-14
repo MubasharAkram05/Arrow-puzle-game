@@ -4,6 +4,7 @@ import { tapArrow } from '../game/game.js';
 import { notePress, requestFrame, startMoving, stopMoving } from '../render/canvasBoard.js';
 import { $ } from '../ui/dom.js';
 import { bindZoom, releaseIsTap } from './zoom.js';
+import { isTapRelease } from './tapRule.js';
 
 /**
  * Squared distance from a point to a segment.
@@ -102,7 +103,8 @@ export function bindBoardInput() {
     unpress();
     if (!e.isPrimary || state.locked || state.hearts <= 0 || !state.level) return;
     const a = pickArrow(e.clientX, e.clientY);
-    press = { a, id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+    // the event's own time, not the handler's: see isTapRelease
+    press = { a, id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp };
     if (a && !a.escaped && !a.busy) {
       a.pressed = true;
       notePress(e.timeStamp);
@@ -115,8 +117,8 @@ export function bindBoardInput() {
   });
   wrap.addEventListener('pointerup', (e) => {
     const p = press && press.id === e.pointerId ? press : null;
-    const quick = p && performance.now() - p.t < TAP.maxMs;
-    const tap = releaseIsTap(e) && quick && Math.hypot(e.clientX - p.x, e.clientY - p.y) < TAP.movePx;
+    const gesture = releaseIsTap(e);
+    const tap = gesture && !!p && isTapRelease(p, { t: e.timeStamp, x: e.clientX, y: e.clientY }, TAP);
     const a = p?.a;
     unpress();
     if (!tap || state.locked || state.hearts <= 0) return;
