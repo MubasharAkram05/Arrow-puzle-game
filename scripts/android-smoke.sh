@@ -8,6 +8,8 @@ APK="$1"
 OUT="${2:-smoke}"
 PKG=com.sussal.arrowexpert
 mkdir -p "$OUT"
+# marker: the emulator booted and the test itself started (the workflow retries only when this is missing)
+touch "$OUT/started"
 
 adb wait-for-device
 adb logcat -c

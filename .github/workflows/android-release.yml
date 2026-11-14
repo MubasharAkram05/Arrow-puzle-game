@@ -211,7 +211,7 @@ jobs:
     needs: android
     if: needs.android.outputs.debug == 'true' && github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -231,13 +231,38 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The emulator setup itself can fail now and then (SDK download cut off, slow boot). Such a failure is
+      # retried once; a failure of the test (smoke/started exists) is never retried, so app bugs always show.
       - name: Play level 1 on an emulator (API ${{ matrix.api-level }})
+        id: smoke1
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: google_apis
           disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash scripts/android-smoke.sh "$(find dl -name '${{ needs.android.outputs.apk_name }}' | head -1)" smoke
+      - name: Emulator setup failed before the test started, trying once more
+        id: setupfail
+        if: steps.smoke1.outcome == 'failure'
+        run: |
+          if [ -f smoke/started ]; then
+            echo "::error::the smoke test failed on the app (see the step above); not retried"
+            exit 1
+          fi
+          echo "::warning::the emulator setup failed before the test started (download or boot); retrying once"
+      - name: Play level 1 on an emulator, second try (API ${{ matrix.api-level }})
+        if: steps.smoke1.outcome == 'failure' && steps.setupfail.outcome == 'success'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/android-smoke.sh "$(find dl -name '${{ needs.android.outputs.apk_name }}' | head -1)" smoke
       - uses: actions/upload-artifact@v4
