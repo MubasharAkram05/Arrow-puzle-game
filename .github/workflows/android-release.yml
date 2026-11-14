@@ -27,6 +27,7 @@ on:
       - '.github/workflows/android-release.yml'
       - 'scripts/verify-apk.sh'
       - 'scripts/check-apk-manifest.py'
+      - 'scripts/android-smoke.*'
 
 permissions:
   contents: read
@@ -203,3 +204,42 @@ jobs:
           (cd "$(dirname "$APK")" && sha256sum -c ./*.sha256)
           unzip -tq "$APK"
           echo "artifact APK: OK (same bytes as the verified build)"
+
+  # Smoke test on an Android emulator: install the debug APK, open it, play level 1 through the WebView and
+  # check logcat for crashes, ANRs and app errors (scripts/android-smoke.sh). Pull requests and manual runs.
+  emulator:
+    needs: android
+    if: needs.android.outputs.debug == 'true' && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: playwright-core (connects to the app's WebView; no browser download)
+        run: npm i --no-save --no-package-lock playwright-core@1.63.0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arrow-expert-*-debug-apk
+          path: dl
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Play level 1 on an emulator (API 34)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash scripts/android-smoke.sh "$(find dl -name '${{ needs.android.outputs.apk_name }}' | head -1)" smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-smoke
+          path: smoke/
+          if-no-files-found: warn
