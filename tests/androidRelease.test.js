@@ -134,7 +134,7 @@ describe('android-release workflow', () => {
     const sh = text('scripts/android-smoke.sh');
     expect(sh).toContain('adb install -r');
     expect(sh).toMatch(/FATAL EXCEPTION\|ANR in/);
-    expect(text('scripts/android-smoke.mjs')).toContain("waitForSelector('#modal-victory.open'");
+    expect(text('scripts/android-smoke.mjs')).toContain('#modal-victory.open');
   });
 
   it('reads the four signing secrets and never writes the keystore into the repo', () => {

@@ -205,8 +205,8 @@ jobs:
           unzip -tq "$APK"
           echo "artifact APK: OK (same bytes as the verified build)"
 
-  # Smoke test on an Android emulator: install the debug APK, open it, play level 1 through the WebView and
-  # check logcat for crashes, ANRs and app errors (scripts/android-smoke.sh). Pull requests and manual runs.
+  # Smoke test on an Android emulator: install the debug APK, open it, play level 1 through the WebView (DevTools
+  # protocol) and check logcat for crashes, ANRs and app errors (scripts/android-smoke.sh). PRs and manual runs.
   emulator:
     needs: android
     if: needs.android.outputs.debug == 'true' && github.event_name != 'push'
@@ -217,8 +217,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: playwright-core (connects to the app's WebView; no browser download)
-        run: npm i --no-save --no-package-lock playwright-core@1.63.0
       - uses: actions/download-artifact@v4
         with:
           pattern: arrow-expert-*-debug-apk
