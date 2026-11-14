@@ -13,6 +13,7 @@ adb wait-for-device
 adb logcat -c
 adb install -r "$APK" || exit 1
 adb shell am start -W -n "$PKG/.MainActivity" || exit 1
+echo "Android $(adb shell getprop ro.build.version.release | tr -d '\r'), WebView $(adb shell dumpsys package com.google.android.webview | grep -m1 versionName | tr -d ' \r')"
 
 # the WebView DevTools socket of the app (debug builds only)
 SOCK=""

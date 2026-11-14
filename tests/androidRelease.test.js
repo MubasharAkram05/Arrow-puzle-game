@@ -123,7 +123,8 @@ describe('android-release workflow', () => {
     expect(wf).toContain('./gradlew --no-daemon assembleDebug');
     // the AAB, the APK, and the emulator smoke test's logcat and screenshots
     expect(wf.match(/actions\/upload-artifact@v4/g)).toHaveLength(3);
-    expect(wf).toContain('name: emulator-smoke');
+    expect(wf).toContain('name: emulator-smoke-api${{ matrix.api-level }}');
+    expect(wf).toMatch(/api-level: \[34, 36\]/);
   });
 
   it('emulator job: installs the debug APK, plays level 1 and checks logcat (not on version tags)', () => {
