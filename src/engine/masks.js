@@ -43,17 +43,23 @@ function insidePolygon(x, y, poly) {
   return inside;
 }
 
-/** Five-point star polygon in normalized coordinates. */
-function starPolygon() {
-  const poly = [];
-  for (let i = 0; i < 10; i++) {
-    const ang = -Math.PI / 2 + (i * Math.PI) / 5;
-    const rad = i % 2 === 0 ? 1.12 : 0.56;
-    poly.push([Math.cos(ang) * rad, Math.sin(ang) * rad + 0.12]);
-  }
-  return poly;
-}
-const STAR = starPolygon();
+/**
+ * Five-point star polygon in normalized coordinates: point i at angle -90 deg + i * 36 deg, radius 1.12
+ * (tips) or 0.56 (inner corners), moved down by 0.12. Written out as numbers (3.28.0) because Math.sin and
+ * Math.cos can differ in the last bit between JavaScript engines, which would change the shape on some devices.
+ */
+const STAR = Object.freeze([
+  [0, -1],
+  [0.329159741283785, -0.33304951684997064],
+  [1.065183298250572, -0.2260990336999411],
+  [0.532591649125286, 0.29304951684997055],
+  [0.65831948256757, 1.0260990336999414],
+  [0, 0.68],
+  [-0.6583194825675699, 1.0260990336999414],
+  [-0.532591649125286, 0.2930495168499706],
+  [-1.0651832982505722, -0.226099033699941],
+  [-0.32915974128378506, -0.3330495168499706],
+]);
 
 /**
  * Is a normalized point inside one of the 20 original shapes (formula or pixel art)? x and y are in [-1, 1],

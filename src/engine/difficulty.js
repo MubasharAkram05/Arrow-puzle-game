@@ -2,6 +2,7 @@ import { LEVELS, TIER_FLOORS } from '../config.js';
 import { buildOccupancy, rayArrows } from './board.js';
 import { solveLevel } from './solver.js';
 import { extraMetrics } from './metrics.js';
+import { dlog, dpow } from './detMath.js';
 
 /**
  * @typedef {object} DifficultyReport
@@ -113,13 +114,13 @@ const lerp = (a, b, t) => a + (b - a) * t;
 /** 0 at the first curve level, 1 at fullSizeLevel: a square-root ramp (fast early, slower later). */
 function early(n) {
   const t = (n - C.firstLevel) / (C.fullSizeLevel - C.firstLevel);
-  return Math.min(1, Math.max(0, t)) ** C.growth;
+  return dpow(Math.min(1, Math.max(0, t)), C.growth);
 }
 
 /** 0 at fullSizeLevel, 1 at lateLevel, on a log scale (keeps rising for very high levels). */
 function late(n) {
   if (n <= C.fullSizeLevel) return 0;
-  return Math.min(1, Math.log(n / C.fullSizeLevel) / Math.log(C.lateLevel / C.fullSizeLevel));
+  return Math.min(1, dlog(n / C.fullSizeLevel) / dlog(C.lateLevel / C.fullSizeLevel));
 }
 
 /** Value of a [start, full size] or [start, full size, late] curve at level n. */

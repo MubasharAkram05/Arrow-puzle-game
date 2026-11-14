@@ -8,6 +8,7 @@ import { state } from '../../../game/state.js';
 import { icon } from '../../components/icons.js';
 import { buyFlow } from './actions.js';
 import { card, section, sectionHead } from './cards.js';
+import { adUiShown } from '../../../ads/index.js';
 import { earnRow, onEarn } from './adEarn.js';
 
 /** @returns {string[]} keys for the tab's "New" dot (hints are never new) */
@@ -43,7 +44,7 @@ export function render(o = {}) {
   ];
   return [
     inventory(),
-    o.inAll
+    o.inAll || !adUiShown()
       ? ''
       : sectionHead('Free hint', { icon: 'ad', sub: 'Watch a short ad' }) + earnRow('hint', { featured: true }),
     section('Buy hints', hints, '', { icon: 'bulb', sub: 'Each hint shows an arrow that can escape' }),

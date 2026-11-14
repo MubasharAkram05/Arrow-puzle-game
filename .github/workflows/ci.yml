@@ -19,3 +19,13 @@ jobs:
       # generation-speed tests: their own step, one file at a time, so other tests do not slow them down
       - run: npm run test:timing
       - run: npm run build
+      # the browser builds the same boards as Node: golden level hashes checked inside Chrome (preinstalled on
+      # the runner); a debug build exposes the hook (ARROW_TEST_ADS=1), the release build does not have it
+      - name: Level boards in Chrome match the golden hashes
+        run: |
+          ARROW_TEST_ADS=1 npx vite build --mode release --outDir "$RUNNER_TEMP/dist-hash"
+          npx vite preview --outDir "$RUNNER_TEMP/dist-hash" --port 4173 --strictPort &
+          google-chrome --headless=new --no-sandbox --remote-debugging-port=9222 \
+            --user-data-dir="$RUNNER_TEMP/chrome" about:blank &
+          timeout 60 bash -c 'until curl -sf http://localhost:4173/ > /dev/null; do sleep 0.5; done'
+          node scripts/chrome-level-hashes.mjs http://localhost:4173/

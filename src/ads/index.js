@@ -12,6 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import { ADS } from '../config.js';
 import { toast } from '../ui/components/toast.js';
 import {
+  adUiVisible,
   adUnitIds,
   bannerAllowed,
   countRewarded,
@@ -104,6 +105,9 @@ export function rewardedAvailable() {
 export function earnState(kind) {
   return earnOffer(rec, { now: Date.now(), kind, ready: !busy && provider.rewardedReady() }, ADS);
 }
+
+/** Show "Watch ad" buttons and rows? The app always; the production web never (it has no ads). */
+export const adUiShown = () => adUiVisible({ native: Capacitor.isNativePlatform(), webAdUi: __WEB_AD_UI__ });
 
 export const NO_AD_MSG = 'No ad right now, try again in a moment';
 export const LIMIT_MSG = 'Daily limit reached, come back tomorrow';

@@ -5,7 +5,7 @@
  * keeps a "Daily Reward" button with a dot on Home until today's reward is claimed.
  * Rules: src/game/daily.js; card states: src/game/dailyCards.js.
  */
-import { dailyStatus } from '../../game/daily.js';
+import { dailyStatus, tutorialDone } from '../../game/daily.js';
 import { dailyCards, mainReward } from '../../game/dailyCards.js';
 import { claimDailyReward } from '../../game/rewards.js';
 import { state } from '../../game/state.js';
@@ -74,10 +74,13 @@ export function openDaily() {
 }
 
 /** Is a reward waiting today? */
-export const dailyAvailable = () => dailyStatus(state.daily, Date.now()).state === 'available';
+/** Today's reward is waiting and the tutorial is done (a new player gets it after level 3). */
+export const dailyAvailable = () =>
+  tutorialDone(state.progress) && dailyStatus(state.daily, Date.now()).state === 'available';
 
 /** On Home: open the popup by itself the first time today's reward is waiting. */
 export function maybeShowDaily() {
+  if (!tutorialDone(state.progress)) return;
   const s = dailyStatus(state.daily, Date.now());
   if (s.state !== 'available' || autoShownDay === s.today) return;
   autoShownDay = s.today;

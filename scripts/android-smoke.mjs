@@ -3,10 +3,11 @@
  * opened on an emulator by scripts/android-smoke.sh, which forwards the app's WebView DevTools socket to
  * localhost:9222. This script talks to that WebView over the Chrome DevTools Protocol (Node's built-in
  * WebSocket, no extra packages): it claims or closes the daily reward, plays level 1 with real touch taps
- * (level 1 is drawn by hand, so its arrows are known) and waits for the victory popup.
+ * (level 1 is drawn by hand, so its arrows are known), waits for the victory popup, and checks that this
+ * WebView builds the golden boards (tests/fixtures/level-hashes.json, debug builds expose the hook).
  * It fails on any console error or warning, uncaught exception or unhandled promise rejection in the app.
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { LEVEL_ONE } from '../src/engine/levels.js';
 import { solveLevel } from '../src/engine/solver.js';
 
@@ -147,6 +148,13 @@ try {
     }
     await waitFor(`!!document.querySelector('#modal-victory.open')`);
     await sleep(1200);
+  });
+  await step('level fingerprints match the golden hashes (this WebView builds the same boards)', async () => {
+    const want = JSON.parse(readFileSync(new URL('../tests/fixtures/level-hashes.json', import.meta.url), 'utf8'));
+    const got = await evaluate('window.__arrowLevelHashes()');
+    const bad = Object.keys(want).filter((n) => got[n] !== want[n]);
+    console.log(`    ${Object.keys(want).length} levels checked, ${bad.length} different`);
+    if (bad.length) throw new Error(`different boards in this WebView for levels ${bad.join(', ')}`);
   });
   await step('safe-area insets set (Capacitor variables and env())', async () => {
     const insets = await evaluate(`(() => {

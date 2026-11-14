@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { $ } from '../ui/dom.js';
 import { closeModals, modalBack, openModal } from '../ui/modals/modal.js';
 import { goBack } from '../ui/navigation.js';
+import { escapeKey } from './escapeKey.js';
 
 const GUARD = { arrowEscape: 'guard' };
 let exitApp = exitBrowser;
@@ -48,6 +49,7 @@ function bindHistoryBack() {
  */
 export async function initBackButton() {
   $('btn-exit').addEventListener('click', () => exitApp());
+  document.addEventListener('keydown', (e) => escapeKey(e, modalBack));
   if (Capacitor.isNativePlatform()) {
     try {
       const { App } = await import('@capacitor/app');

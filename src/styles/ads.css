@@ -125,6 +125,13 @@ body.ad-slot .toast {
   grid-template-columns: 1.55fr 1fr;
   gap: 10px;
 }
+/* the production web has no ads (3.28.0): the diamonds button takes the whole row */
+.go-actions:has(> .go-ad[hidden]) {
+  grid-template-columns: 1fr;
+}
+.go-ad[hidden] {
+  display: none;
+}
 .go-ad,
 .go-gems {
   display: inline-flex;

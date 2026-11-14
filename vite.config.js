@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
-import { adDebug, adsRealAllowed, adsSimulated, testUnlockAll } from './scripts/build-flags.mjs';
+import { adDebug, adsRealAllowed, adsSimulated, testUnlockAll, webAdUi } from './scripts/build-flags.mjs';
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
       __ADS_SIMULATED__: JSON.stringify(adsSimulated({ mode })),
       // the hidden Ad debug panel and the ArrowAds log: debug APK, dev server and tests only
       __AD_DEBUG__: JSON.stringify(adDebug({ mode })),
+      // "Watch ad" buttons and rows on the web: dev server, tests and Vercel previews only (the app always has them)
+      __WEB_AD_UI__: JSON.stringify(webAdUi({ mode })),
       __APP_VERSION__: JSON.stringify(version),
     },
     plugins: [
