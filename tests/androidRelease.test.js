@@ -121,7 +121,21 @@ describe('android-release workflow', () => {
     expect(wf).toContain('npx cap sync android');
     expect(wf).toContain('./gradlew --no-daemon bundleRelease');
     expect(wf).toContain('./gradlew --no-daemon assembleDebug');
-    expect(wf.match(/actions\/upload-artifact@v4/g)).toHaveLength(2);
+    // the AAB, the APK, and the emulator smoke test's logcat and screenshots
+    expect(wf.match(/actions\/upload-artifact@v4/g)).toHaveLength(3);
+    expect(wf).toContain('name: emulator-smoke-api${{ matrix.api-level }}');
+    expect(wf).toMatch(/api-level: \[34, 36\]/);
+  });
+
+  it('emulator job: installs the debug APK, plays level 1 and checks logcat (not on version tags)', () => {
+    const job = wf.slice(wf.indexOf('\n  emulator:'));
+    expect(job).toContain("github.event_name != 'push'");
+    expect(job).toContain('reactivecircus/android-emulator-runner@v2');
+    expect(job).toContain('bash scripts/android-smoke.sh');
+    const sh = text('scripts/android-smoke.sh');
+    expect(sh).toContain('adb install -r');
+    expect(sh).toMatch(/FATAL EXCEPTION\|ANR in/);
+    expect(text('scripts/android-smoke.mjs')).toContain('#modal-victory.open');
   });
 
   it('reads the four signing secrets and never writes the keystore into the repo', () => {
