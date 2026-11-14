@@ -52,10 +52,18 @@ ws.onmessage = ({ data }) => {
     issues.push(`exception: ${d.exception?.description || d.text}`);
   }
 };
+/** One DevTools call; gives up after a minute so a stuck emulator fails the test instead of hanging it. */
 const send = (method, params = {}) =>
   new Promise((resolve, reject) => {
     const id = ++nextId;
-    pending.set(id, { resolve, reject });
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error(`${method} timed out`));
+    }, 60000);
+    pending.set(id, {
+      resolve: (v) => (clearTimeout(timer), resolve(v)),
+      reject: (e) => (clearTimeout(timer), reject(e)),
+    });
     ws.send(JSON.stringify({ id, method, params }));
   });
 /** Evaluate an expression in the app (awaits promises) and return its value. */
@@ -115,7 +123,10 @@ const step = async (name, fn) => {
 
 let failed = null;
 try {
-  await step('app loaded (splash gone)', () => waitFor(`!document.getElementById('boot-splash')`, 30000));
+  // the DevTools target can be ready before the app's page is: wait for Home itself, not only for the splash to go
+  await step('app loaded (Home shown, splash gone)', () =>
+    waitFor(`!!document.getElementById('btn-play') && !document.getElementById('boot-splash')`, 60000),
+  );
   await step('daily reward claimed or closed', async () => {
     await sleep(800);
     if (!(await isOpen('modal-daily'))) return;
@@ -186,3 +197,4 @@ if (failed) {
   process.exit(1);
 }
 if (issues.length) process.exit(1);
+process.exit(0);

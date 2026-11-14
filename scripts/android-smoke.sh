@@ -26,7 +26,8 @@ done
 adb forward tcp:9222 "localabstract:$SOCK"
 for _ in $(seq 1 30); do curl -sf http://127.0.0.1:9222/json/version > /dev/null && break; sleep 1; done
 
-SMOKE_OUT="$OUT" node scripts/android-smoke.mjs
+# a hard limit, so a stuck WebView fails the job quickly instead of running into the job timeout
+SMOKE_OUT="$OUT" timeout 900 node scripts/android-smoke.mjs
 PLAY=$?
 
 sleep 2
