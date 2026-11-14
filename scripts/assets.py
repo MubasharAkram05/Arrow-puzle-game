@@ -7,6 +7,7 @@ Sources (made with an image AI, processed here, never redrawn):
   icon-background.png  blue gradient             -> adaptive icon background, maskable background
   icon-mono.png        black logo on transparent -> adaptive monochrome (themed) icon
   splash-light.png     light-mode splash         -> splash screens; the dark one is made from it here
+  feature-graphic-source.png  1536 x 1024 art   -> Play Store feature graphic 1024 x 500 (crop + resize only)
 
 Outputs: store-assets/ (Play Store files, Android res/ to copy into android/app/src/main/res) and public/
 (web icons, served by Vite). When an android/ project exists, the res/ files are copied into it too.
@@ -200,6 +201,58 @@ def fit_splash(src, W, H):
     return Image.fromarray(np.uint8(np.clip(canvas, 0, 255)))
 
 
+# ---------- Play Store feature graphic ----------
+
+FEATURE = (1024, 500)
+FEATURE_MARGIN = 0.08  # logo and text keep at least 8% of the width / height free on every side
+
+
+def content_box(im, thresh=40, min_px=40):
+    """Box (x0, y0, x1, y1) around the logo and text. The background is a cyan-to-blue gradient whose red
+    channel stays near 0 (faint background arrows too), while the white logo, orange arrow, title and tagline
+    (with their glow) are far redder, so the red channel finds them. Rows and columns with only a few such
+    pixels (stray noise) are ignored."""
+    red = np.asarray(im.convert('RGB'))[..., 0] > thresh
+    cols = np.nonzero(red.sum(axis=0) >= min_px // 10)[0]
+    rows = np.nonzero(red.sum(axis=1) >= min_px // 10)[0]
+    if red.sum() < min_px or not len(cols) or not len(rows):
+        sys.exit('feature graphic: no logo or text found in brand-images/feature-graphic-source.png')
+    return int(cols[0]), int(rows[0]), int(cols[-1]) + 1, int(rows[-1]) + 1
+
+
+def feature_crop(size, box, ratio=FEATURE[0] / FEATURE[1], margin=FEATURE_MARGIN):
+    """Crop rectangle (may reach outside the picture) with the content box in its centre: as large as the
+    picture allows (full width when the content is centred), never smaller than the content plus the margin.
+    Parts outside the picture are filled by extending its edges (see extend)."""
+    W, H = size
+    x0, y0, x1, y1 = box
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    # smallest crop that keeps the margin on every side
+    need_w = max((x1 - x0) / (1 - 2 * margin), (y1 - y0) / (1 - 2 * margin) * ratio)
+    # largest crop centred on the content that stays inside the picture
+    fit_w = min(2 * min(cx, W - cx), 2 * min(cy, H - cy) * ratio)
+    w = max(need_w, fit_w)
+    h = w / ratio
+    return round(cx - w / 2), round(cy - h / 2), round(cx + w / 2), round(cy + h / 2)
+
+
+def extend(im, rect):
+    """Crop rect out of im; anything outside the picture repeats the nearest edge pixels (no redrawing)."""
+    x0, y0, x1, y1 = rect
+    a = np.asarray(im.convert('RGB'))
+    H, W = a.shape[:2]
+    pad = ((max(0, -y0), max(0, y1 - H)), (max(0, -x0), max(0, x1 - W)), (0, 0))
+    a = np.pad(a, pad, mode='edge')
+    ox, oy = pad[1][0], pad[0][0]
+    return Image.fromarray(a[y0 + oy : y1 + oy, x0 + ox : x1 + ox])
+
+
+def feature_graphic(src):
+    box = content_box(src)
+    rect = feature_crop(src.size, box)
+    return extend(src, rect).resize(FEATURE, Image.LANCZOS), box, rect
+
+
 def main():
     full = load('icon-full.png').convert('RGB')
     fg = clean_alpha(load('icon-foreground.png'))
@@ -210,6 +263,13 @@ def main():
 
     # Play Store icon: 512 x 512, full square, no transparency
     out(os.path.join(STORE, 'play', 'icon-512.png'), resize(full, (512, 512)))
+
+    # Play Store feature graphic: 1024 x 500, no transparency, PNG and JPG
+    fsrc = load('feature-graphic-source.png').convert('RGB')
+    feat, box, rect = feature_graphic(fsrc)
+    out(os.path.join(STORE, 'play', 'feature-graphic.png'), feat)
+    out(os.path.join(STORE, 'play', 'feature-graphic.jpg'), feat, quality=92, subsampling=0)
+    print(f'feature graphic: content {box}, crop {rect} of {fsrc.size}')
 
     # Android adaptive icon: 108dp layers, art inside the 66dp safe circle (radius 33dp)
     for d, k in DENSITIES.items():
@@ -300,6 +360,9 @@ def slot_and_check(rel, im, size):
     opaque = im.mode in ('RGB', 'L', 'P')
     side_ok = 320 <= min(w, h) and max(w, h) <= 3840 and max(w, h) <= 2 * min(w, h)
     name = os.path.basename(rel)
+    if rel.startswith('store-assets/play/feature-graphic.'):
+        ok = (w, h) == FEATURE and im.mode == 'RGB' and size <= 1024 * 1024
+        return 'Play Store: feature graphic (1024 x 500 PNG/JPEG, no alpha, up to 1 MB)', ok
     if rel == 'store-assets/play/icon-512.png':
         ok = (w, h) == (512, 512) and opaque and size <= 1024 * 1024
         return 'Play Store: app icon (512 x 512 PNG, up to 1 MB, full square)', ok
@@ -347,7 +410,7 @@ def write_readme():
         for top in (STORE, ICONS)
         for d, _, fs in os.walk(top)
         for f in fs
-        if f.endswith('.png')
+        if f.endswith('.png') or f.startswith('feature-graphic.')
     )
     for rel in files:
         im = Image.open(os.path.join(ROOT, rel))
@@ -371,7 +434,9 @@ screenshots so the table is up to date.
 
 - ✅ = meets the rule in the "Slot" column (Google Play's rules for store files, as of late 2026; check the
   Play Console when uploading).
-- Feature graphic (1024 x 500): not made yet.
+- Feature graphic (1024 x 500): `play/feature-graphic.png` and `.jpg`, cropped and resized (never redrawn)
+  from `brand-images/feature-graphic-source.png`, with the logo and text found automatically, centred, and at
+  least 8% from every edge.
 - `android/res/` goes into `android/app/src/main/res/` once the Android project exists (`npx cap add android`);
   `npm run assets` copies it there automatically when that folder exists. Merge `android/splash-theme.xml`
   into `values/styles.xml`.

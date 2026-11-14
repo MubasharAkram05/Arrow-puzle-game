@@ -2,6 +2,12 @@
 
 All notable changes to this project. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- **Play Store feature graphic**: `store-assets/play/feature-graphic.png` and `.jpg` (1024 x 500, no alpha, under 1 MB), made by `npm run assets` from `brand-images/feature-graphic-source.png`. The logo and text are found automatically and centred with at least 8% margin. The art is only cropped and resized (Lanczos), never redrawn. Edges are extended only if a crop would cut the art.
+
 ## [3.27.0] - 2026-11-14
 
 ### Changed
